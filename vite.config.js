@@ -9,9 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icono.svg', 'icono-192.png', 'icono-512.png'],
       manifest: {
-        name: 'Metseri — Tu ventana al universo',
+        name: 'Metseri',
         short_name: 'Metseri',
-        description: 'Explora el universo en 360° y realidad virtual.',
         lang: 'es',
         start_url: '/',
         scope: '/',
