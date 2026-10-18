@@ -1,0 +1,58 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+# Add your tech stack, conventions, style guides, domain knowledge, etc.
+# Example:
+#   context: |
+#     Tech stack: TypeScript, React, Node.js
+#     We use conventional commits
+#     Domain: e-commerce platform
+
+context: |
+  Los nombres de funciones, metodos y archivos propios del proyecto deben ser
+  descriptivos, estar en espanol y usar camelCase. Las clases y los componentes
+  propios tambien usan nombres en espanol, respetando la capitalizacion de su
+  convencion; por ejemplo, EscenaEstelar en escenaEstelar.jsx.
+  Se conservan nombres de plantilla o convencionales como App y main, los nombres
+  fijos de herramientas y los identificadores de APIs o dependencias externas.
+  Los identificadores de cambios OpenSpec deben ser descriptivos y estar en
+  espanol y kebab-case, por ejemplo agregar-escena-estelar-inmersiva. Usar solo
+  letras a-z minusculas, numeros y guiones simples, sin espacios ni caracteres
+  acentuados. Para estos identificadores no se usa camelCase; los nombres fijos
+  de los artefactos OpenSpec se conservan.
+
+  La base actual de la interfaz es JavaScript, React, HTML y CSS, con Vite y
+  Node.js/npm. El usuario aporta como referencia por experiencia previa Three.js,
+  WebGL y Canvas 2D para graficos; Device Orientation API y WebXR para orientacion
+  y VR; vite-plugin-pwa y Workbox para instalacion y uso sin conexion; Lucide React
+  para iconos; Fontsource con DM Sans y Manrope para fuentes; Vercel para alojamiento
+  y HTTPS; y Porkbun/DNS para dominios. Elegir lo necesario segun cada cambio y
+  comprobar la configuracion real: esta referencia no significa que esas tecnologias
+  adicionales ya esten instaladas, configuradas o comprometidas para todo cambio.
+
+  El cambio inicial agregar-escena-estelar-inmersiva se limita a la escena 360 y VR movil,
+  con Three.js/WebGL y orientacion del dispositivo sobre la base existente. El
+  usuario aplazo la instalacion PWA y el funcionamiento sin conexion para otro cambio.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+# Example:
+#   rules:
+#     proposal:
+#       - Keep proposals under 500 words
+#       - Always include a "Non-goals" section
+#     tasks:
+#       - Break tasks into chunks of max 2 hours
+
+# Per-operation guidance (optional)
+# Add advisory guidance for how apply and archive work should be conducted.
+# This is separate from artifact rules above.
+# Example:
+#   operations:
+#     apply:
+#       guidance:
+#         - Keep test summaries concise
+#     archive:
+#       guidance:
+#         - Summarize the archive outcome before finishing

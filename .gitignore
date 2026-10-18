@@ -1,4 +1,29 @@
-# Logs
+# Dependencias
+node_modules/
+
+# Variables de entorno y configuracion local
+.env
+.env.*
+*.local
+!.env.example
+!.env.*.example
+
+# Compilaciones y caches
+dist/
+dist-ssr/
+dev-dist/
+.vite/
+.vite-temp/
+.cache/
+.eslintcache
+
+# Cobertura de pruebas
+coverage/
+
+# Configuracion local de despliegue
+.vercel/
+
+# Registros
 logs
 *.log
 npm-debug.log*
@@ -7,18 +32,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
+# Configuracion local de editores y herramientas
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
+.claude/settings.local.json
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*~
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
