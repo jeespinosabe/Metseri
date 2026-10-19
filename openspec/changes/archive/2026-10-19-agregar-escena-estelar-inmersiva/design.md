@@ -24,6 +24,7 @@ El usuario confirmó pantalla dividida para un visor móvil y aplazó la instala
 - Introducir un servidor de escenas, una biblioteca de componentes 3D para React o un sistema general de realidad extendida.
 - Añadir calibración óptica por modelo de visor, perfiles de lentes, locomoción o controladores de VR.
 - Crear manifest, service worker, caché sin conexión o flujo de instalación; quedan fuera de este cambio por decisión del usuario.
+- Dar comportamiento al puntero de cruz (selección por mirada, temporizadores de permanencia, acciones o resaltado de objetos): se plantea para sprints posteriores.
 
 ## Decisions
 
@@ -37,6 +38,7 @@ Distribución propuesta, sin convertirla en un framework interno:
 | --- | --- |
 | `src/App.jsx` | Contenedor, estado de presentación, controles y mensajes. |
 | `src/componentes/escenaEstelar.jsx` | Componente `EscenaEstelar`: canvas, enlace con React, foco y creación/liberación del motor. |
+| `src/componentes/punteroCruz.jsx` | Componente `PunteroCruz`: cruz blanca superpuesta, una en vista única y una por mitad en VR. Sin lógica de interacción. |
 | `src/escena/campoEstelar.js` | Generación de estrellas, escena, cámara y renderizado normal/dividido. |
 | `src/escena/orientacionDispositivo.js` | Conversión de lecturas y corrección de pantalla mediante cuaterniones. |
 | `src/escena/controlesVista.js` | Arrastre, teclado, permisos, selección de entrada y recentrado. |
@@ -109,9 +111,17 @@ Verificar con pruebas pequeñas de `node:test` los cálculos de orientación y l
 
 Los módulos nuevos usarán los nombres de la tabla anterior; sus funciones y métodos serán descriptivos y camelCase, por ejemplo `crearCampoEstelar`, `obtenerOrientacionDispositivo`, `entrarModoVr` y `recentrarVista`. Los archivos de pruebas conservarán esa base de nombre, con el sufijo convencional `.test.js`.
 
-El archivo `escenaEstelar.jsx` exportará `EscenaEstelar` para respetar la capitalización de los componentes React. Las demás clases propias usarán nombres en español conforme a su convención. Se conservan `App`, `main`, los nombres fijos de los artefactos OpenSpec y los contratos externos como `StereoEffect`, `DeviceOrientationEvent.requestPermission`, `alpha`, `beta` y `gamma`.
+El archivo `escenaEstelar.jsx` exportará `EscenaEstelar` y `punteroCruz.jsx` exportará `PunteroCruz`, para respetar la capitalización de los componentes React. Las demás clases propias usarán nombres en español conforme a su convención. Se conservan `App`, `main`, los nombres fijos de los artefactos OpenSpec y los contratos externos como `StereoEffect`, `DeviceOrientationEvent.requestPermission`, `alpha`, `beta` y `gamma`.
 
 Esta es una convención de implementación y no modifica el comportamiento descrito por las especificaciones. No requiere renombrar archivos existentes de plantilla ni archivos ajenos al cambio.
+
+### 8. Puntero de cruz como elemento de interfaz superpuesto
+
+El puntero es un elemento de interfaz, no un objeto de la escena: un `PunteroCruz` con SVG en línea (cuatro trazos blancos con un pequeño hueco central para no tapar lo que se apunta), de unos 24 px en total, trazo de 2 px y un halo oscuro tenue para distinguirse del fondo. Va superpuesto al canvas, con `pointer-events: none`, sin `tabindex`, sin manejadores y con `aria-hidden="true"`, de modo que arrastre, teclado y botones se comportan igual que sin él. No se muestra en el estado de error.
+
+En vista única se coloca en el 50 % horizontal y vertical del área de la escena, que coincide con el eje de la cámara. En VR se muestran dos copias, centradas en cada mitad (25 % y 75 % del ancho, 50 % del alto), con la misma posición relativa. Es el mismo reparto que hace `StereoEffect`, que asigna a cada ojo una mitad con su propio aspecto; el efecto no desplaza la imagen de forma apreciable porque el enfoque de la cámara coincide con la distancia de las estrellas. Dos copias idénticas en la misma posición relativa tienen disparidad cero y se fusionan en un solo puntero al infinito, como el cielo. Mostrar una sola cruz en el centro de la pantalla completa quedaría sobre la división de las vistas y cada ojo vería la mitad.
+
+Alternativas: dibujar la cruz en la escena 3D, anclada a la cámara, cambiaría su tamaño en píxeles según la resolución y el pixel ratio, la deformaría con la perspectiva y la acoplaría al motor gráfico para una guía puramente visual; dibujarla en el lienzo con Canvas 2D añadiría un segundo ciclo de dibujo. Una cruz HTML/SVG es nítida a cualquier densidad de píxeles, no toca el motor y se alinea con el viewport por CSS. La interacción se deja fuera deliberadamente: añadirla después consiste en dotar de comportamiento a este componente o a un detector de mirada, sin cambiar el reparto visual.
 
 ## Risks / Trade-offs
 
@@ -120,6 +130,8 @@ Esta es una convención de implementación y no modifica el comportamiento descr
 - Mayor coste de dos vistas en equipos modestos --> pocos grupos de puntos, pixel ratio acotado, pausa al ocultarse y revisión de fluidez en móvil; ajustar los valores visuales sin cambiar el contrato.
 - Un sensor ausente o rechazado impide seguir la cabeza --> la alternativa manual mantiene navegable la vista dividida, pero no sustituye físicamente el seguimiento dentro de un visor sin entrada manual.
 - Pruebas desde una IP local con HTTP pueden no acceder a sensores --> documentar una forma de servir la aplicación por HTTPS válido al móvil; la vista manual sigue utilizable.
+- Con un visor real el centro óptico de cada lente puede no coincidir con el centro de su mitad de pantalla, y la cruz heredaría ese desajuste --> la posición central es la de la proyección sin calibración por modelo de visor; comprobarla con un visor real y registrar los modelos probados, sin prometer alineación universal.
+- Una cruz fija puede tapar un objeto central cuando existan elementos seleccionables --> en esta versión solo hay estrellas; el hueco central y el tamaño reducido limitan la oclusión, y se revisarán cuando se añada interacción.
 - El mismo cielo puede confundirse con una representación astronómica precisa --> no incluir nombres, coordenadas, fecha u orientación geográfica que sugieran esa precisión en este cambio.
 
 ## Migration Plan

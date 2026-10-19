@@ -20,6 +20,27 @@ La aplicación SHALL permitir entrar en VR mediante una acción del usuario y sa
 - **THEN** vuelve a una sola vista orientada hacia la última dirección observada
 - **AND** los movimientos posteriores del dispositivo no modifican la mirada hasta una nueva activación del control por sensores
 
+### Requirement: Puntero común en las dos vistas
+
+En VR el puntero de cruz SHALL mostrarse centrado en cada una de las dos vistas, en la misma posición relativa dentro de su mitad de pantalla, de modo que ambas copias coincidan y se perciban como un solo puntero al usar el visor. El puntero SHALL conservar las mismas características de la vista única (blanco, tamaño y carácter de mera guía visual), seguir centrado al redimensionar o rotar la pantalla, y desaparecer al volver a la vista única, donde SHALL mostrarse un único puntero en el centro.
+
+#### Scenario: Puntero en VR
+- **WHEN** el usuario entra en VR
+- **THEN** aparece una cruz blanca en el centro de la vista izquierda y otra en el centro de la vista derecha, a la misma altura y en la misma posición relativa dentro de su mitad
+- **AND** el puntero no se muestra en el centro de la pantalla completa ni cruza la división entre las dos vistas
+
+#### Scenario: Cambio de tamaño u orientación en VR
+- **WHEN** cambia el tamaño o la orientación de la pantalla con VR activo
+- **THEN** cada cruz permanece centrada en su mitad de pantalla
+
+#### Scenario: Salir de VR
+- **WHEN** el usuario sale de VR
+- **THEN** vuelve a mostrarse una sola cruz, centrada en el área completa de la escena
+
+#### Scenario: El puntero no altera los controles de VR
+- **WHEN** el usuario usa las vistas divididas con el sensor o con el control manual
+- **THEN** el puntero no modifica la dirección de la mirada, el recentrado ni la entrada y salida de VR, y no responde a ninguna interacción
+
 ### Requirement: Activación de sensores con permiso
 
 La aplicación SHALL intentar habilitar la orientación del dispositivo al entrar en VR a partir de esa acción del usuario. SHALL solicitar permiso únicamente cuando el navegador lo requiera y proporcione una forma de solicitarlo, sin pedirlo al abrir la aplicación. La falta de soporte o de un contexto seguro SHALL conducir al control manual sin impedir la entrada en la vista dividida.

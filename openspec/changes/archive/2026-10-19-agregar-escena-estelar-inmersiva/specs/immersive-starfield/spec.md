@@ -51,9 +51,31 @@ La escena SHALL adaptarse al área visible al redimensionar la ventana o rotar e
 - **WHEN** el usuario activa el control para recentrar en vista única
 - **THEN** la mirada vuelve a la dirección inicial sin regenerar las estrellas
 
+### Requirement: Puntero de cruz como guía visual
+
+La vista única SHALL mostrar un puntero de cruz blanco fijo en el centro del área de la escena que indique hacia dónde apunta la mirada, con un tamaño suficiente para distinguirse claramente de las estrellas sin cubrir una parte significativa de la escena. El puntero SHALL ser únicamente una guía visual: no SHALL seleccionar objetos, activar acciones, recibir el foco ni responder a punteros o al teclado, y SHALL ser ignorado por la tecnología de asistencia.
+
+#### Scenario: Puntero en la vista única
+- **WHEN** la escena está en funcionamiento en vista única
+- **THEN** se ve una cruz blanca en el centro exacto del área de la escena, claramente distinguible de las estrellas
+- **AND** al girar la mirada la cruz permanece en el centro mientras las estrellas se desplazan
+
+#### Scenario: Cambio de tamaño u orientación
+- **WHEN** cambia el tamaño de la ventana o la orientación del dispositivo
+- **THEN** la cruz permanece en el centro del área de la escena
+
+#### Scenario: El puntero no interfiere con la interacción
+- **WHEN** el usuario presiona, toca o arrastra sobre el puntero, o utiliza el teclado
+- **THEN** el arrastre, las flechas y los controles se comportan exactamente igual que sin puntero
+- **AND** el puntero no recibe el foco, no cambia de aspecto ni dispara ninguna acción
+
+#### Scenario: Escena en estado de error
+- **WHEN** la escena no puede mostrarse y aparece el mensaje de error
+- **THEN** no se presenta el puntero
+
 ### Requirement: Representación visual autónoma
 
-La experiencia SHALL generar su campo visual sin depender de una API, catálogo astronómico, geolocalización o descarga externa de imágenes. SHALL conservar la misma distribución de estrellas al cambiar la dirección, redimensionar la vista o alternar entre vista única y VR. La escena SHALL limitarse a estrellas; no se requiere correspondencia con el cielo real.
+La experiencia SHALL generar su campo visual sin depender de una API, catálogo astronómico, geolocalización o descarga externa de imágenes. SHALL conservar la misma distribución de estrellas al cambiar la dirección, redimensionar la vista o alternar entre vista única y VR. La escena SHALL limitarse a estrellas; no se requiere correspondencia con el cielo real. El puntero de cruz y los controles son elementos de interfaz superpuestos y no forman parte de la escena.
 
 #### Scenario: Uso sin la API del proyecto
 - **WHEN** la aplicación está cargada y la API Express no está disponible
