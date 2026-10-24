@@ -144,6 +144,62 @@ describe('seguimiento con sensor', () => {
 })
 
 describe('cambio a control manual con sensor', () => {
+  it('tocar y seleccionar conserva el sensor activo y las lecturas posteriores', () => {
+    const activaciones = []
+    const { elemento, sensor, controles } = crearEntorno({ alActivar: (evento) => activaciones.push(evento) })
+    controles.entrarVr()
+    sensor.ultimo().alLectura(lecturaVertical(30))
+    const cancelaciones = sensor.cancelaciones
+    emitirPuntero(elemento, 'pointerdown', { clientX: 10, clientY: 10 })
+    emitirPuntero(elemento, 'pointermove', { clientX: 12, clientY: 11 })
+    emitirPuntero(elemento, 'pointerup', { clientX: 12, clientY: 11 })
+    emitirPuntero(elemento, 'click', { clientX: 12, clientY: 11 })
+    assert.equal(activaciones.length, 1)
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    assert.equal(sensor.cancelaciones, cancelaciones)
+    sensor.ultimo().alLectura(lecturaVertical(60))
+    cercaDe(controles.obtenerOrientacion().giro, 30 * GRADOS)
+    controles.destruir()
+  })
+
+  it('un toque no cancela un permiso pendiente ni la llegada de la primera lectura', async () => {
+    const { elemento, sensor, controles } = crearEntorno()
+    controles.entrarVr()
+    const cancelaciones = sensor.cancelaciones
+    emitirPuntero(elemento, 'pointerdown', { clientX: 10, clientY: 10 })
+    emitirPuntero(elemento, 'pointerup', { clientX: 10, clientY: 10 })
+    emitirPuntero(elemento, 'click', { clientX: 10, clientY: 10 })
+    assert.equal(controles.obtenerFuente(), 'solicitando')
+    assert.equal(sensor.cancelaciones, cancelaciones)
+    sensor.ultimo().resolver({ estado: 'activo' })
+    sensor.ultimo().alLectura(lecturaVertical(50))
+    await microtareas()
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    controles.destruir()
+  })
+
+  it('al confirmar un arrastre parte de la lectura más reciente y cancela un intento pendiente', async () => {
+    const { elemento, sensor, controles } = crearEntorno()
+    controles.entrarVr()
+    sensor.ultimo().alLectura(lecturaVertical(40))
+    emitirPuntero(elemento, 'pointerdown', { clientX: 0, clientY: 0 })
+    sensor.ultimo().alLectura(lecturaVertical(60))
+    emitirPuntero(elemento, 'pointermove', { clientX: 20, clientY: 0 })
+    cercaDe(controles.obtenerOrientacion().giro, 20 * GRADOS + .1)
+    assert.equal(controles.obtenerFuente(), 'manual')
+    controles.entrarVr()
+    const pendiente = sensor.ultimo()
+    emitirPuntero(elemento, 'pointerdown', { clientX: 0, clientY: 0 })
+    emitirPuntero(elemento, 'pointermove', { clientX: 20, clientY: 0 })
+    const manual = controles.obtenerOrientacion()
+    pendiente.alLectura(lecturaVertical(200))
+    pendiente.resolver({ estado: 'activo' })
+    await microtareas()
+    assert.equal(controles.obtenerFuente(), 'manual')
+    assert.deepEqual(controles.obtenerOrientacion(), manual)
+    controles.destruir()
+  })
+
   it('un arrastre con el sensor activo pasa a manual conservando la orientación completa', () => {
     const { elemento, sensor, controles } = crearEntorno()
     controles.entrarVr()
@@ -152,11 +208,12 @@ describe('cambio a control manual con sensor', () => {
     const mostrada = controles.obtenerOrientacion()
 
     emitirPuntero(elemento, 'pointerdown', { clientX: 0, clientY: 0 })
-    assert.equal(controles.obtenerFuente(), 'manual')
-    assert.ok(sensor.cancelaciones >= 1)
+    assert.equal(controles.obtenerFuente(), 'sensor', 'presionar no cancela el seguimiento')
     assert.deepEqual(controles.obtenerOrientacion(), mostrada)
 
     emitirPuntero(elemento, 'pointermove', { clientX: 20, clientY: 0 })
+    assert.equal(controles.obtenerFuente(), 'manual')
+    assert.ok(sensor.cancelaciones >= 2)
     assert.equal(controles.obtenerOrientacion().balanceo, mostrada.balanceo, 'conserva el balanceo')
     assert.notEqual(controles.obtenerOrientacion().giro, mostrada.giro)
 

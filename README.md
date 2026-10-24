@@ -1,6 +1,6 @@
 # Metseri
 
-Experiencia de astronomía en el navegador. La primera versión muestra un cielo de estrellas envolvente, hecho con React, Vite y Three.js.
+Experiencia de astronomía en el navegador: un cielo de estrellas envolvente con los ocho planetas del sistema solar en 3D, hecho con React, Vite y Three.js.
 
 ## Cómo ejecutarla
 
@@ -29,6 +29,16 @@ Otros comandos disponibles:
 3. Redimensiona la ventana: el cielo debe seguir cubriendo toda el área sin deformarse ni mostrar barras de desplazamiento.
 4. Si el navegador no puede crear el contexto gráfico, o lo pierde, aparece un mensaje con el botón **Reintentar**.
 
+### Planetas de la escena
+
+Mercurio, Venus, Tierra, Marte, Júpiter, Saturno, Urano y Neptuno están repartidos alrededor del observador, a distintas alturas. La Tierra se ve al iniciar; recorre también los lados y la parte posterior para encontrar los demás. Sus superficies se generan en la aplicación: continentes y océanos, bandas, cráteres ilustrados y los anillos de Saturno permiten distinguir los cuerpos.
+
+La disposición es compositiva: posiciones, distancias y tamaños no están a escala astronómica. Los planetas permanecen quietos y conservan su distribución al recentrar, redimensionar o cambiar de modo.
+
+Cada planeta visible muestra su nombre junto al cuerpo. Las etiquetas acompañan la vista al girar y no bloquean el arrastre ni la selección; en VR aparece una copia por ojo. La vista única utiliza una proyección esférica que conserva los contornos circulares de los planetas también en los extremos de una pantalla ancha.
+
+Las etiquetas se presentan sin cápsula: un punto y una guía discreta acompañan al nombre y su clasificación. Al apuntar o seleccionar, el nombre cambia de color y el cuerpo recibe un resplandor de contorno. No aparece un recuadro con «Haz clic para explorar». Los planetas tienen mayor presencia y relieve, y Saturno muestra bandas concéntricas y una separación entre sus anillos.
+
 ## Controles manuales
 
 | Acción | Cómo |
@@ -36,18 +46,23 @@ Otros comandos disponibles:
 | Mirar alrededor | Arrastra con el mouse o con un dedo sobre el cielo. Puedes dar la vuelta completa en horizontal; en vertical la mirada se detiene cerca de los polos. |
 | Mirar con el teclado | Enfoca el cielo (con `Tab` o haciendo clic) y usa las flechas. Si el foco está en un botón, las flechas no se interceptan. |
 | Recentrar | Pulsa **Recentrar** (abajo a la derecha) para volver a la dirección inicial. El cielo no cambia, solo la dirección de la mirada. |
+| Seleccionar en vista única | Haz clic o toca directamente un planeta, aunque esté fuera de la cruz central. Se ilumina y aparece un halo. |
+| Cambiar la selección en vista única | Pulsa otro planeta para trasladarle la selección. Solo puede haber uno seleccionado. |
+| Deseleccionar en vista única | Pulsa otra vez el planeta seleccionado o toca el fondo. |
 
 El observador permanece siempre en el centro: no hay desplazamiento por el espacio ni movimiento automático.
+
+Un arrastre cambia la mirada y nunca selecciona ni deselecciona, aunque comience o termine sobre un planeta. Las pequeñas oscilaciones de un toque se toleran sin mover la cámara. La selección se conserva al mirar a otro lado, recentrar y entrar o salir de VR; los botones superpuestos solo ejecutan su propia acción.
 
 ### Puntero de cruz
 
 Una cruz blanca fija en el centro indica hacia dónde apunta la mirada. En la vista dividida (VR) aparece una cruz en el centro de cada una de las dos vistas, en la misma posición relativa, de modo que con el visor se perciba como un solo puntero.
 
-Por ahora es **solo una guía visual**: no selecciona nada, no activa acciones y no responde al toque, al mouse ni al teclado (no recibe el foco). Puedes arrastrar sobre ella como sobre cualquier otra parte del cielo. La interacción con el puntero está prevista para sprints posteriores.
+La cruz es una guía visual que no recibe el foco ni intercepta gestos: puedes tocar o arrastrar sobre ella como sobre cualquier otra parte del cielo. En vista única seleccionas en la posición del mouse o del dedo; en VR, la dirección de la cruz sirve como referencia para apuntar a un planeta.
 
 ## Vista dividida para visor móvil (VR)
 
-El botón **Entrar VR** divide la pantalla en dos vistas contiguas, una por ojo, pensadas para un visor móvil tipo Cardboard. Ambas vistas muestran el mismo cielo y la misma dirección de mirada; al entrar y salir se conservan las estrellas y la dirección.
+El botón **Entrar VR** divide la pantalla en dos vistas contiguas, una por ojo, pensadas para un visor móvil tipo Cardboard. Ambas vistas comparten el cielo, los planetas, la dirección de mirada y la selección; al entrar y salir se conservan todos ellos.
 
 - **Entrar:** pulsa **Entrar VR**. La aplicación intenta además activar la pantalla completa y bloquear la orientación en horizontal, pero ambas cosas son opcionales: si el navegador no las permite o las rechaza, la vista dividida funciona igual dentro del área disponible.
 - **Salir:** pulsa **Salir de VR** (centro, abajo) o la tecla `Escape`. También se vuelve a la vista única si abandonas la pantalla completa desde el navegador. Al salir solo se libera lo que la propia aplicación activó, no una pantalla completa que ya estuviera activa por otro motivo.
@@ -55,6 +70,17 @@ El botón **Entrar VR** divide la pantalla en dos vistas contiguas, una por ojo,
 - **Mirar alrededor en VR:** el arrastre con el dedo o el mouse y las flechas del teclado funcionan también en la vista dividida, igual que en la vista única. **Recentrar** vuelve a la dirección inicial.
 
 Las dos vistas usan una proyección estéreo básica de Three.js (`StereoEffect`). **No hay calibración por modelo de visor ni de lentes**: la distancia entre ejes y el campo de visión son valores comunes, así que la alineación puede variar según el visor. La cruz se coloca en el centro de cada mitad de pantalla, sin ajustarla al centro óptico de las lentes de un visor concreto.
+
+### Seleccionar con el botón del visor
+
+1. Mira un planeta: se resalta mientras le apuntas. Mirarlo por sí solo no lo selecciona ni hay un temporizador de permanencia.
+2. Sin selección previa, toca **cualquier zona de la escena**, en cualquiera de las dos mitades, o pulsa el botón táctil del visor. Se selecciona el planeta apuntado, aunque el toque quede lejos de su representación. Su iluminación aumenta y aparece un halo persistente.
+3. Puedes mirar a otro lado: el planeta conserva la selección.
+4. El siguiente toque en **cualquier zona** quita la selección, incluso mirando el fondo u otro planeta. Ese toque solo deselecciona. Si estás mirando otro planeta, necesitas un toque posterior para seleccionarlo.
+
+Cuando deseleccionas sin dejar de mirar el cuerpo, desaparece el halo de selección y queda únicamente el resaltado por mirada. Tocar mirando el fondo sin selección previa no selecciona nada, aunque el dedo caiga sobre un planeta lateral. Recentrar y entrar o salir de VR conservan la selección y no cuentan como toques de selección.
+
+Los toques de selección y deselección **mantienen el seguimiento por sensores**, incluso si todavía se espera el permiso o la primera lectura. El arrastre confirmado o las flechas pasan a control manual. Las mismas reglas de mirada y toque funcionan sin sensor, apuntando mediante arrastre o teclado.
 
 ### Orientación del dispositivo y permiso
 
@@ -64,7 +90,7 @@ Al pulsar **Entrar VR** la aplicación intenta usar los sensores de orientación
 - **Primera lectura:** la vista no da un salto al activarse el sensor; parte de la dirección que ya veías.
 - **Recentrar:** con el sensor activo, la dirección en la que apunta el teléfono pasa a ser el frente; el seguimiento continúa.
 - **Alternativa manual:** si no hay sensor, el navegador no lo ofrece, se rechaza el permiso, la página no está en un contexto seguro (HTTPS) o no llegan lecturas válidas en los 2 segundos siguientes a habilitar el sensor (con la página visible), la vista dividida sigue disponible y se muestra un aviso breve ("Arrastra para mirar alrededor"). Entonces funcionan el arrastre con dedo o mouse y las flechas del teclado.
-- Si empiezas a arrastrar o a usar las flechas mientras el sensor está activo, el control pasa a manual y conserva la orientación actual; el sensor no vuelve a moverla hasta que salgas de VR y entres otra vez.
+- Si se reconoce un arrastre real o usas las flechas mientras el sensor está activo, el control pasa a manual y conserva la orientación actual; el sensor no vuelve a moverla hasta que salgas de VR y entres otra vez. Una pulsación sin arrastre no cancela el sensor.
 
 Los sensores de orientación solo se entregan en un **contexto seguro**: `https://` o `http://localhost`. Un `http://192.168.x.x` desde el móvil mostrará la escena y el control manual, pero no los sensores.
 
@@ -77,11 +103,13 @@ Sin la API Express ni ninguna configuración de instalación (PWA); solo el serv
    - **Android con cable USB** (Chrome, depuración USB activada): ejecuta `adb reverse tcp:5173 tcp:5173` y abre `http://localhost:5173` en el móvil. `localhost` cuenta como contexto seguro, así que no hace falta HTTPS.
    - **Un túnel con HTTPS válido** (Android o iPhone): por ejemplo `cloudflared tunnel --url http://localhost:5173 --http-host-header localhost:5173` o `ngrok http 5173 --host-header=localhost:5173`, y abre en el móvil la dirección `https://…` que muestre. Vite rechaza (error 403) las peticiones cuyo encabezado `Host` no sea el local, por eso se reescribe a `localhost:5173`.
 3. Pulsa **Entrar VR** y acepta el permiso de orientación si el navegador lo solicita. Gira el teléfono: las dos vistas deben seguirlo. Para probar la alternativa manual, rechaza el permiso y arrastra con el dedo.
+4. Con el visor, apunta a un planeta y usa su botón táctil: comprueba selección con halo en ambos ojos y que la cabeza sigue dirigiendo la vista. Mira al fondo y pulsa de nuevo: debe desaparecer la selección. Repite mirando otro planeta; el primer toque quita la selección anterior y el siguiente selecciona el nuevo objetivo.
+5. Comprueba los ocho cuerpos, anillos y superficies, rota la pantalla, recentra y repite entrada/salida y regreso desde segundo plano. Repite la selección con sensores rechazados y control manual. Registra navegador, dispositivo y visor empleados; las comprobaciones físicas que no se realicen deben quedar pendientes.
 
 Los pasos 2 y 3 requieren un móvil físico y, en su caso, las herramientas indicadas (`adb`, `cloudflared` o `ngrok`), que no forman parte del proyecto. Los eventos de sensor simulados en un navegador de escritorio no acreditan la compatibilidad con un visor real.
 
 ## Alcance
 
-- Las estrellas son una **representación visual generada**: no corresponden a posiciones astronómicas reales, y no hay planetas, constelaciones ni etiquetas.
+- Las estrellas y los ocho planetas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Se muestran etiquetas con los nombres; no hay órbitas, rotación automática, Sol, lunas, constelaciones ni fichas informativas.
 - La escena funciona por completo en el cliente: no usa la API Express, catálogos ni imágenes remotas.
 - Esta versión **no incluye instalación como aplicación (PWA) ni uso sin conexión**; quedan para un cambio posterior.

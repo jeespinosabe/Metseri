@@ -78,6 +78,7 @@ export function EscenaEstelar() {
         obtenerAnguloPantalla,
         alCambiar: (orientacion) =>
           campo.establecerOrientacion(calcularCuaternionVista(orientacion)),
+        alActivar: (evento) => campo.activar(evento),
         alAvisar: (motivo) =>
           setAviso(
             motivo === 'denegado'
@@ -160,7 +161,9 @@ export function EscenaEstelar() {
         className="escena-estelar__superficie"
         ref={superficieRef}
         role="application"
-        aria-label="Cielo estrellado. Arrastra o usa las flechas del teclado para mirar alrededor."
+        aria-label={modo === 'vr'
+          ? 'Cielo con planetas en VR. Mira un planeta para resaltarlo y toca cualquier zona para seleccionarlo. Otro toque quita la selección aunque mires a otro lado. Arrastra o usa las flechas para mirar manualmente.'
+          : 'Cielo con planetas. Arrastra o usa las flechas del teclado para mirar alrededor. Haz clic o toca un planeta para seleccionarlo; pulsa de nuevo o toca el fondo para deseleccionarlo.'}
         tabIndex={mensajeError ? -1 : 0}
       />
       {mensajeError ? (

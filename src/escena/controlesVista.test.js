@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import { Vector3 } from 'three'
 import {
   LIMITE_INCLINACION,
+  UMBRAL_ARRASTRE,
   ajustarOrientacion,
   calcularCuaternionVista,
   crearControlesVista,
@@ -162,6 +163,88 @@ describe('arrastre con Pointer Events', () => {
     controles.destruir()
     emitirPuntero(elemento, 'pointerdown', { clientX: 0, clientY: 0 })
     assert.equal(controles.estaArrastrando(), false)
+  })
+})
+
+describe('toques, clics y separación del arrastre', () => {
+  function crearEntorno() {
+    const elemento = crearElementoSimulado()
+    const activaciones = []
+    const controles = crearControlesVista({ elemento, alActivar: (evento) => activaciones.push(evento) })
+    return { elemento, controles, activaciones }
+  }
+
+  function tocar(elemento, x = 100, y = 100) {
+    emitirPuntero(elemento, 'pointerdown', { clientX: x, clientY: y, pointerType: 'touch' })
+    emitirPuntero(elemento, 'pointerup', { clientX: x, clientY: y, pointerType: 'touch' })
+    emitirPuntero(elemento, 'click', { clientX: x, clientY: y })
+  }
+
+  it('un toque con oscilación produce una sola activación sin mover la mirada', () => {
+    const { elemento, controles, activaciones } = crearEntorno()
+    emitirPuntero(elemento, 'pointerdown', { clientX: 100, clientY: 100 })
+    emitirPuntero(elemento, 'pointermove', { clientX: 103, clientY: 104 })
+    emitirPuntero(elemento, 'pointerup', { clientX: 103, clientY: 104 })
+    assert.equal(activaciones.length, 0, 'la única ruta de activación es click')
+    emitirPuntero(elemento, 'click', { clientX: 103, clientY: 104 })
+    assert.equal(activaciones.length, 1)
+    assert.deepEqual(controles.obtenerOrientacion(), { giro: 0, inclinacion: 0, balanceo: 0 })
+    assert.equal(elemento.capturas.size, 0)
+    controles.destruir()
+  })
+
+  it('acumula el movimiento inicial y un arrastre de ida y vuelta nunca activa', () => {
+    const { elemento, controles, activaciones } = crearEntorno()
+    emitirPuntero(elemento, 'pointerdown', { clientX: 100, clientY: 100 })
+    emitirPuntero(elemento, 'pointermove', { clientX: 100 + UMBRAL_ARRASTRE, clientY: 100 })
+    cercaDe(controles.obtenerOrientacion().giro, 0)
+    emitirPuntero(elemento, 'pointermove', { clientX: 120, clientY: 100 })
+    cercaDe(controles.obtenerOrientacion().giro, .1)
+    emitirPuntero(elemento, 'pointermove', { clientX: 100, clientY: 100 })
+    emitirPuntero(elemento, 'pointerup', { clientX: 100, clientY: 100 })
+    emitirPuntero(elemento, 'click', { clientX: 100, clientY: 100 })
+    assert.equal(activaciones.length, 0)
+    tocar(elemento)
+    assert.equal(activaciones.length, 1, 'el siguiente gesto válido funciona')
+    controles.destruir()
+  })
+
+  for (const tipo of ['pointercancel', 'lostpointercapture']) {
+    it(`${tipo} no activa y permite recuperarse en el siguiente toque`, () => {
+      const { elemento, controles, activaciones } = crearEntorno()
+      emitirPuntero(elemento, 'pointerdown', { clientX: 100, clientY: 100 })
+      emitirPuntero(elemento, tipo, { clientX: 100, clientY: 100 })
+      emitirPuntero(elemento, 'click', { clientX: 100, clientY: 100 })
+      assert.equal(activaciones.length, 0)
+      tocar(elemento)
+      assert.equal(activaciones.length, 1)
+      controles.destruir()
+    })
+  }
+
+  it('un segundo dedo invalida la activación aunque se suelte antes del primero', () => {
+    const { elemento, controles, activaciones } = crearEntorno()
+    emitirPuntero(elemento, 'pointerdown', { clientX: 100, clientY: 100, pointerType: 'touch' })
+    emitirPuntero(elemento, 'pointerdown', { pointerId: 2, clientX: 200, clientY: 100, pointerType: 'touch' })
+    emitirPuntero(elemento, 'pointerup', { pointerId: 2, clientX: 200, clientY: 100 })
+    emitirPuntero(elemento, 'pointerup', { clientX: 100, clientY: 100 })
+    emitirPuntero(elemento, 'click', { clientX: 200, clientY: 100 })
+    emitirPuntero(elemento, 'click', { clientX: 100, clientY: 100 })
+    assert.equal(activaciones.length, 0)
+    tocar(elemento)
+    assert.equal(activaciones.length, 1)
+    controles.destruir()
+  })
+
+  it('admite el clic aislado del visor, ignora botones secundarios y deja de activar al destruir', () => {
+    const { elemento, controles, activaciones } = crearEntorno()
+    emitirPuntero(elemento, 'click', { clientX: 10, clientY: 20 })
+    emitirPuntero(elemento, 'click', { clientX: 10, clientY: 20, button: 2 })
+    assert.equal(activaciones.length, 1)
+    controles.destruir()
+    tocar(elemento)
+    emitirPuntero(elemento, 'click', { clientX: 10, clientY: 20 })
+    assert.equal(activaciones.length, 1)
   })
 })
 

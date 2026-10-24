@@ -11,12 +11,104 @@
 }
 
 .escena-estelar__superficie {
+  position: relative;
   width: 100%;
   height: 100%;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   cursor: grab;
+}
+
+.etiquetas-planetas,
+.etiquetas-planetas__vista {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.etiquetas-planetas__vista[hidden],
+.etiqueta-planeta[hidden] {
+  display: none;
+}
+
+.etiqueta-planeta {
+  position: absolute;
+  color: #aebcc9;
+  text-shadow: 0 1px 8px #080b12;
+  white-space: nowrap;
+}
+
+.etiqueta-planeta::before {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: -20px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px rgb(173 197 217 / 20%);
+}
+
+.etiqueta-planeta::after {
+  content: '';
+  position: absolute;
+  top: 11px;
+  right: calc(100% + 38px);
+  width: clamp(40px, 5vw, 90px);
+  height: 1px;
+  background: rgb(170 193 213 / 24%);
+}
+
+.etiqueta-planeta__nombre {
+  display: block;
+  font-size: clamp(15px, 1.6vw, 23px);
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.etiqueta-planeta__tipo {
+  display: block;
+  margin-top: 10px;
+  color: #71808f;
+  font-size: clamp(8px, .6vw, 10px);
+  line-height: 1.3;
+  letter-spacing: .21em;
+  text-transform: uppercase;
+}
+
+.etiqueta-planeta--tierra .etiqueta-planeta__nombre {
+  font-size: clamp(14px, 1.25vw, 18px);
+  letter-spacing: .035em;
+  text-transform: none;
+}
+
+.etiqueta-planeta--activa {
+  color: #cce89f;
+}
+
+.etiquetas-planetas--vr .etiqueta-planeta {
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.etiquetas-planetas--vr .etiqueta-planeta::before,
+.etiquetas-planetas--vr .etiqueta-planeta::after {
+  display: none;
+}
+
+.etiquetas-planetas--vr .etiqueta-planeta__nombre {
+  font-size: 13px;
+}
+
+.etiquetas-planetas--vr .etiqueta-planeta__tipo {
+  margin-top: 7px;
+  font-size: 8px;
+  letter-spacing: .12em;
 }
 
 .escena-estelar__superficie:active {

@@ -1,9 +1,11 @@
 import {
   AdditiveBlending,
+  AmbientLight,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
   Color,
+  DirectionalLight,
   PerspectiveCamera,
   Points,
   PointsMaterial,
@@ -11,9 +13,14 @@ import {
   Scene,
   SRGBColorSpace,
   Vector2,
+  Vector3,
   WebGLRenderer,
 } from 'three'
 import { StereoEffect } from 'three/examples/jsm/effects/StereoEffect.js'
+import { crearPlanetas, RADIO_PLANETAS } from './planetas.js'
+import { crearDetectorPlanetas, crearSeleccionPlanetas } from './seleccionPlanetas.js'
+import { crearProyeccionVista } from './proyeccionVista.js'
+import { crearEtiquetasPlanetas } from './etiquetasPlanetas.js'
 
 const COLOR_FONDO = 0x080b12
 const RADIO_CIELO = 100
@@ -130,13 +137,41 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
     escena.add(new Points(geometria, material))
   }
 
-  // Las estrellas están a RADIO_CIELO: sin disparidad a esa distancia, como el infinito.
-  camara.focus = RADIO_CIELO
+  let planetas
+  try {
+    planetas = crearPlanetas()
+  } catch (error) {
+    geometrias.forEach((geometria) => geometria.dispose())
+    materiales.forEach((material) => material.dispose())
+    textura.dispose()
+    renderizador.dispose()
+    renderizador.forceContextLoss()
+    lienzo.remove()
+    throw error
+  }
+  escena.add(planetas.raiz, new AmbientLight(0xbac9dd, .38))
+  const luz = new DirectionalLight(0xfff0d8, 3.1)
+  const direccionLuz = new Vector3(-1.2, .8, 1.3)
+  luz.position.copy(direccionLuz)
+  escena.add(luz)
+  // Convergencia cerca de los cuerpos apuntables, compartida por ambos ojos.
+  camara.focus = RADIO_PLANETAS
+  const proyeccion = crearProyeccionVista(escena)
+  const etiquetas = crearEtiquetasPlanetas(contenedor, planetas.etiquetas)
 
   let efectoEstereo = null
   let modo = 'normal'
   let destruido = false
+  let contextoPerdido = false
   let necesitaDibujo = true
+  const seleccion = crearSeleccionPlanetas({
+    detector: crearDetectorPlanetas({ camara, seleccionables: planetas.seleccionables, obtenerDireccion: proyeccion.obtenerDireccion }),
+    alCambiar: (estado) => {
+      planetas.actualizarAspecto(estado)
+      etiquetas.actualizarAspecto(estado)
+      necesitaDibujo = true
+    },
+  })
 
   function ajustarTamano() {
     const ancho = Math.max(1, contenedor.clientWidth)
@@ -146,9 +181,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
     )
     renderizador.setSize(ancho, alto, false)
     restaurarAreaDibujo()
-    // El aspecto es el de la ventana completa: StereoEffect lo reparte entre ojos.
-    camara.aspect = ancho / alto
-    camara.updateProjectionMatrix()
+    proyeccion.ajustar(camara, ancho, alto, modo)
     necesitaDibujo = true
   }
 
@@ -162,6 +195,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
   function dibujarSiHaceFalta() {
     if (!necesitaDibujo) return
     necesitaDibujo = false
+    etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight)
     if (modo === 'vr') efectoEstereo.render(escena, camara)
     else renderizador.render(escena, camara)
   }
@@ -182,6 +216,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
 
   function alContextoPerdido(evento) {
     evento.preventDefault()
+    contextoPerdido = true
     detenerCiclo()
     if (!destruido && alPerderContexto) alPerderContexto()
   }
@@ -199,7 +234,10 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
 
     // Aplica la orientación de la cámara; la posición del observador es fija.
     establecerOrientacion(cuaternion) {
+      if (destruido || contextoPerdido) return
       camara.quaternion.copy(cuaternion)
+      luz.position.copy(direccionLuz).applyQuaternion(cuaternion)
+      seleccion.actualizarMirada()
       necesitaDibujo = true
     },
 
@@ -207,9 +245,12 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
 
     // 'normal' = vista única; 'vr' = dos vistas contiguas con la misma escena y cámara.
     establecerModo(nuevoModo) {
+      if (destruido || contextoPerdido) return
       if (nuevoModo === modo) return
       if (nuevoModo === 'vr') efectoEstereo ??= new StereoEffect(renderizador)
       modo = nuevoModo
+      proyeccion.ajustar(camara, contenedor.clientWidth, contenedor.clientHeight, modo)
+      seleccion.establecerModo(modo)
       restaurarAreaDibujo()
       necesitaDibujo = true
     },
@@ -218,9 +259,16 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
       return new Quaternion().copy(camara.quaternion)
     },
 
+    activar(evento) {
+      if (destruido || contextoPerdido) return
+      seleccion.activar(evento, lienzo.getBoundingClientRect())
+    },
+
     destruir() {
       if (destruido) return
       destruido = true
+      seleccion.destruir()
+      etiquetas.destruir()
       detenerCiclo()
       observador.disconnect()
       document.removeEventListener('visibilitychange', alCambiarVisibilidad)
@@ -228,6 +276,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto } = {}) {
       geometrias.forEach((geometria) => geometria.dispose())
       materiales.forEach((material) => material.dispose())
       textura.dispose()
+      planetas.destruir()
       renderizador.dispose()
       renderizador.forceContextLoss()
       lienzo.remove()
