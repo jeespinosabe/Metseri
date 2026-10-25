@@ -1,5 +1,18 @@
 import { StereoCamera, Vector3 } from 'three'
 
+export function etiquetaCubiertaPorFicha(posicion, ficha, camara, ancho, alto) {
+  if (!ficha?.visible) return false
+  ficha.updateWorldMatrix(true, false)
+  const puntos = [[-.5, -.5], [-.5, .5], [.5, -.5], [.5, .5]].map(([x, y]) => new Vector3(x, y, 0).applyMatrix4(ficha.matrixWorld).applyMatrix4(camara.matrixWorldInverse))
+  if (puntos.some((punto) => punto.z >= 0)) return false
+  puntos.forEach((punto) => punto.applyMatrix4(camara.projectionMatrix))
+  const izquierda = (Math.min(...puntos.map((p) => p.x)) + 1) * ancho / 2
+  const derecha = (Math.max(...puntos.map((p) => p.x)) + 1) * ancho / 2
+  const arriba = (1 - Math.max(...puntos.map((p) => p.y))) * alto / 2
+  const abajo = (1 - Math.min(...puntos.map((p) => p.y))) * alto / 2
+  return posicion.x + 86 >= izquierda && posicion.x - 86 <= derecha && posicion.y + 52 >= arriba && posicion.y <= abajo
+}
+
 export function calcularPosicionEtiqueta(posicion, radio, camara, ancho, alto, proyeccion = null, contorno = []) {
   const punto = new Vector3().copy(posicion).applyMatrix4(camara.matrixWorldInverse)
   if (punto.z >= 0) return null
@@ -87,7 +100,7 @@ export function crearEtiquetasPlanetas(contenedor, planetas) {
         etiqueta.classList.toggle('etiqueta-planeta--activa', id === planetaSeleccionado || id === planetaApuntado)
       }))
     },
-    actualizar(camara, modo, proyeccion, ancho, alto) {
+    actualizar(camara, modo, proyeccion, ancho, alto, ficha = null) {
       camara.updateWorldMatrix(true, false)
       const enVr = modo === 'vr'
       raiz.classList.toggle('etiquetas-planetas--vr', enVr)
@@ -109,6 +122,7 @@ export function crearEtiquetasPlanetas(contenedor, planetas) {
           etiqueta.hidden = posicion === null
           if (!posicion) return
           const x = enVr ? posicion.x : Math.max(32, Math.min(anchoVista - 172, posicion.x + Math.min(160, posicion.radioVisible * 1.15)))
+          if (enVr && etiquetaCubiertaPorFicha(posicion, ficha, camaraVista, anchoVista, alto)) etiqueta.hidden = true
           etiqueta.style.left = `${x}px`
           etiqueta.style.top = `${posicion.y}px`
         })

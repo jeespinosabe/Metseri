@@ -8,16 +8,20 @@ Permitir que el usuario contemple un entorno de estrellas envolvente y explore s
 
 ### Requirement: Escena inicial de estrellas
 
-La aplicación SHALL abrir en una vista única que ocupe toda el área disponible y muestre estrellas sobre un fondo casi negro. Las estrellas SHALL rodear al observador en todas las direcciones y presentar variación discreta de tamaño y brillo, tomando la imagen aportada por el usuario como referencia visual. La escena SHALL permanecer estática mientras el usuario no cambie la dirección de observación.
+La aplicación SHALL abrir en una vista única que ocupe toda el área disponible y muestre estrellas sobre un fondo casi negro junto con los planetas de la escena planetaria. Las estrellas SHALL rodear al observador en todas las direcciones y presentar variación discreta de tamaño y brillo, tomando la imagen aportada por el usuario como referencia visual. La distribución de los cuerpos SHALL permanecer fija; su iluminación SHALL poder cambiar por mirada o selección según el modo.
 
 #### Scenario: Primera apertura
 - **WHEN** el usuario abre la aplicación en un navegador con renderizado compatible
-- **THEN** se muestra directamente el cielo de estrellas en vista única, sin la interfaz de bienvenida de la plantilla
+- **THEN** se muestra directamente el cielo de estrellas con planetas en vista única, sin la interfaz de bienvenida de la plantilla
 - **AND** el usuario no necesita activar VR ni conceder permisos para ver y explorar la escena
 
 #### Scenario: Mirar en cualquier dirección
 - **WHEN** el usuario gira la mirada horizontalmente o hacia arriba y abajo
 - **THEN** continúa viendo el campo de estrellas, sin bordes de una imagen plana ni una dirección vacía por falta de cobertura
+
+#### Scenario: Iluminación sin movimiento automático
+- **WHEN** el usuario selecciona un planeta o cambia el objetivo de mirada en VR
+- **THEN** se actualiza la iluminación correspondiente sin desplazar los cuerpos ni animar automáticamente el cielo
 
 ### Requirement: Exploración manual en 360 grados
 
@@ -53,7 +57,7 @@ La escena SHALL adaptarse al área visible al redimensionar la ventana o rotar e
 
 ### Requirement: Puntero de cruz como guía visual
 
-La vista única SHALL mostrar un puntero de cruz blanco fijo en el centro del área de la escena que indique hacia dónde apunta la mirada, con un tamaño suficiente para distinguirse claramente de las estrellas sin cubrir una parte significativa de la escena. El puntero SHALL ser únicamente una guía visual: no SHALL seleccionar objetos, activar acciones, recibir el foco ni responder a punteros o al teclado, y SHALL ser ignorado por la tecnología de asistencia.
+La vista única SHALL mostrar una cruz blanca fija en el centro de la escena, distinguible de las estrellas y sin cubrir una parte significativa del cielo. La cruz SHALL permanecer como guía superpuesta sin foco ni eventos propios e ignorada por la tecnología de asistencia. La escena SHALL gestionar la selección directa en vista única y la referencia de mirada en VR sin exigir pulsar la cruz ni impedir el paso de los gestos a la escena.
 
 #### Scenario: Puntero en la vista única
 - **WHEN** la escena está en funcionamiento en vista única
@@ -66,8 +70,8 @@ La vista única SHALL mostrar un puntero de cruz blanco fijo en el centro del á
 
 #### Scenario: El puntero no interfiere con la interacción
 - **WHEN** el usuario presiona, toca o arrastra sobre el puntero, o utiliza el teclado
-- **THEN** el arrastre, las flechas y los controles se comportan exactamente igual que sin puntero
-- **AND** el puntero no recibe el foco, no cambia de aspecto ni dispara ninguna acción
+- **THEN** la escena recibe los gestos y aplica sus controles de navegación o selección según corresponda
+- **AND** la cruz no recibe el foco, no cambia de aspecto ni ejecuta manejadores propios
 
 #### Scenario: Escena en estado de error
 - **WHEN** la escena no puede mostrarse y aparece el mensaje de error
@@ -75,15 +79,19 @@ La vista única SHALL mostrar un puntero de cruz blanco fijo en el centro del á
 
 ### Requirement: Representación visual autónoma
 
-La experiencia SHALL generar su campo visual sin depender de una API, catálogo astronómico, geolocalización o descarga externa de imágenes. SHALL conservar la misma distribución de estrellas al cambiar la dirección, redimensionar la vista o alternar entre vista única y VR. La escena SHALL limitarse a estrellas; no se requiere correspondencia con el cielo real. El puntero de cruz y los controles son elementos de interfaz superpuestos y no forman parte de la escena.
+La experiencia SHALL generar estrellas y planetas sin depender de una API, catálogo astronómico, geolocalización o descarga externa de imágenes. SHALL conservar su distribución al cambiar la dirección, redimensionar la vista o alternar entre vista única y VR. No se requiere correspondencia con posiciones, distancias o escalas del cielo real. El puntero de cruz y los controles SHALL seguir siendo elementos de interfaz superpuestos y no cuerpos de la escena.
 
 #### Scenario: Uso sin la API del proyecto
 - **WHEN** la aplicación está cargada y la API Express no está disponible
-- **THEN** el cielo y sus controles continúan funcionando sin solicitudes a esa API
+- **THEN** el cielo, sus planetas y sus controles continúan funcionando sin solicitudes a esa API
 
 #### Scenario: Conservación del campo visual
 - **WHEN** el usuario cambia de modo o vuelve a una dirección ya observada durante la misma sesión
-- **THEN** reconoce la misma distribución de estrellas en esa dirección
+- **THEN** reconoce la misma distribución de estrellas y planetas en esa dirección
+
+#### Scenario: Apariencia planetaria local
+- **WHEN** se crean los cuerpos de la escena
+- **THEN** sus superficies y rasgos reconocibles no requieren descargar modelos ni imágenes de un servicio externo
 
 ### Requirement: Fallos comprensibles del renderizado
 

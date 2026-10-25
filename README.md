@@ -46,9 +46,10 @@ Las etiquetas se presentan sin cápsula: un punto y una guía discreta acompaña
 | Mirar alrededor | Arrastra con el mouse o con un dedo sobre el cielo. Puedes dar la vuelta completa en horizontal; en vertical la mirada se detiene cerca de los polos. |
 | Mirar con el teclado | Enfoca el cielo (con `Tab` o haciendo clic) y usa las flechas. Si el foco está en un botón, las flechas no se interceptan. |
 | Recentrar | Pulsa **Recentrar** (abajo a la derecha) para volver a la dirección inicial. El cielo no cambia, solo la dirección de la mirada. |
-| Seleccionar en vista única | Haz clic o toca directamente un planeta, aunque esté fuera de la cruz central. Se ilumina y aparece un halo. |
+| Apuntar en vista única | Pasa el mouse sobre un planeta: se ilumina sin abrir su ficha. Al apartarlo desaparece el brillo transitorio. La cruz central no sustituye al mouse. |
+| Seleccionar en vista única | Haz clic o toca directamente un planeta, aunque esté fuera de la cruz central. Se ilumina de forma persistente y abre su ficha. |
 | Cambiar la selección en vista única | Pulsa otro planeta para trasladarle la selección. Solo puede haber uno seleccionado. |
-| Deseleccionar en vista única | Pulsa otra vez el planeta seleccionado o toca el fondo. |
+| Deseleccionar en vista única | Pulsa otra vez el planeta seleccionado, toca el fondo o usa el cierre de la ficha. |
 
 El observador permanece siempre en el centro: no hay desplazamiento por el espacio ni movimiento automático.
 
@@ -76,7 +77,8 @@ Las dos vistas usan una proyección estéreo básica de Three.js (`StereoEffect`
 1. Mira un planeta: se resalta mientras le apuntas. Mirarlo por sí solo no lo selecciona ni hay un temporizador de permanencia.
 2. Sin selección previa, toca **cualquier zona de la escena**, en cualquiera de las dos mitades, o pulsa el botón táctil del visor. Se selecciona el planeta apuntado, aunque el toque quede lejos de su representación. Su iluminación aumenta y aparece un halo persistente.
 3. Puedes mirar a otro lado: el planeta conserva la selección.
-4. El siguiente toque en **cualquier zona** quita la selección, incluso mirando el fondo u otro planeta. Ese toque solo deselecciona. Si estás mirando otro planeta, necesitas un toque posterior para seleccionarlo.
+4. La ficha aparece frente a ti. Mira una pestaña (**Ficha**, **Datos**, **¿Sabías?**, **Libros**) y toca para ir directamente a esa sección. También puedes usar las flechas **Anterior** y **Siguiente**. La sección actual queda marcada en ambos ojos.
+5. Tocar mirando el área de lectura mantiene la ficha abierta. Para cerrar, apunta a **×** y toca. Mirar fuera de la tarjeta y tocar conserva la deselección global: el primer toque cierra la ficha y solo uno posterior puede seleccionar otro planeta.
 
 Cuando deseleccionas sin dejar de mirar el cuerpo, desaparece el halo de selección y queda únicamente el resaltado por mirada. Tocar mirando el fondo sin selección previa no selecciona nada, aunque el dedo caiga sobre un planeta lateral. Recentrar y entrar o salir de VR conservan la selección y no cuentan como toques de selección.
 
@@ -110,6 +112,26 @@ Los pasos 2 y 3 requieren un móvil físico y, en su caso, las herramientas indi
 
 ## Alcance
 
-- Las estrellas y los ocho planetas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Se muestran etiquetas con los nombres; no hay órbitas, rotación automática, Sol, lunas, constelaciones ni fichas informativas.
+- Las estrellas y los ocho planetas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Hay nombres y fichas educativas; no hay órbitas, rotación automática, Sol, lunas ni constelaciones.
 - La escena funciona por completo en el cliente: no usa la API Express, catálogos ni imágenes remotas.
 - Esta versión **no incluye instalación como aplicación (PWA) ni uso sin conexión**; quedan para un cambio posterior.
+
+## Fichas educativas
+
+La ficha sigue la referencia visual: clasificación discreta, nombre grande, imagen pequeña arriba a la derecha, espacio para subtítulo y descripción, cuatro datos en dos columnas, curiosidades y libros separados por líneas. Los créditos de imagen quedan aparte.
+
+Por ahora los textos y cifras están **vacíos** en producción. Se conservan nombre, clasificación, imagen, encabezados, etiquetas y unidades. Los espacios reservados son estáticos: no son una carga de red ni textos de ejemplo. Los campos están en src/datos/cuerposCelestes.js: subtitulo y descripcion vacíos, curiosidades sin entradas y los cuatro valores numéricos en null. El formateador conserva la distinción entre falta de valor y cero.
+
+En escritorio se muestra un panel lateral; en móvil conserva desplazamiento propio. El cierre devuelve el foco al cielo. Desplazar o usar flechas dentro del panel no gira la escena. Apuntar no abre ni sustituye la ficha, y la selección conserva su iluminación al apartar el mouse o la mirada.
+
+En VR la tarjeta aparece **frente a la mirada** y sus pestañas permiten elegir una sección sin pasar por las anteriores. El área de lectura no reacciona a toques; las flechas y × son acciones separadas. Recentrar recupera la tarjeta al frente conservando la sección y selección. Entrar o salir de VR conserva el cuerpo y reinicia la sección. Mirar un control sin tocar no lo activa; un toque mantiene el sensor activo o pendiente y un arrastre confirmado sigue pasando a control manual.
+
+Las imágenes optimizadas de public/imagenes/planetas/ se sirven localmente y conservan su URL original, texto alternativo y crédito. No se añaden satélites a la escena; se mantiene preparado su contrato de datos para otro cambio.
+
+### Descubrir libros
+
+Se conserva el encabezado y el espacio del contenido, sin invitaciones, títulos o enlaces de ejemplo. LIBROS_POR_CUERPO, en src/datos/librosCuerposCelestes.js, permanece vacío. Cuando se incorpore contenido definitivo, cada asociación real identificará título y URL HTTP/HTTPS de la ficha bibliográfica de la Biblioteca «Solón Argüello». Los validadores no aceptan títulos o destinos vacíos y no consultan existencias ni préstamos.
+
+### Comprobar las fichas
+
+Revisar los ocho cuerpos, ausencia de textos/cifras y disposición del panel. En VR comprobar apertura al frente, estado de pestaña actual, salto directo entre secciones, flechas, cierre ×, toque inofensivo sobre lectura y deselección mirando fuera. Repetir con teclado/arrastre, sensor denegado, recentrado y cambio de modo. Las comprobaciones del navegador no acreditan la comodidad óptica, sensores reales ni botón físico; requieren teléfono y visor cuando estén disponibles.

@@ -7,12 +7,12 @@ Metseri ya permite reconocer y seleccionar los ocho planetas, pero esa selecció
 ## What Changes
 
 - Abrir una sola ficha al seleccionar Mercurio, Venus, Tierra, Marte, Júpiter, Saturno, Urano o Neptuno. Cambiar de selección actualiza su contenido; deseleccionar o cerrar la ficha elimina la selección persistente.
-- Incluir las cinco secciones solicitadas: nombre e imagen representativa, descripción en español de 30 a 50 palabras, cuatro datos principales, una o dos curiosidades bajo «¿Sabías que...?» y la invitación «Descubrir libros».
-- Mostrar para planetas diámetro en km, distancia media al Sol en millones de km, duración del día y duración del año con unidades terrestres y una convención de medición explícita. Preparar el modelo de contenido para satélites con distancia al planeta, período de rotación y período orbital, sin añadir satélites a la escena ni contenido lunar en este cambio.
+- Conservar la estructura de nombre e imagen, subtítulo, descripción, cuatro datos, «¿Sabías que...?» y «Descubrir libros», dejando vacíos los textos y valores editoriales hasta recibir el contenido definitivo.
+- Conservar las etiquetas y unidades de los cuatro datos, con los valores de producción en blanco. Mantener preparado el contrato para satélites futuros sin añadir cuerpos a la escena.
 - Añadir iluminación transitoria al pasar el mouse sobre un planeta en vista única y conservarla únicamente mientras siga bajo el mouse. Mantener el mismo comportamiento por la cruz del visor en VR. Apuntar no abre fichas; seleccionar conserva una iluminación distinta aunque se aparte el mouse o la mirada.
-- Presentar la ficha como panel adaptable en vista única y como tarjeta legible en ambas vistas de VR, con el mismo contenido y navegación por páginas mediante mirada y toque, sin activación por permanencia.
-- Mantener los gestos actuales: arrastrar no selecciona, el toque global VR deselecciona y los controles explícitos de la ficha ejecutan solo su acción. Leer o cambiar de página no interrumpe el sensor ni modifica la selección.
-- Preparar asociaciones configurables entre cuerpos y fichas bibliográficas. Mientras no se proporcionen enlaces reales, mostrar la invitación a la biblioteca y un estado honesto de enlaces pendientes, sin inventar libros, disponibilidad, direcciones ni accesos ficticios.
+- Adaptar la ficha a la referencia visual: nombre grande, imagen pequeña arriba a la derecha, descripción reservada, datos en dos columnas y separadores discretos. En VR abrirla de frente y ofrecer cuatro pestañas de sección, flechas visibles y cierre independiente.
+- Conservar navegación, selección y sensor. En VR, tocar la superficie de lectura mantiene la ficha abierta; los controles ejecutan solo su acción, el cierre explícito deselecciona y tocar mirando fuera mantiene la deselección global.
+- Conservar las asociaciones bibliográficas configurables vacías y reservar el espacio de libros sin invitaciones, títulos ni enlaces ficticios. Los créditos de las imágenes se conservan aparte del contenido editorial.
 
 No se incluyen nuevos cuerpos 3D, órbitas, animación automática, búsqueda o integración remota con el catálogo, préstamos, WebXR, PWA, uso sin conexión ni publicación.
 
@@ -20,12 +20,12 @@ No se incluyen nuevos cuerpos 3D, órbitas, animación automática, búsqueda o 
 
 ### New Capabilities
 
-- `fichas-cuerpos-celestes`: Contenido educativo de los ocho planetas, ficha sincronizada con la selección, presentación en pantalla y visor, y asociaciones bibliográficas configurables con estado vacío.
+- `fichas-cuerpos-celestes`: Contenido educativo de los ocho planetas, ficha sincronizada con la selección, presentación en pantalla y visor, y asociaciones bibliográficas configurables con espacios editoriales vacíos y diseño conforme a la referencia.
 
 ### Modified Capabilities
 
 - `escena-planetaria`: Extender el resaltado transitorio a mouse en vista única y mantener independientes apuntado, selección persistente y ficha. Esta capacidad está definida en el cambio completado `escena-planetaria`, todavía pendiente de sincronización con `openspec/specs/`; sus especificaciones son la dependencia explícita de este delta.
-- `mobile-vr-mode`: Añadir acciones de la ficha mediante mirada y toque, coherentes entre ojos y con prioridad sobre el toque global, conservando los controles y el seguimiento existentes.
+- `mobile-vr-mode`: Añadir acciones de la ficha mediante mirada y toque, coherentes entre ojos y con protección de los toques de lectura y prioridad sobre el toque global, conservando los controles y el seguimiento existentes.
 
 ## Impact
 

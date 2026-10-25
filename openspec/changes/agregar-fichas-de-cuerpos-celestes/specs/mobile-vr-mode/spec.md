@@ -4,52 +4,46 @@
 
 ### Requirement: Acciones de ficha mediante mirada y toque
 
-La ficha VR SHALL ofrecer controles explícitos para avanzar, retroceder cuando corresponda y cerrar. SHALL permitir apuntarlos con el eje común de mirada y activarlos con un único toque en cualquier zona de la superficie o con el clic táctil del visor. El control apuntado SHALL tener una señal visible coherente en ambos ojos. Mirarlo sin tocar SHALL NOT ejecutarlo ni iniciar temporizadores de permanencia. El objetivo de la acción SHALL resolverse en el instante de la activación y SHALL NOT depender de las coordenadas físicas del toque.
+La ficha VR SHALL ofrecer pestañas de sección, flechas de navegación y cierre ×. El eje común de mirada SHALL resolver el control apuntado y un toque en cualquier zona SHALL activarlo una sola vez, independientemente de las coordenadas del dedo. Cada control SHALL destacar al apuntarlo y la sección actual SHALL tener un estado visible en ambos ojos. Mirar sin tocar SHALL NOT activar acciones ni temporizadores de permanencia.
 
-Un control de ficha apuntado SHALL tener prioridad sobre la deselección global, consumiendo esa activación una sola vez. Si no se apunta a un control accionable, el siguiente toque global SHALL conservar la regla existente de quitar la selección, incluso mirando al fondo, al texto de la ficha o a otro planeta. Los controles DOM explícitos de la interfaz SHALL seguir ejecutando únicamente su propia acción.
+Un impacto en la tarjeta sin control accionable SHALL consumir el toque manteniendo ficha, sección y selección. Apuntar fuera de la tarjeta y tocar SHALL conservar la deselección global existente; ese toque no selecciona otro cuerpo. Los controles explícitos de interfaz SHALL ejecutar solo su acción y un arrastre SHALL NOT paginar ni seleccionar.
 
-#### Scenario: Cambiar de página desde cualquier mitad
-- **WHEN** se apunta a «Siguiente» de la ficha y se toca una zona alejada en cualquiera de las dos mitades
-- **THEN** ambas vistas avanzan exactamente una página y no se deselecciona el planeta
+#### Scenario: Activar desde una zona alejada
+- **WHEN** se apunta a una pestaña o flecha y se toca lejos del objetivo en cualquiera de las mitades
+- **THEN** ambos ojos muestran la misma sección y el cuerpo sigue seleccionado
 
-#### Scenario: Mirar sin tocar
-- **WHEN** la mirada permanece sobre «Siguiente», «Anterior» o «Cerrar» sin una activación
-- **THEN** se señala el objetivo y no cambia la página, la selección ni el estado de la ficha
+#### Scenario: Tocar la lectura
+- **WHEN** se mira el texto o un espacio reservado y se toca sin apuntar a un control
+- **THEN** la ficha permanece en la misma sección y no se quita la selección
 
-#### Scenario: Deselección global fuera de acciones
-- **WHEN** hay selección, no se apunta a un control de ficha y se toca mirando al texto, al fondo o a otro planeta
-- **THEN** se cierra la ficha y se quita la selección sin seleccionar otro cuerpo en ese mismo toque
-- **AND** un toque posterior apuntando a otro planeta puede seleccionarlo y abrir su ficha
-
-#### Scenario: Cierre explícito con el visor
-- **WHEN** se apunta a «Cerrar» y se pulsa el botón táctil del visor
+#### Scenario: Cierre explícito
+- **WHEN** se apunta a × y se toca
 - **THEN** se cierra la ficha y se quita la selección una sola vez
 
-#### Scenario: Lectura que ocluye un planeta
-- **WHEN** la mirada incide en la superficie visible de la ficha y hay un planeta detrás
-- **THEN** no se resalta ni se activa el planeta oculto a través de la ficha
+#### Scenario: Deselección fuera de la ficha
+- **WHEN** hay selección, se apunta fuera de la tarjeta y se toca mirando al fondo u otro planeta
+- **THEN** se quita la selección sin seleccionar otro cuerpo en ese toque
 
-#### Scenario: Arrastre o eventos derivados
-- **WHEN** el usuario arrastra sobre la escena o el navegador entrega eventos derivados de un único toque
-- **THEN** el arrastre no cambia la página ni la selección y un toque válido produce como máximo una acción
+#### Scenario: Mirar, arrastrar y eventos derivados
+- **WHEN** se mira sin tocar, se arrastra o se reciben varios eventos del mismo toque
+- **THEN** mirar no activa, arrastrar no pagina ni selecciona y un toque válido produce como máximo una acción
+
+#### Scenario: Oclusión del cielo
+- **WHEN** hay un planeta o una etiqueta detrás de la tarjeta
+- **THEN** no se apuntan cuerpos a través del panel ni se dibujan etiquetas sobre su lectura
 
 ### Requirement: Lectura de ficha compatible con orientación y controles
 
-Abrir una ficha, cambiar su página y cerrar o deseleccionar mediante toque SHALL conservar el seguimiento de orientación activo o pendiente, sin pasar al control manual. Los arrastres confirmados y las flechas SHALL mantener su comportamiento actual de navegación. La ficha SHALL ser alcanzable mediante sensor y alternativa manual y SHALL conservar los controles de salida de VR y recentrado utilizables. Recentrar SHALL reubicar la ficha respecto del nuevo frente sin cambiar el planeta ni la página.
+Abrir, cambiar sección y cerrar mediante toque SHALL conservar el seguimiento activo o pendiente. El sensor y la alternativa manual SHALL permitir apuntar los mismos controles. Los arrastres confirmados y las flechas de mirada SHALL mantener su comportamiento. Recentrar SHALL recuperar la tarjeta frente a la mirada conservando cuerpo y sección; salir de VR SHALL mantener el cuerpo en la ficha normal y detener el sensor.
 
-#### Scenario: Sensor activo durante la lectura
-- **WHEN** se abre una ficha o se cambia de página con el sensor activo y después se gira el dispositivo
-- **THEN** ambas vistas continúan respondiendo a la orientación y conservan el mismo cuerpo y página
+#### Scenario: Sensor activo o pendiente
+- **WHEN** se toca una acción de ficha con el seguimiento activo o esperando permiso o primera lectura
+- **THEN** el intento sigue vigente y las lecturas válidas posteriores pueden dirigir ambas vistas
 
-#### Scenario: Permiso o primera lectura pendientes
-- **WHEN** se activa una acción de ficha con el sensor pendiente de permiso o de su primera lectura
-- **THEN** continúa vigente el intento de seguimiento y la lectura válida posterior puede dirigir la vista
+#### Scenario: Alternativa manual
+- **WHEN** el sensor no se puede usar y se apunta mediante arrastre o teclado y luego se toca
+- **THEN** funcionan las mismas pestañas, flechas y cierre sin selección accidental al arrastrar
 
-#### Scenario: Sensor denegado o ausente
-- **WHEN** el sensor no se puede utilizar y se apunta a una acción mediante arrastre o flechas y luego se toca
-- **THEN** se puede recorrer y cerrar la ficha con las mismas reglas de acción y selección
-
-#### Scenario: Salida y retorno a vista única
-- **WHEN** el usuario sale de VR con una ficha abierta, mediante el control, Escape o salida de pantalla completa
-- **THEN** vuelve a la ficha del mismo cuerpo en vista única y el sensor deja de dirigir la mirada
-- **AND** no se genera una selección, deselección ni activación de enlace accidental
+#### Scenario: Recentrado y salida
+- **WHEN** se recentra o se sale de VR con una ficha abierta
+- **THEN** el recentrado conserva sección y coloca la tarjeta al frente; la salida conserva el cuerpo en vista única sin activar acciones adicionales

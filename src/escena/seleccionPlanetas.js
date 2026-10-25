@@ -37,6 +37,8 @@ export function crearSeleccionPlanetas({ detector, alCambiar } = {}) {
   let modo = 'normal'
   let planetaApuntado = null
   let planetaSeleccionado = null
+  let posicionMouse = null
+  let rectanguloMouse = null
   let destruido = false
 
   function obtenerEstado() {
@@ -52,16 +54,30 @@ export function crearSeleccionPlanetas({ detector, alCambiar } = {}) {
   function actualizarMirada() {
     if (destruido) return
     const antes = obtenerEstado()
-    planetaApuntado = modo === 'vr' ? detector.detectarMirada() : null
+    planetaApuntado = modo === 'vr' ? detector.detectarMirada()
+      : posicionMouse ? detector.detectarPosicion(posicionMouse, rectanguloMouse) : null
     notificar(antes)
   }
 
   return {
     obtenerEstado,
     actualizarMirada,
+    actualizarMouse(posicion, rectangulo) {
+      if (destruido || modo !== 'normal') return
+      posicionMouse = posicion
+      rectanguloMouse = rectangulo
+      actualizarMirada()
+    },
+    quitarSeleccion() {
+      if (destruido) return
+      const antes = obtenerEstado()
+      planetaSeleccionado = null
+      notificar(antes)
+    },
     establecerModo(nuevoModo) {
       if (destruido) return
       modo = nuevoModo
+      posicionMouse = null
       actualizarMirada()
     },
     activar(evento, rectangulo) {
@@ -78,6 +94,7 @@ export function crearSeleccionPlanetas({ detector, alCambiar } = {}) {
     },
     destruir() {
       destruido = true
+      posicionMouse = null
       planetaApuntado = null
       planetaSeleccionado = null
     },

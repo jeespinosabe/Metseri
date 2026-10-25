@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { crearControlesVista } from './controlesVista.js'
+import { crearEstadoLectura } from './contenidoFicha.js'
 
 const cercaDe = (real, esperado, margen = 1e-9) =>
   assert.ok(Math.abs(real - esperado) <= margen, `${real} no está cerca de ${esperado}`)
@@ -144,6 +145,27 @@ describe('seguimiento con sensor', () => {
 })
 
 describe('cambio a control manual con sensor', () => {
+  it('paginar con permiso pendiente y cerrar después de la primera lectura conserva el seguimiento', () => {
+    const lectura = crearEstadoLectura()
+    lectura.actualizar('tierra', 4)
+    let accion = 'siguiente'
+    const { elemento, sensor, controles } = crearEntorno({ alActivar: () => {
+      if (accion === 'siguiente') lectura.mover(1)
+      else lectura.actualizar(null, 0)
+    } })
+    controles.entrarVr()
+    emitirPuntero(elemento, 'click', {})
+    assert.equal(controles.obtenerFuente(), 'solicitando')
+    assert.equal(lectura.obtenerEstado().pagina, 1)
+    sensor.ultimo().alLectura(lecturaVertical(30))
+    accion = 'cerrar'
+    emitirPuntero(elemento, 'click', {})
+    assert.equal(lectura.obtenerEstado().cuerpoId, null)
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    sensor.ultimo().alLectura(lecturaVertical(60))
+    cercaDe(controles.obtenerOrientacion().giro, 30 * GRADOS)
+    controles.destruir()
+  })
   it('tocar y seleccionar conserva el sensor activo y las lecturas posteriores', () => {
     const activaciones = []
     const { elemento, sensor, controles } = crearEntorno({ alActivar: (evento) => activaciones.push(evento) })
