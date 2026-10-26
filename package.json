@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start:api": "node --env-file-if-exists=.env server.js",
+    "dev:api": "node --watch --env-file-if-exists=.env server.js",
+    "test:integracion": "node --env-file-if-exists=.env api/comprobarSupabase.js",
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test",

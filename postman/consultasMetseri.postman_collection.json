@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "Metseri - Consultas públicas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Pruebas GET de la API Express de Metseri. Inicia npm run start:api y ajusta urlBase al PORT del servidor. slugCuerpo debe corresponder a un cuerpo ya publicado. La API gestiona Supabase; esta colección no utiliza claves ni modifica registros."
+  },
+  "auth": {
+    "type": "noauth"
+  },
+  "variable": [
+    {
+      "key": "urlBase",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "slugCuerpo",
+      "value": "tierra",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Estado del servidor",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{urlBase}}/api/estado"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Contrato de estado de Metseri', () => {",
+              "  pm.expect(pm.response.json()).to.eql({",
+              "    proyecto: 'Metseri',",
+              "    mensaje: 'API de Metseri funcionando correctamente',",
+              "    estado: 'activo'",
+              "  });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Cuerpos publicados",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{urlBase}}/api/cuerpos-celestes"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Listado con el cuerpo publicado configurado', () => {",
+              "  const cuerpos = pm.response.json();",
+              "  pm.expect(cuerpos).to.be.an('array');",
+              "  const cuerpo = cuerpos.find((registro) => registro.slug === pm.variables.get('slugCuerpo'));",
+              "  pm.expect(cuerpo, 'Configura un slug de un cuerpo publicado').to.be.an('object');",
+              "  pm.expect(cuerpo).to.include.keys('id', 'slug', 'nombre', 'tipo', 'orden');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Ficha completa",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{urlBase}}/api/cuerpos-celestes/{{slugCuerpo}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Ficha del cuerpo solicitado', () => {",
+              "  const ficha = pm.response.json();",
+              "  pm.expect(ficha.slug).to.eql(pm.variables.get('slugCuerpo'));",
+              "  pm.expect(ficha).to.include.keys('id', 'nombre', 'tipo', 'imagen', 'descripcion_breve', 'datos_principales', 'curiosidades', 'libros');",
+              "  pm.expect(ficha.curiosidades).to.be.an('array');",
+              "  pm.expect(ficha.libros).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Libros asociados",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{urlBase}}/api/cuerpos-celestes/{{slugCuerpo}}/libros"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Libros válidos o arreglo vacío', () => {",
+              "  const libros = pm.response.json();",
+              "  pm.expect(libros).to.be.an('array');",
+              "  libros.forEach((libro) => pm.expect(libro).to.include.keys('libro_id', 'titulo', 'autor', 'editorial', 'anio', 'url_ficha', 'orden'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Slug inválido (400 esperado)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{urlBase}}/api/cuerpos-celestes/TIERRA"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 400 esperado', () => pm.response.to.have.status(400));",
+              "pm.test('Error de slug inválido', () => {",
+              "  pm.expect(pm.response.json().error.codigo).to.eql('SLUG_INVALIDO');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Cuerpo inexistente (404 esperado)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{urlBase}}/api/cuerpos-celestes/cuerpo-inexistente-metseri-prueba"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 404 esperado', () => pm.response.to.have.status(404));",
+              "pm.test('Error de cuerpo no encontrado', () => {",
+              "  pm.expect(pm.response.json().error.codigo).to.eql('CUERPO_NO_ENCONTRADO');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

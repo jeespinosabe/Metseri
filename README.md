@@ -135,3 +135,90 @@ Se conserva el encabezado y el espacio del contenido, sin invitaciones, títulos
 ### Comprobar las fichas
 
 Revisar los ocho cuerpos, ausencia de textos/cifras y disposición del panel. En VR comprobar apertura al frente, estado de pestaña actual, salto directo entre secciones, flechas, cierre ×, toque inofensivo sobre lectura y deselección mirando fuera. Repetir con teclado/arrastre, sensor denegado, recentrado y cambio de modo. Las comprobaciones del navegador no acreditan la comodidad óptica, sensores reales ni botón físico; requieren teléfono y visor cuando estén disponibles.
+
+## API de consulta de contenido
+
+El backend Express se ejecuta por separado de Vite. Requiere Node.js 22.12 o posterior compatible con Vite (también Node 24). La interfaz continúa usando sus datos locales; iniciar la API no cambia las fichas ni agrega cuerpos a la escena.
+
+1. Copia `.env.example` como `.env` en la raíz del proyecto y completa `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. En PowerShell puedes usar `Copy-Item .env.example .env` si todavía no existe `.env`.
+2. Obtén la URL del proyecto en Supabase, **Integrations > Data API**, y la clave pública `sb_publishable_…` en **Settings > API Keys**. Se utiliza la clave pública para respetar los permisos del visitante y RLS; no una clave secreta o `service_role`.
+3. Ejecuta `npm run start:api`, o `npm run dev:api` para reiniciar automáticamente al editar el backend. `PORT` es opcional y por defecto vale 3000.
+
+`.env` está ignorado por Git. El ejemplo solo contiene marcadores; las variables no llevan prefijo `VITE_`. Los comandos cargan `.env` con Node y siguen funcionando si el archivo no existe: `/api/estado` está disponible y las rutas de contenido indican configuración pendiente. No se añade proxy de Vite ni CORS para otros orígenes en este cambio.
+
+### Rutas y respuestas
+
+| Método y ruta | Respuesta exitosa |
+| --- | --- |
+| `GET /api/estado` | 200 con el estado actual del servidor; no comprueba la conexión a Supabase. |
+| `GET /api/cuerpos-celestes` | 200 con un arreglo de planetas y satélites publicados, ordenados por `orden` y `slug`. |
+| `GET /api/cuerpos-celestes/:slug` | 200 con la ficha completa del cuerpo publicado. |
+| `GET /api/cuerpos-celestes/:slug/libros` | 200 con sus libros verificados y activos, ordenados por `orden` y `libro_id`. |
+
+Ejemplos en PowerShell (sustituye `tierra` por un slug que ya esté publicado):
+
+```powershell
+curl.exe -i http://localhost:3000/api/estado
+curl.exe -i http://localhost:3000/api/cuerpos-celestes
+curl.exe -i http://localhost:3000/api/cuerpos-celestes/tierra
+curl.exe -i http://localhost:3000/api/cuerpos-celestes/tierra/libros
+```
+
+El listado conserva `id` (UUID), `slug`, `nombre`, `clasificacion`, `subtitulo`, `tipo`, `planeta_id`, `planeta_slug`, `orden`, `imagen_path` e `imagen_alt`. La ficha contiene `id`, `slug`, `nombre`, `clasificacion`, `subtitulo`, `tipo`, `planeta`, `imagen`, `descripcion_breve`, `datos_principales`, `curiosidades` y `libros`. El endpoint de libros conserva `libro_id`, `titulo`, `autor`, `editorial`, `anio`, `url_ficha` y `orden`; `autor` presenta los autores en el orden de autoría almacenado.
+
+Las rutas reciben el **slug**, por ejemplo `tierra`, y no el UUID de la base. Los identificadores actuales del frontend coinciden con los slugs, pero este cambio no conecta sus contratos. El JSON conserva los nombres `snake_case` de la base y los valores `null`, sin sustituirlos por cero. Los datos principales mantienen las unidades de sus campos: `diametro_km`, `distancia_sol_millones_km` o `distancia_planeta_km`, `rotacion_horas` (negativa para rotación retrógrada) y `orbita_dias`.
+
+Un listado sin contenido público o un cuerpo público sin libros produce `200` con `[]`. Un cuerpo inexistente o sin publicar produce la misma respuesta `404`, también en su ruta de libros. Los errores tienen esta forma:
+
+```json
+{ "error": { "codigo": "CUERPO_NO_ENCONTRADO", "mensaje": "No se encontró el cuerpo celeste." } }
+```
+
+| Estado | Código | Causa |
+| --- | --- | --- |
+| 400 | `SLUG_INVALIDO` | El slug no cumple `^[a-z0-9]+(-[a-z0-9]+)*$`. |
+| 404 | `CUERPO_NO_ENCONTRADO` | Cuerpo inexistente o no visible. |
+| 405 | `METODO_NO_PERMITIDO` | Método distinto de GET/HEAD en las rutas de contenido; `Allow: GET, HEAD`. |
+| 503 | `CONFIGURACION_NO_DISPONIBLE` | URL o clave pública ausente o inválida. |
+| 503 | `CONTENIDO_NO_DISPONIBLE` | Fallo de red, permisos, respuesta remota inválida o plazo de consulta agotado. |
+
+Cada consulta externa tiene un plazo de cinco segundos. La ruta de libros comprueba primero la existencia pública del cuerpo y después consulta sus asociaciones; puede realizar dos consultas. Los errores no se convierten en listas vacías ni devuelven claves o mensajes internos de Supabase.
+
+### Recursos y permisos de Supabase
+
+La API reutiliza el esquema ya existente mediante GET a la Data API: listado en `v_cuerpos_exploracion`, ficha en `rpc/ficha_cuerpo?p_slug=…` y libros en `v_libros_por_cuerpo`, filtrados por `cuerpo_slug`. Sus vistas y función usan `security_invoker`; RLS permite únicamente cuerpos publicados y libros verificados y activos. No se ejecutan escrituras o migraciones ni se cambia la publicación o las políticas.
+
+El SQL inicial compartido crea 12 cuerpos **sin publicar** y ningún libro. Si el proyecto sigue así, una conexión válida devolverá `[]`. No vuelvas a ejecutar la semilla para comprobar la API. Una ficha tampoco inventa descripciones, curiosidades, libros o cifras faltantes. La función SQL entregada no incorpora los créditos de imagen; el frontend conserva sus créditos locales. Para un catálogo que supere el límite de filas de la Data API será necesario ampliar el contrato con paginación.
+
+### Comprobar la integración real
+
+`npm test` ejecuta las pruebas locales con transportes simulados, sin credenciales ni peticiones externas. La comprobación remota se ejecuta expresamente:
+
+1. Configura las dos variables de Supabase en `.env`.
+2. En el Table Editor identifica un cuerpo **ya publicado** y copia su `slug` en `CUERPO_PRUEBA_SLUG` y su UUID `id` en `CUERPO_PRUEBA_ID`. Si no existe ninguno, la recuperación positiva queda pendiente hasta disponer de contenido público; este procedimiento no publica registros.
+3. Ejecuta `npm run test:integracion`. No necesitas arrancar antes `server.js`: la comprobación inicia temporalmente la aplicación en un puerto local libre y la cierra al terminar.
+
+La comprobación exige coincidencia de UUID y slug entre la configuración, el listado y la ficha, y consulta también los libros. Termina con código distinto de cero si faltan variables, el listado está vacío o no puede recuperar el registro. Si no hay libros, informa que la rama con libros reales sigue sin verificarse. Esta comprobación no demuestra por sí sola la exclusión de todos los borradores o libros ocultos: esa evidencia se registra por separado cuando existan casos conocidos.
+
+Ante `503`, revisa URL, tipo de clave, Data API habilitada, recursos existentes, privilegios de lectura y conectividad. Ante `[]` o `404` con una conexión válida, revisa el estado de publicación y las políticas RLS. Una respuesta vacía no acredita la recuperación de información almacenada. Registra los resultados en `verificacion.md` del cambio OpenSpec y mantén pendiente su tarea de conexión real hasta obtener evidencia positiva.
+
+### Probar la API con Postman
+
+La dirección raíz del backend (`http://localhost:PUERTO/`) no tiene una ruta registrada y responde `Cannot GET /`. Para consultar el estado utiliza `/api/estado`; para ver la interfaz inicia Vite con `npm run dev` y abre la dirección que muestre, normalmente el puerto 5173. Usa puertos distintos para ambos servidores: la API tiene 3000 por defecto y puede configurarse en otro puerto libre, por ejemplo `PORT=3001` en `.env`. Reinicia `npm run start:api` después de cambiar `PORT`.
+
+Si el puerto ya está ocupado, el servidor informa el conflicto y termina con código 1. Un arranque correcto mantiene la terminal ejecutándose y muestra la URL de la API.
+
+1. Inicia el backend: `npm run start:api`. Deja esa terminal ejecutándose mientras envías las consultas.
+2. En Postman utiliza **Import** y selecciona `postman/consultasMetseri.postman_collection.json`. También puedes arrastrar el archivo a la aplicación ([guía de importación](https://learning.postman.com/docs/getting-started/importing-and-exporting/importing-data/)).
+3. En las variables de la colección ajusta `urlBase` al puerto del mensaje del servidor. La colección incluye `http://localhost:3001` como ejemplo. `slugCuerpo` tiene `tierra` y debe identificar un cuerpo publicado.
+4. Abre **01 - Estado del servidor** y pulsa **Send**; debe responder 200 con el estado de Metseri. Después prueba listado, ficha y libros, o ejecuta la colección completa con **Run**.
+
+Las seis peticiones son GET y tienen 12 comprobaciones. Las últimas dos esperan 400 y 404 respectivamente y se consideran correctas cuando devuelven esos errores. Un cuerpo público sin libros devuelve `[]`. En estas peticiones no necesitas Body ni claves de Supabase; la configuración de conexión permanece en el servidor.
+
+También puedes ejecutarlas con Postman CLI, en otra terminal mientras el backend sigue activo:
+
+```powershell
+postman collection run postman/consultasMetseri.postman_collection.json
+```
+
+Si tu API usa otro puerto, cambia `urlBase` en la colección o pásalo al ejecutar: `postman collection run postman/consultasMetseri.postman_collection.json --env-var urlBase=http://localhost:3000`.
