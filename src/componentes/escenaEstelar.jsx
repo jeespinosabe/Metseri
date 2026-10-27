@@ -7,6 +7,8 @@ import {
 import { crearSensorOrientacion } from '../escena/orientacionDispositivo.js'
 import { crearPantallaInmersiva } from '../escena/pantallaInmersiva.js'
 import { PunteroCruz } from './punteroCruz.jsx'
+import { ConfiguracionVisor } from './configuracionVisor.jsx'
+import { guardarDiagonalPantalla, leerDiagonalPantalla } from '../escena/perfilVisor.js'
 import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
@@ -48,6 +50,8 @@ export function EscenaEstelar() {
   const [estado, setEstado] = useState({ intento: 0, mensajeError: null })
   const [modo, setModo] = useState('normal')
   const [aviso, setAviso] = useState(null)
+  const [diagonal, setDiagonal] = useState(leerDiagonalPantalla)
+  const [configurandoVisor, setConfigurandoVisor] = useState(false)
   const [lectura, setLectura] = useState({ cuerpoId: null, pagina: 0, total: 0 })
   const cuerpo = obtenerCuerpoCeleste(lectura.cuerpoId)
   const { intento, mensajeError } = estado
@@ -132,6 +136,10 @@ export function EscenaEstelar() {
   }, [intento, mensajeError, salirModoVr])
 
   useEffect(() => {
+    campoRef.current?.establecerDiagonalPantalla(diagonal)
+  }, [diagonal, intento, mensajeError])
+
+  useEffect(() => {
     if (modo !== 'vr') return undefined
     function alPulsarTecla(evento) {
       if (evento.key === 'Escape') salirModoVr()
@@ -174,6 +182,12 @@ export function EscenaEstelar() {
     campoRef.current?.recentrarFicha()
   }
 
+  function guardarConfiguracion(nuevaDiagonal) {
+    guardarDiagonalPantalla(nuevaDiagonal)
+    setDiagonal(nuevaDiagonal)
+    setConfigurandoVisor(false)
+  }
+
   return (
     <div className={`escena-estelar escena-estelar--${modo}`} ref={raizRef}>
       <div
@@ -194,7 +208,7 @@ export function EscenaEstelar() {
         </div>
       ) : (
         <>
-          <PunteroCruz modo={modo} />
+          {modo === 'normal' && <PunteroCruz modo={modo} />}
           <span className="solo-lectores" role="status">{cuerpo ? `Ficha de ${cuerpo.nombre} abierta.` : 'Sin ficha abierta.'}</span>
           {cuerpo && <FichaCuerpoCeleste
             key={`${cuerpo.id}-${modo}`}
@@ -219,6 +233,9 @@ export function EscenaEstelar() {
             {aviso && <p className="escena-estelar__aviso">{aviso}</p>}
           </div>
           <div className="escena-estelar__controles" onPointerEnter={() => campoRef.current?.limpiarApuntado()}>
+            <button type="button" onClick={() => setConfigurandoVisor(true)}>
+              Ajustar visor
+            </button>
             <button
               type="button"
               onClick={recentrar}
@@ -232,6 +249,7 @@ export function EscenaEstelar() {
               {modo === 'vr' ? 'Salir de VR' : 'Entrar VR'}
             </button>
           </div>
+          {configurandoVisor && <ConfiguracionVisor diagonal={diagonal} alGuardar={guardarConfiguracion} alCerrar={() => setConfigurandoVisor(false)} />}
         </>
       )}
     </div>

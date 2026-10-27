@@ -126,13 +126,18 @@
   right: max(16px, env(safe-area-inset-right));
   bottom: max(16px, env(safe-area-inset-bottom));
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
+  max-width: calc(100% - 32px);
 }
 
 .escena-estelar--vr .escena-estelar__controles {
   right: auto;
   left: 50%;
   transform: translateX(-50%);
+  width: max-content;
+  justify-content: center;
 }
 
 /* Guía visual superpuesta; no intercepta punteros ni toques. */
@@ -208,6 +213,29 @@
   outline: 2px solid #fff;
   outline-offset: 3px;
 }
+
+.configuracion-visor {
+  width: min(420px, calc(100% - 40px));
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #41515b;
+  border-radius: 18px;
+  background: #111b24;
+  color: #d8e1e6;
+  line-height: 1.5;
+}
+
+.configuracion-visor::backdrop { background: rgb(0 0 0 / 75%); }
+.configuracion-visor h2 { margin-top: 0; color: #c7e69d; }
+.configuracion-visor p { font-size: .9rem; }
+.configuracion-visor label { display: block; margin-bottom: 8px; }
+.configuracion-visor input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid #71808f; border-radius: 8px; background: #080b12; color: inherit; font: inherit; }
+.configuracion-visor__acciones { display: flex; justify-content: flex-end; gap: 12px; }
+.configuracion-visor button { min-height: 44px; padding: 8px 18px; border: 1px solid #71808f; border-radius: 999px; background: #24343d; color: inherit; font: inherit; cursor: pointer; }
+.configuracion-visor button:disabled { opacity: .4; cursor: default; }
+.configuracion-visor :focus-visible { outline: 2px solid #c7e69d; outline-offset: 3px; }
 
 .escena-estelar__error {
   position: absolute;

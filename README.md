@@ -57,20 +57,24 @@ Un arrastre cambia la mirada y nunca selecciona ni deselecciona, aunque comience
 
 ### Puntero de cruz
 
-Una cruz blanca fija en el centro indica hacia dónde apunta la mirada. En la vista dividida (VR) aparece una cruz en el centro de cada una de las dos vistas, en la misma posición relativa, de modo que con el visor se perciba como un solo puntero.
+Una cruz blanca fija en el centro indica hacia dónde apunta la mirada. En VR aparece una cruz por ojo, alineada con los centros ópticos del HOMIDO GRAB y con la dirección común de mirada. La posición depende del tamaño físico de la pantalla; no tiene por qué coincidir con el centro de cada mitad.
 
 La cruz es una guía visual que no recibe el foco ni intercepta gestos: puedes tocar o arrastrar sobre ella como sobre cualquier otra parte del cielo. En vista única seleccionas en la posición del mouse o del dedo; en VR, la dirección de la cruz sirve como referencia para apuntar a un planeta.
 
 ## Vista dividida para visor móvil (VR)
 
-El botón **Entrar VR** divide la pantalla en dos vistas contiguas, una por ojo, pensadas para un visor móvil tipo Cardboard. Ambas vistas comparten el cielo, los planetas, la dirección de mirada y la selección; al entrar y salir se conservan todos ellos.
+El botón **Entrar VR** presenta dos vistas, una por ojo, con el perfil óptico del **HOMIDO GRAB**, compatible con Google Cardboard. Ambas vistas comparten el cielo, los planetas, la dirección de mirada y la selección; al entrar y salir se conservan todos ellos.
+
+Antes de usarlo, pulsa **Ajustar visor** e indica la **diagonal de pantalla de tu celular en pulgadas**, según su fabricante (por ejemplo, 5.5 o 6.1). El valor inicial de 6 pulgadas es una estimación, no una detección del teléfono. Puedes usar punto o coma decimal; el ajuste se conserva en este navegador cuando su almacenamiento está disponible. Coloca el teléfono centrado en el GRAB y en horizontal; usa pantalla completa para que las barras del navegador no alteren la alineación física. Si el navegador no permite pantalla completa, la vista sigue disponible, pero la alineación puede requerir ocultar sus barras y ajustar la colocación del teléfono.
 
 - **Entrar:** pulsa **Entrar VR**. La aplicación intenta además activar la pantalla completa y bloquear la orientación en horizontal, pero ambas cosas son opcionales: si el navegador no las permite o las rechaza, la vista dividida funciona igual dentro del área disponible.
 - **Salir:** pulsa **Salir de VR** (centro, abajo) o la tecla `Escape`. También se vuelve a la vista única si abandonas la pantalla completa desde el navegador. Al salir solo se libera lo que la propia aplicación activó, no una pantalla completa que ya estuviera activa por otro motivo.
 - **Teléfono en vertical:** se muestran las dos vistas y una indicación para girar el teléfono a horizontal; el control de salida sigue disponible.
 - **Mirar alrededor en VR:** el arrastre con el dedo o el mouse y las flechas del teclado funcionan también en la vista dividida, igual que en la vista única. **Recentrar** vuelve a la dirección inicial.
 
-Las dos vistas usan una proyección estéreo básica de Three.js (`StereoEffect`). **No hay calibración por modelo de visor ni de lentes**: la distancia entre ejes y el campo de visión son valores comunes, así que la alineación puede variar según el visor. La cruz se coloca en el centro de cada mitad de pantalla, sin ajustarla al centro óptico de las lentes de un visor concreto.
+Cada ojo se renderiza a una textura con una perspectiva asimétrica y después recibe la compensación radial de las lentes. Se usan los [parámetros publicados por HOMIDO](https://homido.com/setup/) para el GRAB: separación de 60 mm, distancia de pantalla a lente de 40 mm, alineación vertical central y coeficientes de distorsión 0.34 y 0.10. El campo se limita a los [100° anunciados para el GRAB](https://homido.com/homido-grab/). La escena, las fichas, los nombres de los planetas y las cruces atraviesan la corrección óptica; los controles de configuración quedan superpuestos para utilizarlos fuera del visor. Los bordes negros y la curvatura de la imagen sin el visor son parte de esta compensación.
+
+El perfil está integrado en la web: no hace falta escanear un QR en otra aplicación y los ajustes guardados en la aplicación Cardboard no se transfieren automáticamente a este navegador. La alineación y comodidad finales deben comprobarse con el teléfono real dentro del GRAB.
 
 ### Seleccionar con el botón del visor
 

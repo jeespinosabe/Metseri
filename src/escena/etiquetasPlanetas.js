@@ -101,6 +101,9 @@ export function crearEtiquetasPlanetas(contenedor, planetas) {
       }))
     },
     actualizar(camara, modo, proyeccion, ancho, alto, ficha = null) {
+      // Las etiquetas del visor se dibujan dentro de WebGL para corregir sus lentes.
+      raiz.hidden = modo === 'vr'
+      if (raiz.hidden) return
       camara.updateWorldMatrix(true, false)
       const enVr = modo === 'vr'
       raiz.classList.toggle('etiquetas-planetas--vr', enVr)

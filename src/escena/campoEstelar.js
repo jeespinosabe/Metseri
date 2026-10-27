@@ -16,11 +16,13 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three'
-import { StereoEffect } from 'three/examples/jsm/effects/StereoEffect.js'
+import { crearEfectoVisor } from './efectoVisor.js'
 import { crearPlanetas, RADIO_PLANETAS } from './planetas.js'
 import { crearDetectorPlanetas, crearSeleccionPlanetas } from './seleccionPlanetas.js'
 import { crearProyeccionVista } from './proyeccionVista.js'
 import { crearEtiquetasPlanetas } from './etiquetasPlanetas.js'
+import { crearEtiquetasVisor } from './etiquetasVisor.js'
+import { DIAGONAL_PREDETERMINADA } from './perfilVisor.js'
 import { crearFichaCuerpoVr } from './fichaCuerpoVr.js'
 import { crearApuntadoMouse } from './apuntadoMouse.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
@@ -163,8 +165,10 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   camara.focus = RADIO_PLANETAS
   const proyeccion = crearProyeccionVista(escena)
   const etiquetas = crearEtiquetasPlanetas(contenedor, planetas.etiquetas)
+  const etiquetasVisor = crearEtiquetasVisor(escena, planetas.etiquetas)
 
   let efectoEstereo = null
+  let diagonalPantalla = DIAGONAL_PREDETERMINADA
   let modo = 'normal'
   let destruido = false
   let contextoPerdido = false
@@ -184,6 +188,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     alCambiar: (estado) => {
       planetas.actualizarAspecto(estado)
       etiquetas.actualizarAspecto(estado)
+      etiquetasVisor.actualizarAspecto(estado)
       if (estado.planetaSeleccionado !== seleccionadoAnterior) {
         seleccionadoAnterior = estado.planetaSeleccionado
         ficha.establecerCuerpo(obtenerCuerpoCeleste(seleccionadoAnterior))
@@ -219,13 +224,19 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     renderizador.setSize(ancho, alto, false)
     restaurarAreaDibujo()
     proyeccion.ajustar(camara, ancho, alto, modo)
+    efectoEstereo?.ajustar({
+      ancho, alto,
+      anchoPantalla: window.screen.width,
+      altoPantalla: window.screen.height,
+      diagonal: diagonalPantalla,
+    })
     ficha.ajustar(ancho, alto)
     apuntado.recalcular()
     seleccion.actualizarMirada()
     necesitaDibujo = true
   }
 
-  // StereoEffect deja el viewport en la mitad derecha; la vista única necesita todo el lienzo.
+  // La vista única ocupa todo el lienzo al salir del visor.
   function restaurarAreaDibujo() {
     const { x: ancho, y: alto } = renderizador.getSize(new Vector2())
     renderizador.setScissorTest(false)
@@ -236,6 +247,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     if (!necesitaDibujo) return
     necesitaDibujo = false
     etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight, ficha.malla)
+    etiquetasVisor.actualizar(camara, modo)
     if (modo === 'vr') efectoEstereo.render(escena, camara)
     else renderizador.render(escena, camara)
   }
@@ -288,15 +300,18 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     establecerModo(nuevoModo) {
       if (destruido || contextoPerdido) return
       if (nuevoModo === modo) return
-      if (nuevoModo === 'vr') efectoEstereo ??= new StereoEffect(renderizador)
+      if (nuevoModo === 'vr') efectoEstereo ??= crearEfectoVisor(renderizador)
       modo = nuevoModo
       apuntado.limpiar()
       ficha.establecerModo(modo)
       if (modo === 'vr') ficha.reubicar(camara)
-      proyeccion.ajustar(camara, contenedor.clientWidth, contenedor.clientHeight, modo)
       seleccion.establecerModo(modo)
-      restaurarAreaDibujo()
-      necesitaDibujo = true
+      ajustarTamano()
+    },
+
+    establecerDiagonalPantalla(diagonal) {
+      diagonalPantalla = diagonal
+      ajustarTamano()
     },
 
     obtenerOrientacion() {
@@ -325,6 +340,8 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       seleccion.destruir()
       ficha.destruir()
       etiquetas.destruir()
+      etiquetasVisor.destruir()
+      efectoEstereo?.destruir()
       detenerCiclo()
       observador.disconnect()
       document.removeEventListener('visibilitychange', alCambiarVisibilidad)
