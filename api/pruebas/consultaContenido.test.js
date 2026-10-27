@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { it } from 'node:test'
-import { crearAplicacion } from './index.js'
-import { crearConsultaSupabase, ErrorConsulta } from './consultaSupabase.js'
-import { comprobarSupabase } from './comprobarSupabase.js'
+import { crearAplicacion } from '../index.js'
+import { crearConsultaSupabase, ErrorConsulta } from '../servicios/consultaSupabase.js'
+import { comprobarSupabase } from '../herramientas/comprobarSupabase.js'
 
 const entornoPrueba = {
   SUPABASE_URL: 'https://proyecto.example.invalid',

@@ -9,7 +9,7 @@ it('un puerto ocupado termina con error y no anuncia que la API está ejecutánd
   const servidorOcupado = createServer().listen(0)
   await once(servidorOcupado, 'listening')
   contexto.after(() => new Promise((resolver) => servidorOcupado.close(resolver)))
-  const procesoServidor = spawn(process.execPath, [fileURLToPath(new URL('../server.js', import.meta.url))], {
+  const procesoServidor = spawn(process.execPath, [fileURLToPath(new URL('../../server.js', import.meta.url))], {
     env: { ...process.env, PORT: String(servidorOcupado.address().port) },
     windowsHide: true,
   })

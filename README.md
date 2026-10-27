@@ -140,6 +140,26 @@ Revisar los ocho cuerpos, ausencia de textos/cifras y disposición del panel. En
 
 El backend Express se ejecuta por separado de Vite. Requiere Node.js 22.12 o posterior compatible con Vite (también Node 24). La interfaz continúa usando sus datos locales; iniciar la API no cambia las fichas ni agrega cuerpos a la escena.
 
+### Organización del backend
+
+```text
+api/
+  index.js                         # Crea Express y monta las rutas.
+  rutas/
+    contenidoCeleste.js            # Endpoints, validación HTTP y respuestas.
+  servicios/
+    consultaSupabase.js            # Consultas públicas y errores de Supabase.
+  pruebas/
+    consultaContenido.test.js      # Contratos HTTP y consultas simuladas.
+    inicioServidor.test.js         # Manejo del puerto ocupado al arrancar.
+  herramientas/
+    comprobarSupabase.js           # Comprobación explícita con la base real.
+```
+
+`server.js`, en la raíz del proyecto, conserva el arranque del servidor. Las rutas utilizan el servicio de consulta; las pruebas y herramientas están separadas del código que atiende peticiones. `npm test` descubre las pruebas en su nueva carpeta y `npm run test:integracion` ejecuta la herramienta de comprobación real.
+
+### Configurar y ejecutar
+
 1. Copia `.env.example` como `.env` en la raíz del proyecto y completa `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. En PowerShell puedes usar `Copy-Item .env.example .env` si todavía no existe `.env`.
 2. Obtén la URL del proyecto en Supabase, **Integrations > Data API**, y la clave pública `sb_publishable_…` en **Settings > API Keys**. Se utiliza la clave pública para respetar los permisos del visitante y RLS; no una clave secreta o `service_role`.
 3. Ejecuta `npm run start:api`, o `npm run dev:api` para reiniciar automáticamente al editar el backend. `PORT` es opcional y por defecto vale 3000.
