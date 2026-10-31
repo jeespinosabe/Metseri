@@ -168,6 +168,14 @@ api/
 2. Obtén la URL del proyecto en Supabase, **Integrations > Data API**, y la clave pública `sb_publishable_…` en **Settings > API Keys**. Se utiliza la clave pública para respetar los permisos del visitante y RLS; no una clave secreta o `service_role`.
 3. Ejecuta `npm run start:api`, o `npm run dev:api` para reiniciar automáticamente al editar el backend. `PORT` es opcional y por defecto vale 3000.
 
+### Acceso administrativo
+
+El formulario está disponible en `/admin`. Configura `ADMIN_USUARIO` y `ADMIN_CONTRASENA` en `.env` antes de iniciar la API; usa una contraseña propia de al menos 12 caracteres y no la guardes en Git. En desarrollo, ejecuta `npm run start:api` y `npm run dev` en terminales separadas. Vite reenvía `/api` al servidor local de Express.
+
+La sesión la crea y valida Express mediante una cookie `HttpOnly`, `SameSite=Strict`, válida durante ocho horas. La ruta `GET /api/admin` requiere sesión; el navegador también comprueba la sesión al abrir directamente `/admin`. Si falta la configuración, el acceso se rechaza con `503`; las credenciales incorrectas reciben `401`. La sesión se guarda en memoria del proceso y se invalida al cerrar sesión o reiniciar la API, por lo que este almacenamiento debe sustituirse por una sesión compartida si se despliega con varias instancias.
+
+Para comprobar el flujo, inicia sesión con los valores configurados, prueba una contraseña incorrecta, abre `/admin` en una ventana privada y, ya autenticado, cierra sesión e intenta consultar `GET /api/admin` otra vez. Las respuestas esperadas son respectivamente acceso autorizado, error de credenciales, formulario sin sesión y `401` tras cerrar sesión.
+
 `.env` está ignorado por Git. El ejemplo solo contiene marcadores; las variables no llevan prefijo `VITE_`. Los comandos cargan `.env` con Node y siguen funcionando si el archivo no existe: `/api/estado` está disponible y las rutas de contenido indican configuración pendiente. No se añade proxy de Vite ni CORS para otros orígenes en este cambio.
 
 ### Rutas y respuestas

@@ -4,6 +4,43 @@
   overflow: hidden;
 }
 
+.enlace-administracion { position: fixed; z-index: 31; top: 18px; right: 22px; padding: 9px 15px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 999px; background: rgb(8 11 18 / 65%); color: #a6b4c0; font-size: .75rem; letter-spacing: .08em; text-decoration: none; }
+.enlace-administracion:hover { border-color: #c7e69d; color: #c7e69d; }
+.admin-cargando { display: grid; width: 100%; height: 100%; place-items: center; color: #c7e69d; }
+.admin-acceso, .admin-modulo { position: fixed; inset: 0; overflow: auto; background: radial-gradient(ellipse at 50% 44%, #17252b 0, #0b1119 42%, #080b12 78%); color: #e8ecf5; font-family: inherit; }
+.admin-acceso { display: grid; min-height: 100%; place-items: center; padding: 76px 22px; }
+.admin-acceso__estrellas { position: fixed; inset: 0; pointer-events: none; opacity: .42; background-image: radial-gradient(1px 1px at 12% 20%, #e8ecf5 60%, transparent), radial-gradient(1px 1px at 78% 13%, #c7e69d 60%, transparent), radial-gradient(1px 1px at 86% 67%, #e8ecf5 60%, transparent), radial-gradient(1px 1px at 19% 78%, #e8ecf5 60%, transparent), radial-gradient(1px 1px at 64% 88%, #a6b4c0 60%, transparent), radial-gradient(1px 1px at 34% 34%, #e8ecf5 60%, transparent); }
+.admin-acceso__marca { position: absolute; top: 28px; left: max(28px, calc((100vw - 1120px) / 2)); color: #e8ecf5; font-size: 1rem; font-weight: 500; letter-spacing: .26em; text-decoration: none; }
+.admin-acceso__marca span { color: #c7e69d; }
+.admin-acceso__tarjeta { position: relative; width: min(100%, 440px); padding: 44px 42px 34px; border: 1px solid rgb(166 180 192 / 17%); border-radius: 20px; background: linear-gradient(145deg, rgb(20 31 39 / 95%), rgb(12 19 27 / 96%)); box-shadow: 0 28px 100px rgb(0 0 0 / 42%), inset 0 1px rgb(255 255 255 / 3%); }
+.admin-acceso__orbita { position: absolute; top: -25px; right: 35px; width: 50px; height: 50px; border: 1px solid rgb(199 230 157 / 45%); border-radius: 50%; box-shadow: 0 0 32px rgb(199 230 157 / 15%); }
+.admin-acceso__orbita::before { position: absolute; inset: 9px -6px; border: 1px solid rgb(199 230 157 / 32%); border-radius: 50%; content: ''; transform: rotate(-28deg); }
+.admin-acceso__orbita span { position: absolute; top: 8px; right: 0; width: 7px; height: 7px; border-radius: 50%; background: #c7e69d; box-shadow: 0 0 12px #c7e69d; }
+.admin-acceso__sobrelinea { margin: 0 0 13px; color: #c7e69d; font-size: .66rem; letter-spacing: .23em; }
+.admin-acceso__tarjeta h1, .admin-modulo__contenido h1 { margin: 0; color: #edf2f5; font-size: clamp(1.8rem, 6vw, 2.35rem); font-weight: 400; letter-spacing: -.045em; }
+.admin-acceso__descripcion { margin: 13px 0 29px; color: #98a9b5; font-size: .9rem; line-height: 1.7; }
+.admin-acceso__tarjeta form { display: grid; gap: 10px; }
+.admin-acceso__tarjeta label { margin-top: 7px; color: #c3ced4; font-size: .79rem; }
+.admin-acceso__tarjeta input { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid #33434b; border-radius: 9px; outline: none; background: #0a1118; color: #edf2f5; font: inherit; }
+.admin-acceso__tarjeta input:focus { border-color: #c7e69d; box-shadow: 0 0 0 3px rgb(199 230 157 / 12%); }
+.admin-acceso__tarjeta button, .admin-modulo__cabecera button { display: flex; min-height: 48px; align-items: center; justify-content: space-between; margin-top: 13px; padding: 0 17px; border: 1px solid #c7e69d; border-radius: 9px; background: #c7e69d; color: #101820; font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; }
+.admin-acceso__tarjeta button:hover { background: #d6efb0; }
+.admin-acceso__tarjeta button:disabled { opacity: .65; cursor: wait; }
+.admin-acceso__tarjeta :focus-visible, .admin-modulo button:focus-visible { outline: 2px solid #e8ecf5; outline-offset: 3px; }
+.admin-acceso__error { margin: 4px 0 0; color: #ffaaa8; font-size: .83rem; line-height: 1.5; }
+.admin-acceso__volver { display: block; margin-top: 24px; color: #91a4af; font-size: .78rem; text-align: center; text-decoration: none; }
+.admin-acceso__volver:hover { color: #c7e69d; }
+.admin-acceso__pie { position: absolute; bottom: 20px; color: #687985; font-size: .6rem; letter-spacing: .22em; }
+.admin-modulo { background: radial-gradient(ellipse at 75% 25%, #18272d 0, #0b1119 48%, #080b12 80%); }
+.admin-modulo__cabecera { display: flex; min-height: 76px; align-items: center; justify-content: space-between; padding: 0 max(28px, calc((100vw - 1120px) / 2)); border-bottom: 1px solid rgb(166 180 192 / 12%); }
+.admin-modulo__cabecera .admin-acceso__marca { position: static; }
+.admin-modulo__cabecera button { min-height: 40px; margin: 0; border-color: #41515b; background: #111b24; color: #d8e1e6; font-size: .78rem; }
+.admin-modulo__contenido { width: min(760px, calc(100% - 48px)); margin: 14vh auto; }
+.admin-modulo__contenido > p:not(.admin-acceso__sobrelinea) { max-width: 540px; margin-top: 18px; color: #98a9b5; line-height: 1.7; }
+.admin-modulo__estado { display: inline-flex; align-items: center; gap: 10px; margin-top: 25px; padding: 11px 15px; border: 1px solid rgb(199 230 157 / 20%); border-radius: 999px; color: #c7e69d; font-size: .78rem; }
+.admin-modulo__estado span { width: 7px; height: 7px; border-radius: 50%; background: #c7e69d; box-shadow: 0 0 10px #c7e69d; }
+@media (max-width: 480px) { .admin-acceso__tarjeta { padding: 38px 25px 29px; } .admin-modulo__cabecera { padding-inline: 22px; } }
+
 .escena-estelar {
   position: relative;
   width: 100%;
