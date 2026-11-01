@@ -41,6 +41,11 @@ La aplicación SHALL mostrar una única ficha del cuerpo seleccionado, entre los
 
 La ficha de cualquiera de los doce cuerpos SHALL conservar la estructura de identidad e imagen, subtítulo y descripción, datos principales, «¿Sabías que...?» y «Descubrir libros». Su presentación SHALL seguir la referencia: nombre grande, imagen pequeña arriba a la derecha, cuadrícula de datos en dos columnas y separadores discretos. En esta fase subtítulo, descripción, cifras, curiosidades y texto bibliográfico SHALL permanecer vacíos, con espacios estáticos. SHALL NOT mostrarse párrafos o cifras astronómicas de producción, texto ficticio, ceros que simulen datos ni animación de carga. Nombre, clasificación, relación planetaria de los satélites, imagen y rótulos de estructura SHALL permanecer identificables.
 
+#### Scenario: Revisar los ocho planetas
+- **WHEN** se abre cualquier ficha
+- **THEN** aparece su identidad e imagen con espacios reservados para el contenido pendiente
+- **AND** no aparecen párrafos ni cifras astronómicas de producción
+
 #### Scenario: Revisar los doce cuerpos
 - **WHEN** se abre cualquier ficha de los ocho planetas o los cuatro satélites
 - **THEN** aparece su identidad e imagen con espacios reservados para el contenido pendiente
@@ -57,6 +62,10 @@ La ficha SHALL conservar cuatro espacios de datos en dos columnas. Para los plan
 #### Scenario: Consultar los datos pendientes
 - **WHEN** se observa el bloque de datos de cualquier cuerpo
 - **THEN** hay cuatro etiquetas con sus unidades y valores reservados en dos columnas
+
+#### Scenario: Contrato de satélite futuro
+- **WHEN** se valida un registro sintético de satélite
+- **THEN** admite sus cuatro campos propios sin exigir distancia al Sol ni incorporarse a la escena
 
 #### Scenario: Datos de un satélite incorporado
 - **WHEN** se abre la sección de datos de Luna, Europa, Titán o Tritón en vista única o VR
