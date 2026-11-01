@@ -195,8 +195,8 @@ export function EscenaEstelar() {
         ref={superficieRef}
         role="application"
         aria-label={modo === 'vr'
-          ? 'Cielo con planetas en VR. Mira un planeta y toca para abrir su ficha frente a ti. Mira una sección o una flecha y toca para navegar. Tocar el área de lectura mantiene la ficha abierta. Usa la equis para cerrar, o mira fuera de la ficha y toca para deseleccionar. Arrastra o usa las flechas para mirar manualmente.'
-          : 'Cielo con planetas. Pasa el mouse sobre un planeta para iluminarlo. Haz clic o toca para seleccionarlo y leer su ficha; pulsa de nuevo o toca el fondo para cerrar y deseleccionar. Arrastra o usa las flechas para mirar alrededor.'}
+          ? 'Cielo con planetas y lunas en VR. Mira un cuerpo celeste y toca para abrir su ficha frente a ti. Mira una sección o una flecha y toca para navegar. Tocar el área de lectura mantiene la ficha abierta. Usa la equis para cerrar, o mira fuera de la ficha y toca para deseleccionar. Arrastra o usa las flechas para mirar manualmente.'
+          : 'Cielo con planetas y lunas. Pasa el mouse sobre un cuerpo celeste para iluminarlo. Haz clic o toca para seleccionarlo y leer su ficha; pulsa de nuevo o toca el fondo para cerrar y deseleccionar. Arrastra o usa las flechas para mirar alrededor.'}
         tabIndex={mensajeError ? -1 : 0}
       />
       {mensajeError ? (

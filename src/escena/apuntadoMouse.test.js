@@ -79,3 +79,17 @@ it('mouse, selección y mirada permanecen independientes al cambiar de objetivo 
   assert.equal(cambios.length, cantidad)
   seleccion.destruir()
 })
+
+it('el mouse apunta una luna y salir limpia solo el apuntado, conservando la selección', (t) => {
+  const { apuntado, emitir, cambios } = crearEntorno(t)
+  const seleccion = crearSeleccionPlanetas({ detector: { detectarPosicion: () => 'europa' } })
+  t.after(() => seleccion.destruir())
+  emitir('pointermove')
+  seleccion.actualizarMouse(cambios.at(-1).posicion, cambios.at(-1).area)
+  assert.deepEqual(seleccion.obtenerEstado(), { planetaApuntado: 'europa', planetaSeleccionado: null })
+  seleccion.activar({}, {})
+  emitir('pointerleave')
+  seleccion.actualizarMouse(cambios.at(-1).posicion, cambios.at(-1).area)
+  assert.deepEqual(seleccion.obtenerEstado(), { planetaApuntado: null, planetaSeleccionado: 'europa' })
+  apuntado.destruir()
+})

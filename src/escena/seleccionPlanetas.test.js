@@ -2,6 +2,9 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { DoubleSide, Group, Mesh, MeshBasicMaterial, PerspectiveCamera, RingGeometry, SphereGeometry, Vector3 } from 'three'
 import { crearDetectorPlanetas, crearSeleccionPlanetas } from './seleccionPlanetas.js'
+import { calcularProyeccionVista, obtenerDireccionVista } from './proyeccionVista.js'
+import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
+import { crearEstadoLectura } from './contenidoFicha.js'
 
 function crearEntorno(t) {
   const camara = new PerspectiveCamera(70, 2, .1, 1000)
@@ -30,6 +33,21 @@ function proyectar(camara, posicion, rectangulo) {
 }
 
 describe('detección planetaria', () => {
+  it('detecta una luna lateral con la proyección esférica aunque la cruz mire su planeta', (t) => {
+    const { camara, agregar, seleccionables } = crearEntorno(t)
+    agregar('tierra', [0, 0, -10])
+    const luna = agregar('luna', [7, -2, -10])
+    const rectangulo = { left: 40, top: 20, width: 1500, height: 600 }
+    const parametros = calcularProyeccionVista(rectangulo.width, rectangulo.height)
+    const detector = crearDetectorPlanetas({ camara, seleccionables, obtenerDireccion: (coordenadas) => obtenerDireccionVista(coordenadas, parametros) })
+    const divisor = luna.position.length() - luna.position.z
+    const coordenadas = {
+      clientX: rectangulo.left + rectangulo.width / 2 + luna.position.x / divisor / parametros.escala * rectangulo.height / 2,
+      clientY: rectangulo.top + rectangulo.height / 2 - luna.position.y / divisor / parametros.escala * rectangulo.height / 2,
+    }
+    assert.equal(detector.detectarMirada(), 'tierra')
+    assert.equal(detector.detectarPosicion(coordenadas, rectangulo), 'luna')
+  })
   it('selecciona por coordenadas fuera del centro usando el rectángulo real del lienzo', (t) => {
     const { camara, agregar, detector } = crearEntorno(t)
     agregar('tierra', [0, 0, -10])
@@ -99,6 +117,43 @@ function crearSeleccionSimulada() {
 }
 
 describe('selección y mirada independientes', () => {
+  it('mantiene una sola ficha al seleccionar sucesivamente planetas y las cuatro lunas', () => {
+    const lectura = crearEstadoLectura()
+    let objetivo = null
+    const seleccion = crearSeleccionPlanetas({
+      detector: { detectarPosicion: () => objetivo },
+      alCambiar: ({ planetaSeleccionado }) => {
+        const cuerpo = obtenerCuerpoCeleste(planetaSeleccionado)
+        lectura.actualizar(cuerpo?.id ?? null, cuerpo ? 4 : 0)
+      },
+    })
+    for (const id of ['tierra', 'luna', 'jupiter', 'europa', 'saturno', 'titan', 'neptuno', 'triton']) {
+      objetivo = id
+      seleccion.activar({}, {})
+      assert.equal(seleccion.obtenerEstado().planetaSeleccionado, id)
+      assert.deepEqual(lectura.obtenerEstado(), { cuerpoId: id, pagina: 0, total: 4 })
+      lectura.irA(3)
+    }
+    seleccion.activar({}, {})
+    assert.equal(seleccion.obtenerEstado().planetaSeleccionado, null)
+    assert.equal(lectura.obtenerEstado().cuerpoId, null)
+    seleccion.destruir()
+  })
+
+  it('en VR cada luna comparte el toque global y la prioridad de deselección con los planetas', () => {
+    const { seleccion, mirar, pulsar } = crearSeleccionSimulada()
+    seleccion.establecerModo('vr')
+    for (const id of ['luna', 'europa', 'titan', 'triton']) {
+      mirar(id)
+      assert.equal(seleccion.obtenerEstado().planetaSeleccionado, null)
+      pulsar('tierra')
+      assert.equal(seleccion.obtenerEstado().planetaSeleccionado, id)
+      mirar('saturno')
+      pulsar(id)
+      assert.deepEqual(seleccion.obtenerEstado(), { planetaApuntado: 'saturno', planetaSeleccionado: null })
+    }
+    seleccion.destruir()
+  })
   it('en vista única selecciona, sustituye y quita por cuerpo o fondo', () => {
     const { seleccion, mirar, pulsar } = crearSeleccionSimulada()
     mirar('jupiter')

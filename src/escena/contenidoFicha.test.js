@@ -31,6 +31,27 @@ it('parte palabras largas sin perder caracteres ni duplicar espacios', () => {
   assert.deepEqual(dividirLineas('uno dos tres', (t) => t.length, 7), ['uno dos', 'tres'])
 })
 
+it('las cuatro fichas de satélite usan sus datos y cambiar a un planeta reinicia la lectura', () => {
+  const lectura = crearEstadoLectura()
+  for (const cuerpo of CUERPOS_CELESTES.filter((registro) => registro.tipo === 'satelite')) {
+    const paginas = crearPaginasFicha(cuerpo, contexto)
+    lectura.actualizar(cuerpo.id, paginas.length)
+    lectura.irA(1)
+    const textos = paginas[1].elementos.filter((elemento) => elemento.tipo === 'texto').map((elemento) => elemento.texto)
+    assert.ok(textos.includes('Distancia al planeta'))
+    assert.ok(textos.includes('Período de rotación'))
+    assert.ok(textos.includes('Período orbital'))
+    assert.ok(!textos.includes('Distancia al Sol'))
+    assert.ok(paginas.every((pagina) => pagina.elementos.some((elemento) => elemento.tipo === 'espacio')))
+    const planeta = CUERPOS_CELESTES.find((registro) => registro.id === cuerpo.planetaId)
+    lectura.actualizar(planeta.id, 4)
+    assert.deepEqual(lectura.obtenerEstado(), { cuerpoId: planeta.id, pagina: 0, total: 4 })
+    const datosPlaneta = crearPaginasFicha(planeta, contexto)[1].elementos.map((elemento) => elemento.texto)
+    assert.ok(datosPlaneta.includes('Distancia al Sol'))
+    assert.ok(datosPlaneta.includes('Un año dura'))
+  }
+})
+
 it('lectura conserva página al recentrar, reinicia al cambiar cuerpo/modo y limita ambos extremos', () => {
   const cambios = []
   const estado = crearEstadoLectura((valor) => cambios.push(valor))

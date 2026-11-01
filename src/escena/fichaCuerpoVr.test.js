@@ -10,7 +10,8 @@ function preparar(t) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
   const imagenes = []
   let dibujos = 0
-  const contexto = { font: '', fillRect() { dibujos += 1 }, strokeRect() {}, fillText() {}, drawImage() {}, measureText(texto) { return { width: texto.length * parseFloat(this.font) * .5 } } }
+  const textos = []
+  const contexto = { font: '', fillRect() { dibujos += 1 }, strokeRect() {}, fillText(texto) { textos.push(texto) }, drawImage() {}, measureText(texto) { return { width: texto.length * parseFloat(this.font) * .5 } } }
   const lienzo = { width: 0, height: 0, getContext: () => contexto }
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: () => lienzo } })
   Object.defineProperty(globalThis, 'Image', { configurable: true, value: class ImagenSimulada { constructor() { imagenes.push(this) } } })
@@ -18,8 +19,35 @@ function preparar(t) {
   const cambios = []
   const ficha = crearFichaCuerpoVr({ alCambiarLectura: (estado) => cambios.push(estado) })
   t.after(() => ficha.destruir())
-  return { ficha, cambios, imagenes, lienzo, obtenerDibujos: () => dibujos }
+  return { ficha, cambios, imagenes, lienzo, textos, obtenerDibujos: () => dibujos }
 }
+
+it('cada luna conserva identidad, relación e imagen al navegar y alternar modos', (t) => {
+  const { ficha, textos, imagenes } = preparar(t)
+  const camara = new PerspectiveCamera(70, 2, .1, 1000)
+  ficha.establecerModo('vr')
+  for (const cuerpo of CUERPOS_CELESTES.filter((registro) => registro.tipo === 'satelite')) {
+    textos.length = 0
+    ficha.establecerCuerpo(cuerpo)
+    ficha.reubicar(camara)
+    assert.ok(textos.includes(cuerpo.nombre))
+    assert.ok(textos.includes(cuerpo.clasificacion.toUpperCase()))
+    assert.equal(imagenes.at(-1).src, cuerpo.imagen)
+    assert.deepEqual(ficha.obtenerLectura(), { cuerpoId: cuerpo.id, pagina: 0, total: 4 })
+    ficha.mostrarSeccion(1)
+    assert.ok(textos.includes('Distancia al planeta'))
+    ficha.mostrarSeccion(3)
+    ficha.reubicar(camara)
+    assert.equal(ficha.obtenerLectura().pagina, 3)
+    ficha.establecerModo('normal')
+    assert.equal(ficha.obtenerLectura().cuerpoId, cuerpo.id)
+    assert.equal(ficha.obtenerLectura().pagina, 0)
+    assert.equal(ficha.malla.visible, false)
+    ficha.establecerModo('vr')
+    ficha.establecerCuerpo(CUERPOS_CELESTES.find((registro) => registro.id === cuerpo.planetaId))
+    assert.equal(ficha.obtenerLectura().cuerpoId, cuerpo.planetaId)
+  }
+})
 
 it('un plano compartido permite apuntar acciones reales y conserva la lectura al reubicar', (t) => {
   const { ficha, lienzo } = preparar(t)

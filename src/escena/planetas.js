@@ -27,6 +27,10 @@ const PLANETAS = [
   { id: 'urano', nombre: 'Urano', tipo: '', giro: 225, elevacion: 26, radio: 5.7, color: '#86cccf' },
   { id: 'mercurio', nombre: 'Mercurio', tipo: '', giro: 270, elevacion: -20, radio: 3.5, color: '#93897e' },
   { id: 'venus', nombre: 'Venus', tipo: '', giro: 315, elevacion: 14, radio: 5, color: '#dfb678' },
+  { id: 'luna', nombre: 'Luna', tipo: 'Satélite de la Tierra', planetaId: 'tierra', giro: 14, elevacion: -15, radio: 2.2, color: '#b8bab9' },
+  { id: 'europa', nombre: 'Europa', tipo: 'Satélite de Júpiter', planetaId: 'jupiter', giro: 72, elevacion: -28, radio: 2.2, color: '#ded6b9' },
+  { id: 'titan', nombre: 'Titán', tipo: 'Satélite de Saturno', planetaId: 'saturno', giro: 168, elevacion: 42, radio: 2.8, color: '#d4a254' },
+  { id: 'triton', nombre: 'Tritón', tipo: 'Satélite de Neptuno', planetaId: 'neptuno', giro: 198, elevacion: -32, radio: 2.1, color: '#bfcac8' },
 ]
 
 function crearAleatorio(semilla) {
@@ -48,6 +52,54 @@ function dibujarContinente(contexto, puntos, color) {
   contexto.fill()
 }
 
+function dibujarSuperficieSatelite(contexto, id, aleatorio) {
+  if (id === 'europa') {
+    // Fracturas largas, con ramificaciones y sin regenerarse al mirar alrededor.
+    for (let fractura = 0; fractura < 46; fractura += 1) {
+      const x = aleatorio() * 512
+      const y = aleatorio() * 256
+      contexto.strokeStyle = fractura % 3 ? 'rgba(118,64,43,.52)' : 'rgba(248,236,203,.7)'
+      contexto.lineWidth = fractura % 3 ? .7 + aleatorio() * 1.1 : 3
+      contexto.beginPath()
+      contexto.moveTo(x, y)
+      contexto.bezierCurveTo(x + 28, y - 36, x + 52, y + 45, x + 95, y + (aleatorio() - .5) * 160)
+      contexto.stroke()
+    }
+  } else if (id === 'titan') {
+    // Capas suaves de bruma, sin dibujar continentes o bandas de gigante gaseoso.
+    for (let capa = 0; capa < 80; capa += 1) {
+      contexto.fillStyle = capa % 2 ? 'rgba(255,222,145,.025)' : 'rgba(114,72,29,.025)'
+      contexto.beginPath()
+      contexto.ellipse(aleatorio() * 512, aleatorio() * 256, 80 + aleatorio() * 170, 12 + aleatorio() * 36, 0, 0, Math.PI * 2)
+      contexto.fill()
+    }
+  } else {
+    const lunar = id === 'luna'
+    for (let region = 0; region < 28; region += 1) {
+      contexto.fillStyle = lunar ? 'rgba(63,70,76,.23)' : region % 2 ? 'rgba(190,139,132,.2)' : 'rgba(225,235,216,.28)'
+      contexto.beginPath()
+      contexto.ellipse(aleatorio() * 512, aleatorio() * 256, 8 + aleatorio() * 40, 6 + aleatorio() * 27, aleatorio() * Math.PI, 0, Math.PI * 2)
+      contexto.fill()
+    }
+    if (!lunar) {
+      contexto.fillStyle = 'rgba(237,235,219,.6)'
+      contexto.fillRect(0, 216, 512, 40)
+    }
+    for (let crater = 0; crater < (lunar ? 170 : 32); crater += 1) {
+      const x = aleatorio() * 512
+      const y = aleatorio() * 256
+      const radio = 1 + aleatorio() * (lunar ? 6 : 3)
+      contexto.fillStyle = lunar ? 'rgba(42,46,52,.24)' : 'rgba(91,111,112,.14)'
+      contexto.beginPath()
+      contexto.ellipse(x, y, radio, radio * .7, 0, 0, Math.PI * 2)
+      contexto.fill()
+      contexto.strokeStyle = 'rgba(247,245,231,.35)'
+      contexto.lineWidth = .65
+      contexto.stroke()
+    }
+  }
+}
+
 function crearTexturaPlaneta(planeta, indice) {
   const lienzo = document.createElement('canvas')
   lienzo.width = 1024
@@ -58,7 +110,9 @@ function crearTexturaPlaneta(planeta, indice) {
   contexto.fillStyle = planeta.color
   contexto.fillRect(0, 0, 512, 256)
 
-  if (planeta.id === 'tierra') {
+  if (planeta.planetaId) {
+    dibujarSuperficieSatelite(contexto, planeta.id, aleatorio)
+  } else if (planeta.id === 'tierra') {
     dibujarContinente(contexto, [[.08,.24],[.14,.14],[.23,.16],[.29,.27],[.25,.37],[.21,.42],[.19,.52],[.15,.4],[.1,.37]], '#75985a')
     dibujarContinente(contexto, [[.22,.48],[.29,.52],[.32,.64],[.28,.8],[.25,.9],[.23,.73],[.2,.58]], '#648b45')
     dibujarContinente(contexto, [[.43,.39],[.49,.32],[.56,.37],[.59,.5],[.55,.66],[.5,.76],[.47,.62],[.44,.53]], '#b5a66b')
@@ -283,7 +337,7 @@ export function crearPlanetas() {
       grupo.add(halo)
       cuerpos.set(planeta.id, { materiales: materialesCuerpo, halo, resplandor, esTierra, aspecto: 'normal' })
       raiz.add(grupo)
-      etiquetas.push({ id: planeta.id, nombre: planeta.nombre, tipo: planeta.tipo, posicion: grupo.position, radio: planeta.radio, contorno })
+      etiquetas.push({ id: planeta.id, nombre: planeta.nombre, tipo: planeta.tipo, planetaId: planeta.planetaId ?? null, posicion: grupo.position, radio: planeta.radio, contorno })
     })
   } catch (error) {
     destruir()

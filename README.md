@@ -1,6 +1,6 @@
 # Metseri
 
-Experiencia de astronomía en el navegador: un cielo de estrellas envolvente con los ocho planetas del sistema solar en 3D, hecho con React, Vite y Three.js.
+Experiencia de astronomía en el navegador: un cielo de estrellas envolvente con los ocho planetas del sistema solar y cuatro satélites naturales en 3D, hecho con React, Vite y Three.js.
 
 ## Cómo ejecutarla
 
@@ -29,13 +29,15 @@ Otros comandos disponibles:
 3. Redimensiona la ventana: el cielo debe seguir cubriendo toda el área sin deformarse ni mostrar barras de desplazamiento.
 4. Si el navegador no puede crear el contexto gráfico, o lo pierde, aparece un mensaje con el botón **Reintentar**.
 
-### Planetas de la escena
+### Planetas y satélites de la escena
 
 Mercurio, Venus, Tierra, Marte, Júpiter, Saturno, Urano y Neptuno están repartidos alrededor del observador, a distintas alturas. La Tierra se ve al iniciar; recorre también los lados y la parte posterior para encontrar los demás. Sus superficies se generan en la aplicación: continentes y océanos, bandas, cráteres ilustrados y los anillos de Saturno permiten distinguir los cuerpos.
 
-La disposición es compositiva: posiciones, distancias y tamaños no están a escala astronómica. Los planetas permanecen quietos y conservan su distribución al recentrar, redimensionar o cambiar de modo.
+La escena se completa con Luna junto a la Tierra, Europa junto a Júpiter, Titán junto a Saturno y Tritón junto a Neptuno. Cada luna tiene una superficie ilustrada propia y menor tamaño que su planeta; Titán queda separado de los anillos de Saturno. Puedes apuntar y seleccionar individualmente los doce cuerpos.
 
-Cada planeta visible muestra su nombre junto al cuerpo. Las etiquetas acompañan la vista al girar y no bloquean el arrastre ni la selección; en VR aparece una copia por ojo. La vista única utiliza una proyección esférica que conserva los contornos circulares de los planetas también en los extremos de una pantalla ancha.
+La disposición es compositiva: posiciones, distancias y tamaños no están a escala astronómica. Los doce cuerpos permanecen quietos y conservan su distribución al recentrar, redimensionar o cambiar de modo.
+
+Cada cuerpo visible muestra su nombre; las lunas indican además «Satélite de …» y el nombre de su planeta. Las etiquetas acompañan la vista al girar y no bloquean el arrastre ni la selección; en VR aparece una copia por ojo. La vista única utiliza una proyección esférica que conserva los contornos circulares también en los extremos de una pantalla ancha.
 
 Las etiquetas se presentan sin cápsula: un punto y una guía discreta acompañan al nombre y su clasificación. Al apuntar o seleccionar, el nombre cambia de color y el cuerpo recibe un resplandor de contorno. No aparece un recuadro con «Haz clic para explorar». Los planetas tienen mayor presencia y relieve, y Saturno muestra bandas concéntricas y una separación entre sus anillos.
 
@@ -50,6 +52,8 @@ Las etiquetas se presentan sin cápsula: un punto y una guía discreta acompaña
 | Seleccionar en vista única | Haz clic o toca directamente un planeta, aunque esté fuera de la cruz central. Se ilumina de forma persistente y abre su ficha. |
 | Cambiar la selección en vista única | Pulsa otro planeta para trasladarle la selección. Solo puede haber uno seleccionado. |
 | Deseleccionar en vista única | Pulsa otra vez el planeta seleccionado, toca el fondo o usa el cierre de la ficha. |
+
+Estas acciones también se aplican a las cuatro lunas. Hay una sola selección y una sola ficha entre los doce cuerpos: pulsar directamente una luna después de un planeta cambia la selección y presenta los datos de esa luna.
 
 El observador permanece siempre en el centro: no hay desplazamiento por el espacio ni movimiento automático.
 
@@ -110,13 +114,13 @@ Sin la API Express ni ninguna configuración de instalación (PWA); solo el serv
    - **Un túnel con HTTPS válido** (Android o iPhone): por ejemplo `cloudflared tunnel --url http://localhost:5173 --http-host-header localhost:5173` o `ngrok http 5173 --host-header=localhost:5173`, y abre en el móvil la dirección `https://…` que muestre. Vite rechaza (error 403) las peticiones cuyo encabezado `Host` no sea el local, por eso se reescribe a `localhost:5173`.
 3. Pulsa **Entrar VR** y acepta el permiso de orientación si el navegador lo solicita. Gira el teléfono: las dos vistas deben seguirlo. Para probar la alternativa manual, rechaza el permiso y arrastra con el dedo.
 4. Con el visor, apunta a un planeta y usa su botón táctil: comprueba selección con halo en ambos ojos y que la cabeza sigue dirigiendo la vista. Mira al fondo y pulsa de nuevo: debe desaparecer la selección. Repite mirando otro planeta; el primer toque quita la selección anterior y el siguiente selecciona el nuevo objetivo.
-5. Comprueba los ocho cuerpos, anillos y superficies, rota la pantalla, recentra y repite entrada/salida y regreso desde segundo plano. Repite la selección con sensores rechazados y control manual. Registra navegador, dispositivo y visor empleados; las comprobaciones físicas que no se realicen deben quedar pendientes.
+5. Comprueba los doce cuerpos, anillos y superficies, incluidas Luna–Tierra, Europa–Júpiter, Titán–Saturno y Tritón–Neptuno. Apunta a cada luna, toca lejos de su imagen y verifica su ficha y planeta principal en ambos ojos. Tocar mirando fuera de la ficha quita la selección; un toque posterior puede seleccionar otro cuerpo. Rota la pantalla, recentra y repite entrada/salida y regreso desde segundo plano. Repite la selección con sensores rechazados y control manual. Registra navegador, dispositivo y visor empleados; las comprobaciones físicas que no se realicen deben quedar pendientes.
 
 Los pasos 2 y 3 requieren un móvil físico y, en su caso, las herramientas indicadas (`adb`, `cloudflared` o `ngrok`), que no forman parte del proyecto. Los eventos de sensor simulados en un navegador de escritorio no acreditan la compatibilidad con un visor real.
 
 ## Alcance
 
-- Las estrellas y los ocho planetas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Hay nombres y fichas educativas; no hay órbitas, rotación automática, Sol, lunas ni constelaciones.
+- Las estrellas, los ocho planetas y las cuatro lunas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Hay nombres y fichas educativas; no hay órbitas, rotación automática, Sol, otros satélites ni constelaciones.
 - La escena funciona por completo en el cliente: no usa la API Express, catálogos ni imágenes remotas.
 - Esta versión **no incluye instalación como aplicación (PWA) ni uso sin conexión**; quedan para un cambio posterior.
 
@@ -130,7 +134,9 @@ En escritorio se muestra un panel lateral; en móvil conserva desplazamiento pro
 
 En VR la tarjeta aparece **frente a la mirada** y sus pestañas permiten elegir una sección sin pasar por las anteriores. El área de lectura no reacciona a toques; las flechas y × son acciones separadas. Recentrar recupera la tarjeta al frente conservando la sección y selección. Entrar o salir de VR conserva el cuerpo y reinicia la sección. Mirar un control sin tocar no lo activa; un toque mantiene el sensor activo o pendiente y un arrastre confirmado sigue pasando a control manual.
 
-Las imágenes optimizadas de public/imagenes/planetas/ se sirven localmente y conservan su URL original, texto alternativo y crédito. No se añaden satélites a la escena; se mantiene preparado su contrato de datos para otro cambio.
+Las imágenes optimizadas de `public/imagenes/planetas/` y `public/imagenes/satelites/` se sirven localmente y conservan su URL original, texto alternativo y crédito. Las cuatro lunas tienen fichas propias que identifican su planeta principal tanto en pantalla como en VR. Las fotos de los satélites proceden de NASA, Galileo, Cassini y Voyager 2; las copias locales se han recortado y reducido para las fichas.
+
+Los registros de satélite usan `tipo: 'satelite'`, `planetaId` y `planetaPrincipal`. Sus cuatro datos son diámetro (km), distancia al planeta (km), período de rotación (horas o días terrestres) y período orbital (días terrestres). Los valores `diametroKm`, `distanciaPlanetaKm`, `rotacionHoras` y `orbitaDias` siguen en `null`; no se muestra distancia al Sol para las lunas ni se completa contenido editorial mediante la API.
 
 ### Descubrir libros
 
@@ -138,7 +144,7 @@ Se conserva el encabezado y el espacio del contenido, sin invitaciones, títulos
 
 ### Comprobar las fichas
 
-Revisar los ocho cuerpos, ausencia de textos/cifras y disposición del panel. En VR comprobar apertura al frente, estado de pestaña actual, salto directo entre secciones, flechas, cierre ×, toque inofensivo sobre lectura y deselección mirando fuera. Repetir con teclado/arrastre, sensor denegado, recentrado y cambio de modo. Las comprobaciones del navegador no acreditan la comodidad óptica, sensores reales ni botón físico; requieren teléfono y visor cuando estén disponibles.
+Revisar los doce cuerpos, ausencia de textos/cifras y disposición del panel con la API detenida. Abrir por separado Luna, Europa, Titán y Tritón y comprobar nombre, imagen, relación planetaria y rótulos de satélite; cambiar después a un planeta y verificar que recupera sus rótulos. Revisar también las cuatro parejas con ambas etiquetas legibles y Titán separado de los anillos. En VR comprobar apertura al frente, estado de pestaña actual, salto directo entre secciones, flechas, cierre ×, toque inofensivo sobre lectura y deselección mirando fuera. Repetir con teclado/arrastre, sensor denegado, recentrado y cambio de modo. Las comprobaciones del navegador no acreditan la comodidad óptica, sensores reales ni botón físico; requieren teléfono y visor cuando estén disponibles.
 
 ## API de consulta de contenido
 

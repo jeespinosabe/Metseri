@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { existsSync, statSync } from 'node:fs'
-import { CUERPOS_CELESTES, obtenerDatosPrincipales } from './cuerposCelestes.js'
+import { CUERPOS_CELESTES, obtenerCuerpoCeleste, obtenerDatosPrincipales } from './cuerposCelestes.js'
 import { abrirFichaBibliografica, obtenerLibrosCuerpo } from './librosCuerposCelestes.js'
 
-it('los ocho cuerpos conservan su identidad e imagen y dejan vacío el contenido editorial', () => {
-  assert.equal(CUERPOS_CELESTES.length, 8)
-  assert.equal(new Set(CUERPOS_CELESTES.map((c) => c.id)).size, 8)
+it('los doce cuerpos conservan su identidad e imagen y dejan vacío el contenido editorial', () => {
+  assert.equal(CUERPOS_CELESTES.length, 12)
+  assert.equal(new Set(CUERPOS_CELESTES.map((c) => c.id)).size, 12)
+  assert.equal(CUERPOS_CELESTES.filter((c) => c.tipo === 'planeta').length, 8)
   for (const cuerpo of CUERPOS_CELESTES) {
     assert.equal(cuerpo.descripcion, '')
     assert.equal(cuerpo.subtitulo, '')
@@ -21,7 +22,25 @@ it('los ocho cuerpos conservan su identidad e imagen y dejan vacío el contenido
   }
 })
 
-it('formatea rotación retrógrada y admite datos de un satélite sin añadirlo al catálogo', () => {
+it('relaciona las cuatro lunas con sus planetas y presenta datos propios sin inventar valores', () => {
+  const parejas = { luna: 'tierra', europa: 'jupiter', titan: 'saturno', triton: 'neptuno' }
+  assert.deepEqual(CUERPOS_CELESTES.filter((c) => c.tipo === 'satelite').map((c) => c.id), Object.keys(parejas))
+  for (const [id, planetaId] of Object.entries(parejas)) {
+    const cuerpo = obtenerCuerpoCeleste(id)
+    const planeta = obtenerCuerpoCeleste(planetaId)
+    assert.equal(cuerpo.planetaId, planeta.id)
+    assert.equal(cuerpo.planetaPrincipal, planeta.nombre)
+    assert.ok(cuerpo.clasificacion.includes(planeta.nombre))
+    assert.equal(cuerpo.distanciaPlanetaKm, null)
+    assert.equal(cuerpo.distanciaSolMillonesKm, undefined)
+    const datos = obtenerDatosPrincipales(cuerpo)
+    assert.deepEqual(datos.map((dato) => dato.etiqueta), ['Diámetro', 'Distancia al planeta', 'Período de rotación', 'Período orbital'])
+    assert.deepEqual(datos.map((dato) => dato.unidad), ['km', 'km', 'horas', 'días terrestres'])
+    assert.ok(datos.every((dato) => dato.valor === ''))
+  }
+})
+
+it('formatea rotación retrógrada y admite valores de un satélite', () => {
   const retrograda = obtenerDatosPrincipales({ tipo: 'planeta', rotacionHoras: -72 })
   assert.equal(retrograda[2].valor, '3')
   assert.equal(retrograda[2].unidad, 'días terrestres')
@@ -32,7 +51,6 @@ it('formatea rotación retrógrada y admite datos de un satélite sin añadirlo 
   assert.equal(datos[1].unidad, 'km')
   assert.equal(datos[3].valor, '3')
   assert.equal(datos[3].unidad, 'días terrestres')
-  assert.equal(CUERPOS_CELESTES.filter((c) => c.tipo !== 'planeta').length, 0)
 })
 
 it('ofrece únicamente asociaciones utilizables y abre antes de salir de VR', () => {
