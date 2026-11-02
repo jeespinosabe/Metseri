@@ -13,7 +13,6 @@ import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
 import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
-import { crearConsultaContenido } from '../servicios/consultaContenido.js'
 
 const MENSAJE_SIN_RENDERIZADO =
   'Tu navegador no pudo iniciar los gráficos necesarios para mostrar el cielo. Comprueba que la aceleración gráfica esté activada e inténtalo de nuevo.'
@@ -56,12 +55,7 @@ export function EscenaEstelar() {
   const [configurandoVisor, setConfigurandoVisor] = useState(false)
   const [instruccionVrVisible, setInstruccionVrVisible] = useState(false)
   const [lectura, setLectura] = useState({ cuerpoId: null, pagina: 0, total: 0 })
-  const [consultaContenido] = useState(() => crearConsultaContenido())
-  const contenidoRemoto = useSyncExternalStore(consultaContenido.suscribirse, consultaContenido.obtenerEstado)
-  const [libroBloqueado, setLibroBloqueado] = useState(null)
-  const cuerpoLocal = obtenerCuerpoCeleste(lectura.cuerpoId)
-  const contenido = contenidoRemoto.slug === cuerpoLocal?.id ? contenidoRemoto : { fase: 'cargando', ficha: null }
-  const cuerpo = contenido.ficha ?? cuerpoLocal
+  const cuerpo = obtenerCuerpoCeleste(lectura.cuerpoId)
   const { intento, mensajeError } = estado
   const enVertical = useSyncExternalStore(suscribirseAOrientacion, estaEnVertical)
 
@@ -77,14 +71,6 @@ export function EscenaEstelar() {
     campoRef.current?.recentrarFicha()
   }, [])
 
-  const abrirLibro = useCallback((libro) => {
-    const fichaActual = consultaContenido.obtenerEstado().ficha
-    const abierto = abrirFichaBibliografica(libro, {
-      salirVr: campoRef.current?.obtenerModo() === 'vr' ? salirModoVr : undefined,
-    })
-    setLibroBloqueado(abierto ? null : { ficha: fichaActual, libro })
-  }, [consultaContenido, salirModoVr])
-
   useEffect(() => {
     if (mensajeError) return undefined
 
@@ -95,8 +81,7 @@ export function EscenaEstelar() {
       campo = crearCampoEstelar(superficieRef.current, {
         alCambiarFicha: setLectura,
         alCambiarInstruccionVr: setInstruccionVrVisible,
-        alSolicitarLibro: abrirLibro,
-        alReintentarFicha: consultaContenido.reintentar,
+        alSolicitarLibro: (libro) => abrirFichaBibliografica(libro, { salirVr: salirModoVr }),
         alPerderContexto: () => {
           setLectura({ cuerpoId: null, pagina: 0, total: 0 })
           setModo('normal')
@@ -158,18 +143,7 @@ export function EscenaEstelar() {
       pantallaRef.current = null
       campo?.destruir()
     }
-  }, [intento, mensajeError, abrirLibro, consultaContenido])
-
-  useEffect(() => {
-    consultaContenido.seleccionar(mensajeError ? null : cuerpoLocal)
-    return () => { consultaContenido.cancelar() }
-  }, [consultaContenido, cuerpoLocal, mensajeError, intento])
-
-  useEffect(() => {
-    if (!mensajeError && cuerpoLocal && contenidoRemoto.slug === cuerpoLocal.id) {
-      campoRef.current?.establecerContenidoFicha(contenidoRemoto)
-    }
-  }, [cuerpoLocal, contenidoRemoto, mensajeError, intento])
+  }, [intento, mensajeError, salirModoVr])
 
   useEffect(() => {
     campoRef.current?.establecerDiagonalPantalla(diagonal)
@@ -246,19 +220,16 @@ export function EscenaEstelar() {
       ) : (
         <>
           {modo === 'normal' && <PunteroCruz modo={modo} />}
-          <span className="solo-lectores" role="status">{cuerpo ? `Ficha de ${cuerpo.nombre} ${contenido.fase === 'disponible' ? 'cargada' : 'abierta'}.` : 'Sin ficha abierta.'}</span>
+          <span className="solo-lectores" role="status">{cuerpo ? `Ficha de ${cuerpo.nombre} abierta.` : 'Sin ficha abierta.'}</span>
           {cuerpo && <FichaCuerpoCeleste
             key={`${cuerpo.id}-${modo}`}
             cuerpo={cuerpo}
-            contenido={contenido}
             modo={modo}
             lectura={lectura}
             alAccionar={(accion) => campoRef.current?.ejecutarAccionFicha(accion)}
             alEntrar={() => campoRef.current?.limpiarApuntado()}
             alCerrar={cerrarFicha}
-            alAbrirLibro={abrirLibro}
-            alReintentar={consultaContenido.reintentar}
-            libroBloqueado={libroBloqueado?.ficha === contenido.ficha ? libroBloqueado?.libro : null}
+            alAbrirLibro={(libro) => abrirFichaBibliografica(libro, { salirVr: modo === 'vr' ? salirModoVr : undefined })}
           />}
           {modo === 'vr' && cuerpo && <div className="ficha-vr-indicaciones" aria-hidden="true">
             <span>Mira una sección o una flecha y toca · × para cerrar</span>

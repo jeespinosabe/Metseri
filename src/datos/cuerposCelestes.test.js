@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs'
 import { CUERPOS_CELESTES, obtenerCuerpoCeleste, obtenerDatosPrincipales } from './cuerposCelestes.js'
 import { abrirFichaBibliografica, obtenerLibrosCuerpo } from './librosCuerposCelestes.js'
 
-it('los doce registros locales conservan identidad e imagen sin duplicar el contenido editorial remoto', () => {
+it('los doce cuerpos conservan su identidad e imagen y dejan vacío el contenido editorial', () => {
   assert.equal(CUERPOS_CELESTES.length, 12)
   assert.equal(new Set(CUERPOS_CELESTES.map((c) => c.id)).size, 12)
   assert.equal(CUERPOS_CELESTES.filter((c) => c.tipo === 'planeta').length, 8)
@@ -63,20 +63,5 @@ it('ofrece únicamente asociaciones utilizables y abre antes de salir de VR', ()
   assert.deepEqual(acciones, [valido.url, 'salir'])
   assert.equal(pestana.opener, null)
   assert.equal(abrirFichaBibliografica(valido, { abrir: () => null }), false)
-  const salida = []
-  assert.equal(abrirFichaBibliografica(valido, { abrir: () => { throw new Error('Bloqueado') }, salirVr: () => salida.push('salir') }), false)
-  assert.deepEqual(salida, ['salir'])
   assert.equal(abrirFichaBibliografica(asociaciones.tierra[3], { abrir: () => assert.fail('URL descartada') }), false)
-})
-
-it('los periodos publicados mantienen unidades, ausencia y cero sin llamar día solar a la rotación', () => {
-  const datos = obtenerDatosPrincipales({ tipo: 'planeta', diametroKm: 0, rotacionHoras: -5832.5, orbitaDias: 4331 })
-  assert.equal(datos[0].valor, '0')
-  assert.equal(datos[1].valor, '')
-  assert.equal(datos[2].etiqueta, 'Período de rotación')
-  assert.equal(datos[2].valor, '243.02')
-  assert.equal(datos[2].retrograda, true)
-  assert.equal(datos[3].etiqueta, 'Período orbital')
-  assert.equal(datos[3].valor, '11.86')
-  assert.equal(datos[3].unidad, 'años terrestres')
 })

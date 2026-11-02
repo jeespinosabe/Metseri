@@ -5,8 +5,6 @@ import { crearFichaCuerpoVr } from './fichaCuerpoVr.js'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { obtenerZonasNavegacion } from './contenidoFicha.js'
 import { etiquetaCubiertaPorFicha } from './etiquetasPlanetas.js'
-import { adaptarFicha } from '../servicios/consultaContenido.js'
-import { crearFichaPrueba } from '../pruebas/fichasPrueba.js'
 
 function preparar(t) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
@@ -31,7 +29,6 @@ it('cada luna conserva identidad, relación e imagen al navegar y alternar modos
   for (const cuerpo of CUERPOS_CELESTES.filter((registro) => registro.tipo === 'satelite')) {
     textos.length = 0
     ficha.establecerCuerpo(cuerpo)
-    ficha.establecerContenido({ slug: cuerpo.id, fase: 'disponible', ficha: adaptarFicha(crearFichaPrueba(cuerpo), cuerpo) })
     ficha.reubicar(camara)
     assert.ok(textos.includes(cuerpo.nombre))
     assert.ok(textos.includes(cuerpo.clasificacion.toUpperCase()))
@@ -111,34 +108,4 @@ it('las etiquetas cubiertas por la tarjeta no atraviesan el texto y las demás s
   plano.visible = false
   assert.equal(etiquetaCubiertaPorFicha({ x: 400, y: 400 }, plano, camara, 800, 800), false)
   plano.geometry.dispose(); plano.material.dispose()
-})
-it('actualiza contenido del mismo cuerpo, conserva sección al recomponer y rechaza contenido tardío', (t) => {
-  const { ficha, cambios, textos, obtenerDibujos } = preparar(t)
-  const local = CUERPOS_CELESTES[2]
-  const cuerpo = adaptarFicha(crearFichaPrueba(local), local)
-  cuerpo.descripcion = 'Una descripción científica de prueba que ocupa varias páginas. '.repeat(25)
-  ficha.establecerCuerpo(local)
-  ficha.establecerModo('vr')
-  ficha.mostrarSeccion('libros')
-  const version = ficha.obtenerVersionContenido()
-  assert.equal(ficha.establecerContenido({ slug: local.id, fase: 'disponible', ficha: cuerpo }), true)
-  assert.ok(ficha.obtenerVersionContenido() > version)
-  assert.equal(cambios.at(-1).seccion, 'libros')
-  assert.ok(ficha.obtenerLectura().pagina > 3)
-  assert.equal(ficha.obtenerLibro(0).titulo, cuerpo.libros[0].titulo)
-  assert.ok(textos.includes(cuerpo.libros[0].titulo))
-  ficha.ajustar(356, 275)
-  assert.equal(cambios.at(-1).seccion, 'libros')
-  const antes = ficha.obtenerLectura()
-  ficha.reubicar(new PerspectiveCamera(70, 2, .1, 1000))
-  assert.deepEqual(ficha.obtenerLectura(), antes)
-  ficha.establecerModo('normal')
-  assert.equal(ficha.obtenerLectura().pagina, 0)
-  assert.equal(ficha.obtenerLibro(0).titulo, cuerpo.libros[0].titulo)
-  ficha.establecerCuerpo(null)
-  const dibujos = obtenerDibujos()
-  assert.equal(ficha.establecerContenido({ slug: local.id, fase: 'disponible', ficha: cuerpo }), false)
-  assert.equal(obtenerDibujos(), dibujos)
-  assert.equal(ficha.obtenerLibro(0), undefined)
-  assert.equal(ficha.malla.visible, false)
 })

@@ -230,7 +230,7 @@ export function obtenerDatosPrincipales(cuerpo) {
   return [
     { etiqueta: 'Diámetro', valor: numero(cuerpo.diametroKm), unidad: 'km' },
     { etiqueta: satelite ? 'Distancia al planeta' : 'Distancia al Sol', valor: numero(satelite ? cuerpo.distanciaPlanetaKm : cuerpo.distanciaSolMillonesKm), unidad: satelite ? 'km' : 'millones de km' },
-    { etiqueta: 'Período de rotación', valor: tieneRotacion ? numero(rotacionEnDias ? horas / 24 : horas) : '', unidad: rotacionEnDias ? 'días terrestres' : 'horas', retrograda: tieneRotacion && cuerpo.rotacionHoras < 0 },
-    { etiqueta: 'Período orbital', valor: orbitaEnAnos ? numero(cuerpo.orbitaDias / 365.25) : numero(cuerpo.orbitaDias), unidad: orbitaEnAnos ? 'años terrestres' : 'días terrestres' },
+    { etiqueta: satelite ? 'Período de rotación' : 'Un día dura', valor: tieneRotacion ? numero(rotacionEnDias ? horas / 24 : horas) : '', unidad: rotacionEnDias ? 'días terrestres' : 'horas', retrograda: tieneRotacion && cuerpo.rotacionHoras < 0 },
+    { etiqueta: satelite ? 'Período orbital' : 'Un año dura', valor: orbitaEnAnos ? numero(cuerpo.orbitaDias / 365.25) : numero(cuerpo.orbitaDias), unidad: orbitaEnAnos ? 'años terrestres' : 'días terrestres' },
   ]
 }

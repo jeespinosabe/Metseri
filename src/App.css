@@ -389,32 +389,10 @@
 .ficha-cuerpo__navegacion button { padding: 10px; margin: 4px; border: 1px solid #53664b; border-radius: 8px; background: #1b2b33; color: #e5eedc; }
 .ficha-cuerpo__navegacion [aria-current] { background: #c7e69d; color: #111b24; }
 
-.ficha-cuerpo__barra { position: sticky; z-index: 3; top: -32px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: -32px -28px 24px; padding: 10px 16px; background: #111b24; border-bottom: 1px solid #34424b; }
-.ficha-cuerpo__barra nav { display: flex; gap: 4px; }
-.ficha-cuerpo__barra button, .ficha-cuerpo__estado button { min-height: 44px; padding: 8px 12px; border: 1px solid #53664b; border-radius: 6px; background: transparent; color: #d5edb6; font-size: .8rem; }
-.ficha-cuerpo__barra button:hover, .ficha-cuerpo__estado button:hover { background: #263b2b; }
-.ficha-cuerpo__barra .ficha-cuerpo__cerrar { position: static; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; }
-.ficha-cuerpo :is(h1, h2) { scroll-margin-top: 82px; }
-.ficha-cuerpo__estado { padding: 16px 0 24px; color: #d3dfe5; }
-.ficha-cuerpo__estado p { margin-top: 0; }
-.ficha-cuerpo__ausencia { display: block; font-size: .9rem; line-height: 1.5; }
-.ficha-cuerpo dd { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
-.ficha-cuerpo__libros p { margin: 0 0 12px; }
-.ficha-cuerpo__lista-libros { list-style: none; padding: 0 !important; }
-.ficha-cuerpo__lista-libros li { padding: 0 0 24px; overflow-wrap: anywhere; }
-.ficha-cuerpo__lista-libros li + li { border-top: 1px solid #34424b; padding-top: 24px; }
-.ficha-cuerpo__lista-libros h3 { margin: 0 0 8px; font-size: 1.15rem; font-weight: 500; color: #edf2f5; line-height: 1.5; }
-.ficha-cuerpo__lista-libros p { margin: 4px 0; color: #b5c4cd; font-size: .9rem; }
-.ficha-cuerpo a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; }
-.ficha-cuerpo__lista-libros a { margin-top: 8px; }
-.ficha-cuerpo svg { flex-shrink: 0; }
-.ficha-cuerpo ::selection { background: #c7e69d; color: #111b24; }
-
 .ficha-vr-indicaciones { position: absolute; top: max(12px, env(safe-area-inset-top)); inset-inline: 0; display: flex; pointer-events: none; }
 .ficha-vr-indicaciones span { width: 50%; box-sizing: border-box; padding: 0 12px; color: #b9cbac; font-size: .65rem; text-align: center; text-shadow: 0 1px 6px #000; }
 
 @media (max-width: 600px) {
-  .ficha-cuerpo__barra { top: -26px; margin: -26px -22px 20px; padding-inline: 12px; }
   .ficha-cuerpo { top: auto; left: 12px; right: 12px; bottom: max(76px, calc(64px + env(safe-area-inset-bottom))); width: auto; max-height: calc(100% - 104px); padding: 26px 22px; border-radius: 18px; }
   .ficha-cuerpo__cabecera { min-height: 157px; }
   .ficha-cuerpo h1 { font-size: 2.8rem; max-width: calc(100% - 102px); }
