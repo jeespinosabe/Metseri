@@ -12,6 +12,7 @@ import { guardarDiagonalPantalla, leerDiagonalPantalla } from '../escena/perfilV
 import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
+import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
 
 const MENSAJE_SIN_RENDERIZADO =
   'Tu navegador no pudo iniciar los gráficos necesarios para mostrar el cielo. Comprueba que la aceleración gráfica esté activada e inténtalo de nuevo.'
@@ -52,6 +53,7 @@ export function EscenaEstelar() {
   const [aviso, setAviso] = useState(null)
   const [diagonal, setDiagonal] = useState(leerDiagonalPantalla)
   const [configurandoVisor, setConfigurandoVisor] = useState(false)
+  const [instruccionVrVisible, setInstruccionVrVisible] = useState(false)
   const [lectura, setLectura] = useState({ cuerpoId: null, pagina: 0, total: 0 })
   const cuerpo = obtenerCuerpoCeleste(lectura.cuerpoId)
   const { intento, mensajeError } = estado
@@ -64,6 +66,11 @@ export function EscenaEstelar() {
     setModo('normal')
   }, [])
 
+  const recentrar = useCallback(() => {
+    controlesRef.current?.recentrar()
+    campoRef.current?.recentrarFicha()
+  }, [])
+
   useEffect(() => {
     if (mensajeError) return undefined
 
@@ -73,6 +80,7 @@ export function EscenaEstelar() {
     try {
       campo = crearCampoEstelar(superficieRef.current, {
         alCambiarFicha: setLectura,
+        alCambiarInstruccionVr: setInstruccionVrVisible,
         alSolicitarLibro: (libro) => abrirFichaBibliografica(libro, { salirVr: salirModoVr }),
         alPerderContexto: () => {
           setLectura({ cuerpoId: null, pagina: 0, total: 0 })
@@ -91,6 +99,8 @@ export function EscenaEstelar() {
         alCambiar: (orientacion) =>
           campo.establecerOrientacion(calcularCuaternionVista(orientacion)),
         alActivar: (evento) => campo.activar(evento),
+        alPrepararActivacion: () => campo.prepararActivacion(),
+        alRecentrar: () => campo.recentrarFicha(),
         alAvisar: (motivo) =>
           setAviso(
             motivo === 'denegado'
@@ -177,15 +187,16 @@ export function EscenaEstelar() {
     superficieRef.current?.focus({ preventScroll: true })
   }
 
-  function recentrar() {
-    controlesRef.current?.recentrar()
-    campoRef.current?.recentrarFicha()
-  }
-
   function guardarConfiguracion(nuevaDiagonal) {
     guardarDiagonalPantalla(nuevaDiagonal)
     setDiagonal(nuevaDiagonal)
     setConfigurandoVisor(false)
+  }
+
+  function ajustarVisor() {
+    controlesRef.current?.cancelarActivacion()
+    campoRef.current?.ocultarInstruccionVr()
+    setConfigurandoVisor(true)
   }
 
   return (
@@ -195,7 +206,7 @@ export function EscenaEstelar() {
         ref={superficieRef}
         role="application"
         aria-label={modo === 'vr'
-          ? 'Cielo con planetas y lunas en VR. Mira un cuerpo celeste y toca para abrir su ficha frente a ti. Mira una sección o una flecha y toca para navegar. Tocar el área de lectura mantiene la ficha abierta. Usa la equis para cerrar, o mira fuera de la ficha y toca para deseleccionar. Arrastra o usa las flechas para mirar manualmente.'
+          ? 'Cielo con planetas y lunas en VR. Mira un cuerpo celeste y toca para abrir su ficha frente a ti. Mira una sección o una flecha y toca para navegar. Tocar el área de lectura mantiene la ficha abierta. Usa la equis para cerrar, o mira fuera de la ficha y toca para deseleccionar. Pulsa dos tap para recentrar. Ajustar visor y Salir de VR están abajo. Arrastra o usa las flechas para ajustar la mirada sin interrumpir el sensor.'
           : 'Cielo con planetas y lunas. Pasa el mouse sobre un cuerpo celeste para iluminarlo. Haz clic o toca para seleccionarlo y leer su ficha; pulsa de nuevo o toca el fondo para cerrar y deseleccionar. Arrastra o usa las flechas para mirar alrededor.'}
         tabIndex={mensajeError ? -1 : 0}
       />
@@ -225,6 +236,7 @@ export function EscenaEstelar() {
             <span>Mira una sección o una flecha y toca · × para cerrar</span>
           </div>}
           <div className="escena-estelar__avisos" role="status">
+            {modo === 'vr' && instruccionVrVisible && <span className="solo-lectores">{INSTRUCCION_VR}</span>}
             {modo === 'vr' && enVertical && (
               <p className="escena-estelar__indicacion">
                 Gira el teléfono a horizontal para usar el visor.
@@ -233,15 +245,15 @@ export function EscenaEstelar() {
             {aviso && <p className="escena-estelar__aviso">{aviso}</p>}
           </div>
           <div className="escena-estelar__controles" onPointerEnter={() => campoRef.current?.limpiarApuntado()}>
-            <button type="button" onClick={() => setConfigurandoVisor(true)}>
+            {modo === 'vr' && <button type="button" onClick={ajustarVisor}>
               Ajustar visor
-            </button>
-            <button
+            </button>}
+            {modo === 'normal' && <button
               type="button"
               onClick={recentrar}
             >
               Recentrar
-            </button>
+            </button>}
             <button
               type="button"
               onClick={modo === 'vr' ? salirModoVr : entrarModoVr}

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { crearControlesVista } from './controlesVista.js'
+import { crearControlesVista, LIMITE_INCLINACION, normalizarGiro } from './controlesVista.js'
 import { crearEstadoLectura } from './contenidoFicha.js'
 
 const cercaDe = (real, esperado, margen = 1e-9) =>
@@ -144,8 +144,9 @@ describe('seguimiento con sensor', () => {
   })
 })
 
-describe('cambio a control manual con sensor', () => {
-  it('paginar con permiso pendiente y cerrar después de la primera lectura conserva el seguimiento', () => {
+describe('navegación manual combinada con sensor', () => {
+  it('paginar con permiso pendiente y cerrar después de la primera lectura conserva el seguimiento', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] })
     const lectura = crearEstadoLectura()
     lectura.actualizar('tierra', 4)
     let accion = 'siguiente'
@@ -155,18 +156,21 @@ describe('cambio a control manual con sensor', () => {
     } })
     controles.entrarVr()
     emitirPuntero(elemento, 'click', {})
+    t.mock.timers.tick(300)
     assert.equal(controles.obtenerFuente(), 'solicitando')
     assert.equal(lectura.obtenerEstado().pagina, 1)
     sensor.ultimo().alLectura(lecturaVertical(30))
     accion = 'cerrar'
     emitirPuntero(elemento, 'click', {})
+    t.mock.timers.tick(300)
     assert.equal(lectura.obtenerEstado().cuerpoId, null)
     assert.equal(controles.obtenerFuente(), 'sensor')
     sensor.ultimo().alLectura(lecturaVertical(60))
     cercaDe(controles.obtenerOrientacion().giro, 30 * GRADOS)
     controles.destruir()
   })
-  it('tocar y seleccionar conserva el sensor activo y las lecturas posteriores', () => {
+  it('tocar y seleccionar conserva el sensor activo y las lecturas posteriores', (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] })
     const activaciones = []
     const { elemento, sensor, controles } = crearEntorno({ alActivar: (evento) => activaciones.push(evento) })
     controles.entrarVr()
@@ -176,6 +180,7 @@ describe('cambio a control manual con sensor', () => {
     emitirPuntero(elemento, 'pointermove', { clientX: 12, clientY: 11 })
     emitirPuntero(elemento, 'pointerup', { clientX: 12, clientY: 11 })
     emitirPuntero(elemento, 'click', { clientX: 12, clientY: 11 })
+    t.mock.timers.tick(300)
     assert.equal(activaciones.length, 1)
     assert.equal(controles.obtenerFuente(), 'sensor')
     assert.equal(sensor.cancelaciones, cancelaciones)
@@ -200,7 +205,7 @@ describe('cambio a control manual con sensor', () => {
     controles.destruir()
   })
 
-  it('al confirmar un arrastre parte de la lectura más reciente y cancela un intento pendiente', async () => {
+  it('el arrastre incorpora lecturas intercaladas y conserva un intento pendiente', async () => {
     const { elemento, sensor, controles } = crearEntorno()
     controles.entrarVr()
     sensor.ultimo().alLectura(lecturaVertical(40))
@@ -208,7 +213,13 @@ describe('cambio a control manual con sensor', () => {
     sensor.ultimo().alLectura(lecturaVertical(60))
     emitirPuntero(elemento, 'pointermove', { clientX: 20, clientY: 0 })
     cercaDe(controles.obtenerOrientacion().giro, 20 * GRADOS + .1)
-    assert.equal(controles.obtenerFuente(), 'manual')
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    sensor.ultimo().alLectura(lecturaVertical(80))
+    emitirPuntero(elemento, 'pointermove', { clientX: 40, clientY: 0 })
+    cercaDe(controles.obtenerOrientacion().giro, 40 * GRADOS + .2)
+    emitirPuntero(elemento, 'pointerup', { clientX: 40, clientY: 0 })
+    sensor.ultimo().alLectura(lecturaVertical(90))
+    cercaDe(controles.obtenerOrientacion().giro, 50 * GRADOS + .2)
     controles.entrarVr()
     const pendiente = sensor.ultimo()
     emitirPuntero(elemento, 'pointerdown', { clientX: 0, clientY: 0 })
@@ -217,12 +228,13 @@ describe('cambio a control manual con sensor', () => {
     pendiente.alLectura(lecturaVertical(200))
     pendiente.resolver({ estado: 'activo' })
     await microtareas()
-    assert.equal(controles.obtenerFuente(), 'manual')
-    assert.deepEqual(controles.obtenerOrientacion(), manual)
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    cercaDe(controles.obtenerOrientacion().giro, manual.giro)
+    cercaDe(controles.obtenerOrientacion().inclinacion, manual.inclinacion)
     controles.destruir()
   })
 
-  it('un arrastre con el sensor activo pasa a manual conservando la orientación completa', () => {
+  it('un arrastre conserva el balanceo y la siguiente lectura no revierte el ajuste', () => {
     const { elemento, sensor, controles } = crearEntorno()
     controles.entrarVr()
     sensor.ultimo().alLectura(lecturaVertical(40, 80, 25))
@@ -234,29 +246,85 @@ describe('cambio a control manual con sensor', () => {
     assert.deepEqual(controles.obtenerOrientacion(), mostrada)
 
     emitirPuntero(elemento, 'pointermove', { clientX: 20, clientY: 0 })
-    assert.equal(controles.obtenerFuente(), 'manual')
-    assert.ok(sensor.cancelaciones >= 2)
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    assert.equal(sensor.cancelaciones, 1)
     assert.equal(controles.obtenerOrientacion().balanceo, mostrada.balanceo, 'conserva el balanceo')
     assert.notEqual(controles.obtenerOrientacion().giro, mostrada.giro)
 
-    // el sensor ya no modifica la mirada
-    const congelada = controles.obtenerOrientacion()
+    const ajustada = controles.obtenerOrientacion()
+    sensor.ultimo().alLectura(lecturaVertical(55, 85, 30))
+    for (const eje of ['giro', 'inclinacion', 'balanceo']) cercaDe(controles.obtenerOrientacion()[eje], ajustada[eje])
+    // El sensor sigue modificando la mirada, también antes de soltar el dedo.
     sensor.ultimo().alLectura(lecturaVertical(300, 20))
-    assert.deepEqual(controles.obtenerOrientacion(), congelada)
+    assert.notDeepEqual(controles.obtenerOrientacion(), ajustada)
+    controles.destruir()
   })
 
-  it('las flechas con el sensor pendiente cancelan la activación', async () => {
+  it('las flechas con el sensor pendiente conservan la activación sin salto', async () => {
     const { elemento, sensor, avisos, controles } = crearEntorno()
     controles.entrarVr()
     emitirTecla(elemento, 'ArrowLeft')
-    assert.equal(controles.obtenerFuente(), 'manual')
+    assert.equal(controles.obtenerFuente(), 'solicitando')
     const manual = controles.obtenerOrientacion()
-    sensor.ultimo().alLectura(lecturaVertical(10, 10, 10)) // lectura tardía
+    sensor.ultimo().alLectura(lecturaVertical(10, 10, 10))
     sensor.ultimo().resolver({ estado: 'activo' })
     await microtareas()
-    assert.deepEqual(controles.obtenerOrientacion(), manual)
-    assert.equal(controles.obtenerFuente(), 'manual')
+    for (const eje of ['giro', 'inclinacion', 'balanceo']) cercaDe(controles.obtenerOrientacion()[eje], manual[eje])
+    assert.equal(controles.obtenerFuente(), 'sensor')
     assert.deepEqual(avisos, [])
+    controles.destruir()
+  })
+
+  for (const pointerType of ['mouse', 'touch']) {
+    it(`combina ${pointerType}, flechas y sensor sin permisos ni cancelaciones adicionales`, () => {
+      const { elemento, sensor, avisos, controles } = crearEntorno()
+      controles.entrarVr()
+      sensor.ultimo().alLectura(lecturaVertical(0))
+      emitirPuntero(elemento, 'pointerdown', { pointerType, clientX: 0, clientY: 0 })
+      emitirPuntero(elemento, 'pointermove', { pointerType, clientX: 100, clientY: 0 })
+      emitirPuntero(elemento, 'pointerup', { pointerType, clientX: 100, clientY: 0 })
+      emitirTecla(elemento, 'ArrowLeft')
+      sensor.ultimo().alLectura(lecturaVertical(30))
+      cercaDe(controles.obtenerOrientacion().giro, .6 + 30 * GRADOS)
+      assert.equal(sensor.activaciones.length, 1)
+      assert.equal(sensor.cancelaciones, 1)
+      assert.deepEqual(avisos, [])
+      controles.recentrar()
+      cercaDe(controles.obtenerOrientacion().giro, 0)
+      sensor.ultimo().alLectura(lecturaVertical(60))
+      cercaDe(controles.obtenerOrientacion().giro, 30 * GRADOS)
+      controles.destruir()
+    })
+  }
+
+  it('limita los polos y permite vueltas completas sin perder el seguimiento', () => {
+    const { elemento, sensor, controles } = crearEntorno()
+    controles.entrarVr()
+    sensor.ultimo().alLectura(lecturaVertical(0))
+    emitirPuntero(elemento, 'pointerdown', { clientX: 0, clientY: 0 })
+    emitirPuntero(elemento, 'pointermove', { clientX: 10000, clientY: 10000 })
+    cercaDe(controles.obtenerOrientacion().giro, normalizarGiro(50))
+    cercaDe(controles.obtenerOrientacion().inclinacion, LIMITE_INCLINACION)
+    const antes = controles.obtenerOrientacion()
+    sensor.ultimo().alLectura(lecturaVertical(0))
+    cercaDe(controles.obtenerOrientacion().giro, antes.giro)
+    cercaDe(controles.obtenerOrientacion().inclinacion, antes.inclinacion)
+    assert.equal(controles.obtenerFuente(), 'sensor')
+    controles.destruir()
+  })
+
+  it('un fallo tras navegar durante la espera conserva la vista y el aviso existente', async () => {
+    const { elemento, sensor, controles, avisos } = crearEntorno()
+    controles.entrarVr()
+    emitirTecla(elemento, 'ArrowRight')
+    const antes = controles.obtenerOrientacion()
+    sensor.ultimo().resolver({ estado: 'sin-datos' })
+    await microtareas()
+    assert.deepEqual(controles.obtenerOrientacion(), antes)
+    assert.deepEqual(avisos, ['sin-datos'])
+    sensor.ultimo().alLectura(lecturaVertical(80))
+    assert.deepEqual(controles.obtenerOrientacion(), antes)
+    controles.destruir()
   })
 
   it('salir de VR deja la última orientación y los movimientos posteriores no la cambian', () => {

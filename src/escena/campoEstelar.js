@@ -28,6 +28,7 @@ import { crearApuntadoMouse } from './apuntadoMouse.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { obtenerLibrosCuerpo } from '../datos/librosCuerposCelestes.js'
 import { consumirToqueFicha } from './contenidoFicha.js'
+import { crearInstruccionesVr } from './instruccionesVr.js'
 
 const COLOR_FONDO = 0x080b12
 const RADIO_CIELO = 100
@@ -111,7 +112,7 @@ function crearGeometriaGrupo(grupo, generarAleatorio) {
  * Lanza un error si el navegador no puede crear el contexto gráfico.
  * `alPerderContexto` se invoca si el contexto gráfico se pierde después.
  */
-export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha, alSolicitarLibro } = {}) {
+export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha, alSolicitarLibro, alCambiarInstruccionVr } = {}) {
   const renderizador = new WebGLRenderer({ antialias: true })
   const lienzo = renderizador.domElement
   lienzo.style.display = 'block'
@@ -179,6 +180,11 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     alCambiarLectura: (lectura) => alCambiarFicha?.(lectura),
   })
   escena.add(ficha.malla)
+  const instrucciones = crearInstruccionesVr({
+    alCambiarVisibilidad: alCambiarInstruccionVr,
+    alInvalidar: () => { necesitaDibujo = true },
+  })
+  escena.add(instrucciones.malla)
   const detector = crearDetectorPlanetas({ camara, seleccionables: planetas.seleccionables, obtenerDireccion: proyeccion.obtenerDireccion })
   const seleccion = crearSeleccionPlanetas({
     detector: {
@@ -224,13 +230,15 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     renderizador.setSize(ancho, alto, false)
     restaurarAreaDibujo()
     proyeccion.ajustar(camara, ancho, alto, modo)
-    efectoEstereo?.ajustar({
+    const parametrosVisor = {
       ancho, alto,
       anchoPantalla: window.screen.width,
       altoPantalla: window.screen.height,
       diagonal: diagonalPantalla,
-    })
+    }
+    efectoEstereo?.ajustar(parametrosVisor)
     ficha.ajustar(ancho, alto)
+    instrucciones.ajustar(parametrosVisor)
     apuntado.recalcular()
     seleccion.actualizarMirada()
     necesitaDibujo = true
@@ -269,6 +277,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   function alContextoPerdido(evento) {
     evento.preventDefault()
     contextoPerdido = true
+    instrucciones.ocultar()
     detenerCiclo()
     if (!destruido && alPerderContexto) alPerderContexto()
   }
@@ -288,6 +297,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     establecerOrientacion(cuaternion) {
       if (destruido || contextoPerdido) return
       camara.quaternion.copy(cuaternion)
+      instrucciones.actualizar(camara)
       luz.position.copy(direccionLuz).applyQuaternion(cuaternion)
       seleccion.actualizarMirada()
       if (modo === 'normal') apuntado.recalcular()
@@ -304,6 +314,8 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       modo = nuevoModo
       apuntado.limpiar()
       ficha.establecerModo(modo)
+      if (modo === 'vr') instrucciones.mostrar(camara)
+      else instrucciones.ocultar()
       if (modo === 'vr') ficha.reubicar(camara)
       seleccion.establecerModo(modo)
       ajustarTamano()
@@ -321,16 +333,37 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     activar(evento) {
       if (destruido || contextoPerdido) return
       if (modo === 'vr') {
+        if (instrucciones.esVisible()) { instrucciones.ocultar(); return }
         const objetivo = ficha.detectar(camara)
         if (consumirToqueFicha(objetivo, ejecutarAccionFicha)) return
       }
       seleccion.activar(evento, lienzo.getBoundingClientRect())
     },
 
+    // El sensor puede mover la mirada durante la espera del doble tap: guardar
+    // el objetivo ahora evita activar otro cuerpo o control al vencer el plazo.
+    prepararActivacion() {
+      if (destruido || contextoPerdido || modo !== 'vr') return null
+      if (instrucciones.esVisible()) { instrucciones.ocultar(); return null }
+      const cuerpoInicial = seleccion.obtenerEstado().planetaSeleccionado
+      const objetivoFicha = ficha.detectar(camara)
+      const objetivoCielo = objetivoFicha ? null : detector.detectarMirada()
+      return () => {
+        if (destruido || contextoPerdido || modo !== 'vr' || cuerpoInicial !== seleccion.obtenerEstado().planetaSeleccionado) return
+        if (!consumirToqueFicha(objetivoFicha, ejecutarAccionFicha)) seleccion.activarObjetivo(objetivoCielo)
+        seleccion.actualizarMirada()
+      }
+    },
+
+    ocultarInstruccionVr: instrucciones.ocultar,
+
     ejecutarAccionFicha,
     limpiarApuntado: apuntado.limpiar,
     recentrarFicha() {
-      if (modo === 'vr') { ficha.reubicar(camara); seleccion.actualizarMirada() }
+      if (modo === 'vr') {
+        ficha.reubicar(camara)
+        seleccion.actualizarMirada()
+      }
     },
 
     destruir() {
@@ -339,6 +372,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       apuntado.destruir()
       seleccion.destruir()
       ficha.destruir()
+      instrucciones.destruir()
       etiquetas.destruir()
       etiquetasVisor.destruir()
       efectoEstereo?.destruir()

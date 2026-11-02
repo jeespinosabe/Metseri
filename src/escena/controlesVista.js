@@ -1,4 +1,5 @@
 import { Euler, Quaternion } from 'three'
+import { crearGestosVr } from './gestosVr.js'
 import {
   calcularCuaternionDispositivo,
   crearAlineacionHorizontal,
@@ -56,10 +57,9 @@ const DESPLAZAMIENTOS_TECLADO = {
  * - `solicitando`: se espera permiso o la primera lectura del sensor;
  * - `sensor`: la orientación del dispositivo dirige la mirada.
  *
- * Solo una fuente escribe la orientación a la vez. Un arrastre confirmado o las
- * flechas cancelan el sensor, conservando la orientación completa
- * mostrada. Cada entrada a VR es un intento con su propio número: salir, una
- * interacción manual o un nuevo intento invalidan promesas y lecturas tardías.
+ * Arrastre y flechas ajustan la referencia sin cancelar el sensor activo o
+ * pendiente. Cada entrada a VR tiene su propio intento: salir, destruir o
+ * iniciar otro intento invalida promesas y lecturas tardías.
  *
  * Las flechas solo actúan cuando el propio `elemento` tiene el foco, de modo
  * que no interceptan botones u otros controles.
@@ -69,6 +69,9 @@ export function crearControlesVista({
   alCambiar,
   alAvisar,
   alActivar,
+  alPrepararActivacion,
+  alRecentrar,
+  temporizadoresGestos,
   sensor,
   obtenerAnguloPantalla = () => 0,
   radianesPorPixel = RADIANES_POR_PIXEL,
@@ -82,7 +85,16 @@ export function crearControlesVista({
   let ultimoDispositivo = null
   let resultadoGesto = null
   let destruido = false
+  let enVr = false
   const punterosActivos = new Set()
+  const gestosVr = crearGestosVr({
+    prepararActivacion: alPrepararActivacion ?? ((evento) => () => alActivar?.(evento)),
+    alRecentrar: () => {
+      recentrar()
+      alRecentrar?.()
+    },
+    temporizadores: temporizadoresGestos,
+  })
 
   function aplicar(nuevaOrientacion) {
     orientacion = ajustarOrientacion(nuevaOrientacion)
@@ -97,9 +109,14 @@ export function crearControlesVista({
     ultimoDispositivo = null
   }
 
-  // Una interacción manual toma el control sin mover la vista.
-  function pasarAManual() {
-    if (fuente !== 'manual') detenerSeguimiento()
+  // Incorpora la entrada manual a la referencia de la última lectura. Así el
+  // siguiente evento del sensor no sobrescribe el ajuste ni interrumpe el gesto.
+  function aplicarEntradaManual(nuevaOrientacion) {
+    const ajustada = ajustarOrientacion(nuevaOrientacion)
+    if (fuente === 'sensor' && ultimoDispositivo) {
+      alineacion = crearAlineacionInicial(calcularCuaternionVista(ajustada), ultimoDispositivo)
+    }
+    aplicar(ajustada)
   }
 
   function terminarArrastre() {
@@ -115,6 +132,7 @@ export function crearControlesVista({
     if (evento.pointerType === 'mouse' && evento.button !== 0) return
     punterosActivos.add(evento.pointerId)
     if (arrastre || punterosActivos.size > 1) {
+      gestosVr.cancelar()
       if (arrastre) arrastre.invalidado = true
       return
     }
@@ -138,14 +156,14 @@ export function crearControlesVista({
     if (!arrastre.confirmado) {
       if (Math.hypot(evento.clientX - arrastre.origenX, evento.clientY - arrastre.origenY) <= UMBRAL_ARRASTRE) return
       arrastre.confirmado = true
-      pasarAManual()
+      gestosVr.cancelar()
     }
     const desplazamientoX = evento.clientX - arrastre.x
     const desplazamientoY = evento.clientY - arrastre.y
     if (desplazamientoX === 0 && desplazamientoY === 0) return
     arrastre.x = evento.clientX
     arrastre.y = evento.clientY
-    aplicar({
+    aplicarEntradaManual({
       ...orientacion,
       giro: orientacion.giro + desplazamientoX * radianesPorPixel,
       inclinacion: orientacion.inclinacion + desplazamientoY * radianesPorPixel,
@@ -170,6 +188,7 @@ export function crearControlesVista({
   function alCancelar(evento) {
     punterosActivos.delete(evento.pointerId)
     if (!arrastre || evento.pointerId !== arrastre.idPuntero) return
+    gestosVr.cancelar()
     guardarResultado(evento, false)
     terminarArrastre()
   }
@@ -182,7 +201,8 @@ export function crearControlesVista({
     const tiempo = resultado ? evento.timeStamp - resultado.instante : Infinity
     if (resultado && !resultado.valido && tiempo >= 0 && tiempo <= 1000) return
     resultadoGesto = null
-    alActivar?.(evento)
+    if (enVr) gestosVr.pulsar(evento)
+    else alActivar?.(evento)
   }
 
   function alPulsarTecla(evento) {
@@ -191,8 +211,8 @@ export function crearControlesVista({
     const desplazamiento = DESPLAZAMIENTOS_TECLADO[evento.key]
     if (!desplazamiento) return
     evento.preventDefault()
-    pasarAManual()
-    aplicar({
+    gestosVr.cancelar()
+    aplicarEntradaManual({
       ...orientacion,
       giro: orientacion.giro + desplazamiento[0] * pasoTeclado,
       inclinacion: orientacion.inclinacion + desplazamiento[1] * pasoTeclado,
@@ -232,6 +252,21 @@ export function crearControlesVista({
     alAvisar?.(estado)
   }
 
+  // Con sensor activo, el rumbo actual pasa a ser el frente y el seguimiento
+  // conserva la inclinación natural; sin sensor se vuelve a la vista inicial.
+  function recentrar() {
+    gestosVr.cancelar()
+    if (fuente === 'sensor' && ultimoDispositivo) {
+      const alineacionHorizontal = crearAlineacionHorizontal(ultimoDispositivo)
+      if (alineacionHorizontal) {
+        alineacion = alineacionHorizontal
+        aplicarSeguimiento(ultimoDispositivo)
+      }
+      return
+    }
+    aplicar(ORIENTACION_INICIAL)
+  }
+
   elemento.addEventListener('pointerdown', alPresionar)
   elemento.addEventListener('pointermove', alMover)
   elemento.addEventListener('pointerup', alSoltar)
@@ -239,6 +274,7 @@ export function crearControlesVista({
   elemento.addEventListener('lostpointercapture', alCancelar)
   elemento.addEventListener('click', alHacerClic)
   elemento.addEventListener('keydown', alPulsarTecla)
+  elemento.addEventListener('blur', gestosVr.cancelar)
 
   return {
     obtenerOrientacion: () => ({ ...orientacion }),
@@ -246,28 +282,16 @@ export function crearControlesVista({
     estaArrastrando: () => arrastre !== null,
     establecerOrientacion: aplicar,
 
-    /**
-     * Recentrar. Con sensor activo, el rumbo actual del dispositivo pasa a ser
-     * el frente y el seguimiento continúa con la inclinación natural; en otro
-     * caso la mirada vuelve a la dirección inicial.
-     */
-    recentrar() {
-      if (fuente === 'sensor' && ultimoDispositivo) {
-        const alineacionHorizontal = crearAlineacionHorizontal(ultimoDispositivo)
-        if (alineacionHorizontal) {
-          alineacion = alineacionHorizontal
-          aplicarSeguimiento(ultimoDispositivo)
-        }
-        return
-      }
-      aplicar(ORIENTACION_INICIAL)
-    },
+    recentrar,
+    cancelarActivacion: gestosVr.cancelar,
 
     /**
      * Intenta activar el sensor. Debe llamarse dentro del gesto de entrada a
      * VR: la petición de permiso se inicia de forma síncrona.
      */
     entrarVr() {
+      enVr = true
+      gestosVr.cancelar()
       terminarArrastre()
       punterosActivos.clear()
       resultadoGesto = null
@@ -285,6 +309,8 @@ export function crearControlesVista({
 
     /** Vuelve al control manual en la última orientación mostrada. */
     salirVr() {
+      enVr = false
+      gestosVr.cancelar()
       terminarArrastre()
       punterosActivos.clear()
       resultadoGesto = null
@@ -293,6 +319,7 @@ export function crearControlesVista({
 
     destruir() {
       destruido = true
+      gestosVr.cancelar()
       detenerSeguimiento()
       terminarArrastre()
       elemento.removeEventListener('pointerdown', alPresionar)
@@ -304,6 +331,7 @@ export function crearControlesVista({
       elemento.removeEventListener('lostpointercapture', alCancelar)
       elemento.removeEventListener('click', alHacerClic)
       elemento.removeEventListener('keydown', alPulsarTecla)
+      elemento.removeEventListener('blur', gestosVr.cancelar)
     },
   }
 }

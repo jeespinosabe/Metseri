@@ -48,8 +48,8 @@ Las etiquetas se presentan sin cápsula: un punto y una guía discreta acompaña
 | Mirar alrededor | Arrastra con el mouse o con un dedo sobre el cielo. Puedes dar la vuelta completa en horizontal; en vertical la mirada se detiene cerca de los polos. |
 | Mirar con el teclado | Enfoca el cielo (con `Tab` o haciendo clic) y usa las flechas. Si el foco está en un botón, las flechas no se interceptan. |
 | Recentrar | Pulsa **Recentrar** (abajo a la derecha) para volver a la dirección inicial. El cielo no cambia, solo la dirección de la mirada. |
-| Apuntar en vista única | Pasa el mouse sobre un planeta: se ilumina sin abrir su ficha. Al apartarlo desaparece el brillo transitorio. La cruz central no sustituye al mouse. |
-| Seleccionar en vista única | Haz clic o toca directamente un planeta, aunque esté fuera de la cruz central. Se ilumina de forma persistente y abre su ficha. |
+| Apuntar en vista única | Pasa el mouse sobre un planeta: se ilumina sin abrir su ficha. Al apartarlo desaparece el brillo transitorio. El cursor determina el objetivo. |
+| Seleccionar en vista única | Haz clic o toca directamente un planeta, aunque esté fuera del centro. Se ilumina de forma persistente y abre su ficha. |
 | Cambiar la selección en vista única | Pulsa otro planeta para trasladarle la selección. Solo puede haber uno seleccionado. |
 | Deseleccionar en vista única | Pulsa otra vez el planeta seleccionado, toca el fondo o usa el cierre de la ficha. |
 
@@ -61,7 +61,7 @@ Un arrastre cambia la mirada y nunca selecciona ni deselecciona, aunque comience
 
 ### Puntero de cruz
 
-Una cruz blanca fija en el centro indica hacia dónde apunta la mirada. En VR aparece una cruz por ojo, alineada con los centros ópticos del HOMIDO GRAB y con la dirección común de mirada. La posición depende del tamaño físico de la pantalla; no tiene por qué coincidir con el centro de cada mitad.
+En escritorio, con entrada principal precisa y hover, se usa el cursor del mouse y no aparece una cruz central, incluso en una ventana estrecha. En vista única táctil se conserva una cruz blanca fija en el centro. En VR aparece una cruz por ojo, alineada con los centros ópticos del HOMIDO GRAB y con la dirección común de mirada. La posición depende del tamaño físico de la pantalla; no tiene por qué coincidir con el centro de cada mitad.
 
 La cruz es una guía visual que no recibe el foco ni intercepta gestos: puedes tocar o arrastrar sobre ella como sobre cualquier otra parte del cielo. En vista única seleccionas en la posición del mouse o del dedo; en VR, la dirección de la cruz sirve como referencia para apuntar a un planeta.
 
@@ -69,14 +69,18 @@ La cruz es una guía visual que no recibe el foco ni intercepta gestos: puedes t
 
 El botón **Entrar VR** presenta dos vistas, una por ojo, con el perfil óptico del **HOMIDO GRAB**, compatible con Google Cardboard. Ambas vistas comparten el cielo, los planetas, la dirección de mirada y la selección; al entrar y salir se conservan todos ellos.
 
-Antes de usarlo, pulsa **Ajustar visor** e indica la **diagonal de pantalla de tu celular en pulgadas**, según su fabricante (por ejemplo, 5.5 o 6.1). El valor inicial de 6 pulgadas es una estimación, no una detección del teléfono. Puedes usar punto o coma decimal; el ajuste se conserva en este navegador cuando su almacenamiento está disponible. Coloca el teléfono centrado en el GRAB y en horizontal; usa pantalla completa para que las barras del navegador no alteren la alineación física. Si el navegador no permite pantalla completa, la vista sigue disponible, pero la alineación puede requerir ocultar sus barras y ajustar la colocación del teléfono.
+Después de entrar en VR y antes de colocar el teléfono en el visor, pulsa **Ajustar visor** abajo e indica la **diagonal de pantalla de tu celular en pulgadas**, según su fabricante (por ejemplo, 5.5 o 6.1). El valor inicial de 6 pulgadas es una estimación, no una detección del teléfono. Puedes usar punto o coma decimal; el ajuste se conserva en este navegador cuando su almacenamiento está disponible. Coloca el teléfono centrado en el GRAB y en horizontal; usa pantalla completa para que las barras del navegador no alteren la alineación física. Si el navegador no permite pantalla completa, la vista sigue disponible, pero la alineación puede requerir ocultar sus barras y ajustar la colocación del teléfono.
 
-- **Entrar:** pulsa **Entrar VR**. La aplicación intenta además activar la pantalla completa y bloquear la orientación en horizontal, pero ambas cosas son opcionales: si el navegador no las permite o las rechaza, la vista dividida funciona igual dentro del área disponible.
-- **Salir:** pulsa **Salir de VR** (centro, abajo) o la tecla `Escape`. También se vuelve a la vista única si abandonas la pantalla completa desde el navegador. Al salir solo se libera lo que la propia aplicación activó, no una pantalla completa que ya estuviera activa por otro motivo.
-- **Teléfono en vertical:** se muestran las dos vistas y una indicación para girar el teléfono a horizontal; el control de salida sigue disponible.
-- **Mirar alrededor en VR:** el arrastre con el dedo o el mouse y las flechas del teclado funcionan también en la vista dividida, igual que en la vista única. **Recentrar** vuelve a la dirección inicial.
+- **Entrar:** pulsa **Entrar VR**. La aplicación intenta activar pantalla completa y orientación horizontal cuando estén disponibles, sin convertirlas en requisito.
+- **Instrucción inicial:** cada entrada muestra en ambos ojos «Pulsa tap para seleccionar. Pulsa dos tap para recentrar.». Un tap en cualquier punto del cielo la cierra sin seleccionar un cuerpo.
+- **Recentrar en VR:** pulsa dos tap rápidos (hasta 300 ms entre ellos) en cualquier punto del cielo o pulsa dos veces el botón táctil del visor. Recupera la ficha conservando cuerpo y sección, sin seleccionar ni activar sus controles. Con sensor activo continúa el seguimiento; sin sensor vuelve a la orientación inicial. En vista normal se conserva el botón **Recentrar**.
+- **Ajustar visor:** aparece abajo únicamente en VR y conserva el formulario anterior con entrada decimal, **Guardar** y **Cancelar**. No hay ajuste mediante mirada.
+- **Salir:** pulsa **Salir de VR** abajo o usa la tecla `Escape`. También se vuelve a vista única si abandonas la pantalla completa desde el navegador. Solo se libera lo adquirido por la experiencia.
+- **Mirada y gestos:** mirar sin tocar no activa; un arrastre no selecciona. El tap simple en VR espera 300 ms para descartar un segundo tap y activa el objetivo que mirabas al tocar, aunque el sensor mueva la mirada durante la espera. El doble tap solo recentra. La selección en vista normal es inmediata.
+- **Teléfono en vertical:** se conservan las dos vistas, los controles y una indicación para girar el teléfono a horizontal.
+- **Mirar alrededor en VR:** arrastre con dedo o mouse y flechas ajustan la mirada sin interrumpir el sensor activo o pendiente. Sin sensor utilizable permiten apuntar a los cuerpos y a la ficha. Los botones HTML conservan su alternativa con teclado.
 
-Cada ojo se renderiza a una textura con una perspectiva asimétrica y después recibe la compensación radial de las lentes. Se usan los [parámetros publicados por HOMIDO](https://homido.com/setup/) para el GRAB: separación de 60 mm, distancia de pantalla a lente de 40 mm, alineación vertical central y coeficientes de distorsión 0.34 y 0.10. El campo se limita a los [100° anunciados para el GRAB](https://homido.com/homido-grab/). La escena, las fichas, los nombres de los planetas y las cruces atraviesan la corrección óptica; los controles de configuración quedan superpuestos para utilizarlos fuera del visor. Los bordes negros y la curvatura de la imagen sin el visor son parte de esta compensación.
+Cada ojo se renderiza a una textura con una perspectiva asimétrica y después recibe la compensación radial de las lentes. Se usan los [parámetros publicados por HOMIDO](https://homido.com/setup/) para el GRAB: separación de 60 mm, distancia de pantalla a lente de 40 mm, alineación vertical central y coeficientes de distorsión 0.34 y 0.10. El campo se limita a los [100° anunciados para el GRAB](https://homido.com/homido-grab/). La escena, las fichas, los nombres de los planetas, las cruces y la instrucción inicial VR atraviesan la corrección óptica. Los botones HTML permanecen abajo para usarlos fuera del visor. Los bordes negros y la curvatura de la imagen sin el visor son parte de esta compensación.
 
 El perfil está integrado en la web: no hace falta escanear un QR en otra aplicación y los ajustes guardados en la aplicación Cardboard no se transfieren automáticamente a este navegador. La alineación y comodidad finales deben comprobarse con el teléfono real dentro del GRAB.
 
@@ -90,7 +94,7 @@ El perfil está integrado en la web: no hace falta escanear un QR en otra aplica
 
 Cuando deseleccionas sin dejar de mirar el cuerpo, desaparece el halo de selección y queda únicamente el resaltado por mirada. Tocar mirando el fondo sin selección previa no selecciona nada, aunque el dedo caiga sobre un planeta lateral. Recentrar y entrar o salir de VR conservan la selección y no cuentan como toques de selección.
 
-Los toques de selección y deselección **mantienen el seguimiento por sensores**, incluso si todavía se espera el permiso o la primera lectura. El arrastre confirmado o las flechas pasan a control manual. Las mismas reglas de mirada y toque funcionan sin sensor, apuntando mediante arrastre o teclado.
+Los toques, el arrastre y las flechas **mantienen el seguimiento por sensores**, incluso si todavía se espera el permiso o la primera lectura. La intervención manual ajusta la dirección sin que la lectura siguiente la revierta; los giros del teléfono siguen funcionando también durante el arrastre. Las mismas reglas de mirada y toque funcionan sin sensor, apuntando mediante arrastre o teclado.
 
 ### Orientación del dispositivo y permiso
 
@@ -98,9 +102,9 @@ Al pulsar **Entrar VR** la aplicación intenta usar los sensores de orientación
 
 - **Permiso:** solo se pide cuando el navegador lo exige (por ejemplo Safari en iPhone) y siempre desde el propio toque en **Entrar VR**, nunca al abrir la página. Si lo rechazas no se vuelve a pedir hasta que salgas de VR y entres de nuevo.
 - **Primera lectura:** la vista no da un salto al activarse el sensor; parte de la dirección que ya veías.
-- **Recentrar:** con el sensor activo, la dirección en la que apunta el teléfono pasa a ser el frente; el seguimiento continúa.
+- **Recentrar:** con el sensor activo, el rumbo actual del teléfono pasa a ser el frente, se retiran los ajustes manuales acumulados y se conserva su inclinación natural; el seguimiento continúa. Sin sensor se vuelve a la dirección inicial.
 - **Alternativa manual:** si no hay sensor, el navegador no lo ofrece, se rechaza el permiso, la página no está en un contexto seguro (HTTPS) o no llegan lecturas válidas en los 2 segundos siguientes a habilitar el sensor (con la página visible), la vista dividida sigue disponible y se muestra un aviso breve ("Arrastra para mirar alrededor"). Entonces funcionan el arrastre con dedo o mouse y las flechas del teclado.
-- Si se reconoce un arrastre real o usas las flechas mientras el sensor está activo, el control pasa a manual y conserva la orientación actual; el sensor no vuelve a moverla hasta que salgas de VR y entres otra vez. Una pulsación sin arrastre no cancela el sensor.
+- **Combinar entradas:** arrastrar con dedo o mouse o usar las flechas ajusta la mirada sin cancelar el sensor activo ni una solicitud pendiente. La primera lectura conserva la última dirección visible. No hace falta salir y volver a entrar ni repetir permisos; usar otro control no provoca el aviso de sensor no disponible.
 
 Los sensores de orientación solo se entregan en un **contexto seguro**: `https://` o `http://localhost`. Un `http://192.168.x.x` desde el móvil mostrará la escena y el control manual, pero no los sensores.
 
@@ -115,6 +119,8 @@ Sin la API Express ni ninguna configuración de instalación (PWA); solo el serv
 3. Pulsa **Entrar VR** y acepta el permiso de orientación si el navegador lo solicita. Gira el teléfono: las dos vistas deben seguirlo. Para probar la alternativa manual, rechaza el permiso y arrastra con el dedo.
 4. Con el visor, apunta a un planeta y usa su botón táctil: comprueba selección con halo en ambos ojos y que la cabeza sigue dirigiendo la vista. Mira al fondo y pulsa de nuevo: debe desaparecer la selección. Repite mirando otro planeta; el primer toque quita la selección anterior y el siguiente selecciona el nuevo objetivo.
 5. Comprueba los doce cuerpos, anillos y superficies, incluidas Luna–Tierra, Europa–Júpiter, Titán–Saturno y Tritón–Neptuno. Apunta a cada luna, toca lejos de su imagen y verifica su ficha y planeta principal en ambos ojos. Tocar mirando fuera de la ficha quita la selección; un toque posterior puede seleccionar otro cuerpo. Rota la pantalla, recentra y repite entrada/salida y regreso desde segundo plano. Repite la selección con sensores rechazados y control manual. Registra navegador, dispositivo y visor empleados; las comprobaciones físicas que no se realicen deben quedar pendientes.
+6. Con sensor activo, arrastra con dedo y después gira el teléfono: debe seguir el movimiento sin salir y volver a entrar. Repite con lecturas durante el arrastre y con flechas de teclado cuando esté disponible. Repite antes de aceptar el permiso y antes de la primera lectura: al activarse no debe saltar la vista.
+7. Al entrar en VR, comprueba que la instrucción se lee en ambos ojos y que un tap en cualquier mitad la cierra sin seleccionar. Usa tap simple para seleccionar y doble tap para recentrar; repite con fichas de planeta y luna, comprobando conservación de selección y sección y ausencia de acciones de ficha por doble tap. Prueba el botón físico del visor. Comprueba Ajustar visor y Salir de VR abajo, y Recentrar sin Ajustar visor en vista normal. Vuelve a entrar y comprueba que aparece otra vez la instrucción.
 
 Los pasos 2 y 3 requieren un móvil físico y, en su caso, las herramientas indicadas (`adb`, `cloudflared` o `ngrok`), que no forman parte del proyecto. Los eventos de sensor simulados en un navegador de escritorio no acreditan la compatibilidad con un visor real.
 
@@ -132,7 +138,7 @@ Por ahora los textos y cifras están **vacíos** en producción. Se conservan no
 
 En escritorio se muestra un panel lateral; en móvil conserva desplazamiento propio. El cierre devuelve el foco al cielo. Desplazar o usar flechas dentro del panel no gira la escena. Apuntar no abre ni sustituye la ficha, y la selección conserva su iluminación al apartar el mouse o la mirada.
 
-En VR la tarjeta aparece **frente a la mirada** y sus pestañas permiten elegir una sección sin pasar por las anteriores. El área de lectura no reacciona a toques; las flechas y × son acciones separadas. Recentrar recupera la tarjeta al frente conservando la sección y selección. Entrar o salir de VR conserva el cuerpo y reinicia la sección. Mirar un control sin tocar no lo activa; un toque mantiene el sensor activo o pendiente y un arrastre confirmado sigue pasando a control manual.
+En VR la tarjeta aparece **frente a la mirada** y sus pestañas permiten elegir una sección sin pasar por las anteriores. El área de lectura no reacciona a toques; las flechas y × son acciones separadas. Recentrar recupera la tarjeta al frente conservando la sección y selección. Entrar o salir de VR conserva el cuerpo y reinicia la sección. Mirar un control sin tocar no lo activa; los toques, el arrastre y las flechas de navegación mantienen el sensor activo o pendiente.
 
 Las imágenes optimizadas de `public/imagenes/planetas/` y `public/imagenes/satelites/` se sirven localmente y conservan su URL original, texto alternativo y crédito. Las cuatro lunas tienen fichas propias que identifican su planeta principal tanto en pantalla como en VR. Las fotos de los satélites proceden de NASA, Galileo, Cassini y Voyager 2; las copias locales se han recortado y reducido para las fichas.
 

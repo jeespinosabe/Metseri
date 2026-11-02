@@ -59,9 +59,20 @@ export function crearSeleccionPlanetas({ detector, alCambiar } = {}) {
     notificar(antes)
   }
 
+  function activarObjetivo(objetivo) {
+    if (destruido) return
+    const antes = obtenerEstado()
+    if (modo === 'vr') {
+      planetaApuntado = objetivo
+      planetaSeleccionado = planetaSeleccionado ? null : objetivo
+    } else planetaSeleccionado = objetivo === planetaSeleccionado ? null : objetivo
+    notificar(antes)
+  }
+
   return {
     obtenerEstado,
     actualizarMirada,
+    activarObjetivo,
     actualizarMouse(posicion, rectangulo) {
       if (destruido || modo !== 'normal') return
       posicionMouse = posicion
@@ -82,15 +93,7 @@ export function crearSeleccionPlanetas({ detector, alCambiar } = {}) {
     },
     activar(evento, rectangulo) {
       if (destruido) return
-      const antes = obtenerEstado()
-      if (modo === 'vr') {
-        planetaApuntado = detector.detectarMirada()
-        planetaSeleccionado = planetaSeleccionado ? null : planetaApuntado
-      } else {
-        const objetivo = detector.detectarPosicion(evento, rectangulo)
-        planetaSeleccionado = objetivo === planetaSeleccionado ? null : objetivo
-      }
-      notificar(antes)
+      activarObjetivo(modo === 'vr' ? detector.detectarMirada() : detector.detectarPosicion(evento, rectangulo))
     },
     destruir() {
       destruido = true
