@@ -13,6 +13,14 @@ npm run dev
 
 Abre la dirección que indica Vite (por defecto `http://localhost:5173`). La escena se ve directamente, sin pantalla de bienvenida y sin necesidad de conceder permisos.
 
+Para rellenar las fichas con el contenido publicado, configura `.env` según la sección de la API e inicia también el backend en otra terminal:
+
+```bash
+npm run start:api
+```
+
+Deja ambas terminales abiertas. Vite dirige `/api` al `PORT` del proceso o del archivo `.env` (3000 si no se configura). Con `PORT=3001`, la API y Vite utilizan puertos distintos. No hace falta volver a cargar datos en Supabase para iniciar la aplicación.
+
 Otros comandos disponibles:
 
 | Comando | Qué hace |
@@ -127,34 +135,40 @@ Los pasos 2 y 3 requieren un móvil físico y, en su caso, las herramientas indi
 ## Alcance
 
 - Las estrellas, los ocho planetas y las cuatro lunas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Hay nombres y fichas educativas; no hay órbitas, rotación automática, Sol, otros satélites ni constelaciones.
-- La escena funciona por completo en el cliente: no usa la API Express, catálogos ni imágenes remotas.
+- La escena, su selección y sus imágenes funcionan en el cliente. El contenido educativo de las fichas en vista normal y VR se consulta mediante la API Express; no se consulta un catálogo externo ni se cargan imágenes remotas.
 - Esta versión **no incluye instalación como aplicación (PWA) ni uso sin conexión**; quedan para un cambio posterior.
 
 ## Fichas educativas
 
 La ficha sigue la referencia visual: clasificación discreta, nombre grande, imagen pequeña arriba a la derecha, espacio para subtítulo y descripción, cuatro datos en dos columnas, curiosidades y libros separados por líneas. Los créditos de imagen quedan aparte.
 
-Por ahora los textos y cifras están **vacíos** en producción. Se conservan nombre, clasificación, imagen, encabezados, etiquetas y unidades. Los espacios reservados son estáticos: no son una carga de red ni textos de ejemplo. Los campos están en src/datos/cuerposCelestes.js: subtitulo y descripcion vacíos, curiosidades sin entradas y los cuatro valores numéricos en null. El formateador conserva la distinción entre falta de valor y cero.
+En vista normal, seleccionar un cuerpo consulta `GET /api/cuerpos-celestes/:slug` y rellena su descripción, clasificación, cuatro datos y curiosidades dentro del diseño existente. Se conservan los textos, etiquetas, cifras, unidades y notas del PDF del equipo almacenados en Supabase. `contenido_ficha.datos_principales` es la fuente de presentación: no se sustituyen los días solares por rotación ni se recalculan los años aproximados. El subtítulo ausente conserva su reserva.
+
+Mientras se consulta aparece «Cargando información…» en el espacio de descripción. Si la API falla, se informa la indisponibilidad y se mantienen la identidad, imagen y cierre; cerrar y volver a seleccionar permite intentarlo de nuevo. Cambiar de cuerpo descarta la respuesta anterior. Los datos locales de `src/datos/cuerposCelestes.js` conservan su contenido editorial vacío y no simulan una respuesta remota.
 
 En escritorio se muestra un panel lateral; en móvil conserva desplazamiento propio. El cierre devuelve el foco al cielo. Desplazar o usar flechas dentro del panel no gira la escena. Apuntar no abre ni sustituye la ficha, y la selección conserva su iluminación al apartar el mouse o la mirada.
 
-En VR la tarjeta aparece **frente a la mirada** y sus pestañas permiten elegir una sección sin pasar por las anteriores. El área de lectura no reacciona a toques; las flechas y × son acciones separadas. Recentrar recupera la tarjeta al frente conservando la sección y selección. Entrar o salir de VR conserva el cuerpo y reinicia la sección. Mirar un control sin tocar no lo activa; los toques, el arrastre y las flechas de navegación mantienen el sensor activo o pendiente.
+En VR se rellena la tarjeta con el mismo contenido publicado de la vista normal, conservando su apariencia, optica y controles. Si una seccion no cabe, las flechas actuales permiten leer sus continuaciones sin recortar texto; las cuatro pestañas siguen llevando al inicio de su seccion. La tarjeta aparece **frente a la mirada** y sus pestañas permiten elegir una sección sin pasar por las anteriores. El área de lectura no reacciona a toques; las flechas y × son acciones separadas. Recentrar recupera la tarjeta al frente conservando la sección y selección. Entrar o salir de VR conserva el cuerpo y reinicia la sección. Mirar un control sin tocar no lo activa; los toques, el arrastre y las flechas de navegación mantienen el sensor activo o pendiente. Cambiar de modo conserva la consulta y el contenido del cuerpo seleccionado.
 
 Las imágenes optimizadas de `public/imagenes/planetas/` y `public/imagenes/satelites/` se sirven localmente y conservan su URL original, texto alternativo y crédito. Las cuatro lunas tienen fichas propias que identifican su planeta principal tanto en pantalla como en VR. Las fotos de los satélites proceden de NASA, Galileo, Cassini y Voyager 2; las copias locales se han recortado y reducido para las fichas.
 
-Los registros de satélite usan `tipo: 'satelite'`, `planetaId` y `planetaPrincipal`. Sus cuatro datos son diámetro (km), distancia al planeta (km), período de rotación (horas o días terrestres) y período orbital (días terrestres). Los valores `diametroKm`, `distanciaPlanetaKm`, `rotacionHoras` y `orbitaDias` siguen en `null`; no se muestra distancia al Sol para las lunas ni se completa contenido editorial mediante la API.
+Los registros locales de satélite usan `tipo: 'satelite'`, `planetaId` y `planetaPrincipal`. En vista normal, sus datos editoriales muestran diámetro medio, distancia orbital media desde su planeta, período de rotación y período orbital, tal como aparecen en el PDF. No se exige distancia al Sol ni se sustituye la ficha por la de su planeta principal. Los valores numéricos locales siguen en `null`; el relleno publicado se mantiene separado.
 
 ### Descubrir libros
 
-Se conserva el encabezado y el espacio del contenido, sin invitaciones, títulos o enlaces de ejemplo. LIBROS_POR_CUERPO, en src/datos/librosCuerposCelestes.js, permanece vacío. Cuando se incorpore contenido definitivo, cada asociación real identificará título y URL HTTP/HTTPS de la ficha bibliográfica de la Biblioteca «Solón Argüello». Los validadores no aceptan títulos o destinos vacíos y no consultan existencias ni préstamos.
+Se conserva el encabezado y la ubicación existentes. En vista normal y VR se presenta la invitacion del PDF correspondiente al cuerpo elegido, recibida en `contenido_ficha.descubrir_libros`, aunque `libros` sea `[]`. Se accede desplazando el panel y se puede volver hacia arriba o cerrar con los controles actuales; no se añaden botones o pantallas.
+
+Los dos libros provisionales de la carga anterior se retiraron durante la corrección de contenido. La biblioteca todavía no ha entregado su catálogo: no se agregan títulos, portadas o enlaces de relleno. `LIBROS_POR_CUERPO`, en `src/datos/librosCuerposCelestes.js`, permanece vacío y conserva su contrato futuro de título y URL HTTP/HTTPS válida. La incorporación y comprobación de títulos reales corresponde a su avance posterior.
 
 ### Comprobar las fichas
 
-Revisar los doce cuerpos, ausencia de textos/cifras y disposición del panel con la API detenida. Abrir por separado Luna, Europa, Titán y Tritón y comprobar nombre, imagen, relación planetaria y rótulos de satélite; cambiar después a un planeta y verificar que recupera sus rótulos. Revisar también las cuatro parejas con ambas etiquetas legibles y Titán separado de los anillos. En VR comprobar apertura al frente, estado de pestaña actual, salto directo entre secciones, flechas, cierre ×, toque inofensivo sobre lectura y deselección mirando fuera. Repetir con teclado/arrastre, sensor denegado, recentrado y cambio de modo. Las comprobaciones del navegador no acreditan la comodidad óptica, sensores reales ni botón físico; requieren teléfono y visor cuando estén disponibles.
+Con API y Vite activos, seleccionar un planeta y una luna, cotejar sus textos y datos con el PDF y recorrer hasta «Descubrir libros». Volver hacia arriba, cambiar de selección y cerrar: nunca deben mezclarse dos cuerpos ni reabrirse una ficha por una respuesta tardía. Con la API detenida, la escena y el cierre siguen disponibles y se informa que no puede recuperarse el contenido.
+
+Como regresión, comprobar que entrar y salir de VR mantiene el cuerpo, el contenido publicado y los controles anteriores. Las capturas y la demostración de este avance corresponden al navegador; las evidencias se guardan en `evidencias/rellenarFichas/` y se describen en el informe del cambio OpenSpec. El rediseño movil y la evaluacion de comodidad fisica siguen en sus tareas posteriores. El relleno informativo del visor si forma parte de este cambio.
 
 ## API de consulta de contenido
 
-El backend Express se ejecuta por separado de Vite. Requiere Node.js 22.12 o posterior compatible con Vite (también Node 24). La interfaz continúa usando sus datos locales; iniciar la API no cambia las fichas ni agrega cuerpos a la escena.
+El backend Express se ejecuta por separado de Vite. Requiere Node.js 22.12 o posterior compatible con Vite (también Node 24). La escena conserva sus identidades locales y utiliza la API unicamente para rellenar las fichas en ambos modos; no se agregan cuerpos a la escena.
 
 ### Organización del backend
 
@@ -188,7 +202,7 @@ La sesión la crea y valida Express mediante una cookie `HttpOnly`, `SameSite=St
 
 Para comprobar el flujo, inicia sesión con los valores configurados, prueba una contraseña incorrecta, abre `/admin` en una ventana privada y, ya autenticado, cierra sesión e intenta consultar `GET /api/admin` otra vez. Las respuestas esperadas son respectivamente acceso autorizado, error de credenciales, formulario sin sesión y `401` tras cerrar sesión.
 
-`.env` está ignorado por Git. El ejemplo solo contiene marcadores; las variables no llevan prefijo `VITE_`. Los comandos cargan `.env` con Node y siguen funcionando si el archivo no existe: `/api/estado` está disponible y las rutas de contenido indican configuración pendiente. No se añade proxy de Vite ni CORS para otros orígenes en este cambio.
+`.env` está ignorado por Git. El ejemplo solo contiene marcadores; las variables no llevan prefijo `VITE_`. Los comandos cargan `.env` con Node y siguen funcionando si el archivo no existe: `/api/estado` está disponible y las rutas de contenido indican configuración pendiente. El proxy de Vite reutiliza `PORT` sin exportar credenciales al navegador. Reinicia Vite y la API después de cambiar ese puerto. No se añade CORS para otros orígenes.
 
 ### Rutas y respuestas
 
@@ -210,7 +224,7 @@ curl.exe -i http://localhost:3000/api/cuerpos-celestes/tierra/libros
 
 El listado conserva `id` (UUID), `slug`, `nombre`, `clasificacion`, `subtitulo`, `tipo`, `planeta_id`, `planeta_slug`, `orden`, `imagen_path` e `imagen_alt`. La ficha contiene `id`, `slug`, `nombre`, `clasificacion`, `subtitulo`, `tipo`, `planeta`, `imagen`, `descripcion_breve`, `datos_principales`, `curiosidades` y `libros`. El endpoint de libros conserva `libro_id`, `titulo`, `autor`, `editorial`, `anio`, `url_ficha` y `orden`; `autor` presenta los autores en el orden de autoría almacenado.
 
-Las rutas reciben el **slug**, por ejemplo `tierra`, y no el UUID de la base. Los identificadores actuales del frontend coinciden con los slugs, pero este cambio no conecta sus contratos. El JSON conserva los nombres `snake_case` de la base y los valores `null`, sin sustituirlos por cero. Los datos principales mantienen las unidades de sus campos: `diametro_km`, `distancia_sol_millones_km` o `distancia_planeta_km`, `rotacion_horas` (negativa para rotación retrógrada) y `orbita_dias`.
+Las rutas reciben el **slug**, por ejemplo `tierra`, y no el UUID de la base. El frontend conserva sus identificadores locales y coteja slug, nombre, tipo y planeta anfitrión antes de rellenar la ficha. El JSON conserva los nombres `snake_case` de la base y los valores `null`, sin sustituirlos por cero. Los números normalizados mantienen las unidades de sus campos; el día solar está separado en `dia_solar_horas`. La propiedad adicional `contenido_ficha` contiene los cuatro datos editoriales con sus cifras, unidades y notas originales, y la invitación bibliográfica; es la fuente que utiliza la presentación del navegador.
 
 Un listado sin contenido público o un cuerpo público sin libros produce `200` con `[]`. Un cuerpo inexistente o sin publicar produce la misma respuesta `404`, también en su ruta de libros. Los errores tienen esta forma:
 
@@ -232,7 +246,7 @@ Cada consulta externa tiene un plazo de cinco segundos. La ruta de libros compru
 
 La API reutiliza el esquema ya existente mediante GET a la Data API: listado en `v_cuerpos_exploracion`, ficha en `rpc/ficha_cuerpo?p_slug=…` y libros en `v_libros_por_cuerpo`, filtrados por `cuerpo_slug`. Sus vistas y función usan `security_invoker`; RLS permite únicamente cuerpos publicados y libros verificados y activos. No se ejecutan escrituras o migraciones ni se cambia la publicación o las políticas.
 
-El SQL inicial compartido crea 12 cuerpos **sin publicar** y ningún libro. Si el proyecto sigue así, una conexión válida devolverá `[]`. No vuelvas a ejecutar la semilla para comprobar la API. Una ficha tampoco inventa descripciones, curiosidades, libros o cifras faltantes. La función SQL entregada no incorpora los créditos de imagen; el frontend conserva sus créditos locales. Para un catálogo que supere el límite de filas de la Data API será necesario ampliar el contrato con paginación.
+La corrección de contenido del PDF ya publica los doce cuerpos y retira los dos libros provisionales; puede consultarse en `bd/README.md`. No vuelvas a ejecutar la semilla ni el SQL de corrección para comprobar o iniciar la API. Una ficha no inventa descripciones, curiosidades, libros o cifras faltantes. La función SQL no incorpora los créditos de imagen; el frontend conserva sus créditos locales. Para un catálogo que supere el límite de filas de la Data API será necesario ampliar el contrato con paginación.
 
 ### Comprobar la integración real
 
@@ -266,3 +280,10 @@ postman collection run postman/consultasMetseri.postman_collection.json
 ```
 
 Si tu API usa otro puerto, cambia `urlBase` en la colección o pásalo al ejecutar: `postman collection run postman/consultasMetseri.postman_collection.json --env-var urlBase=http://localhost:3000`.
+
+
+### Probar desde el telefono mediante el tunel de VS Code
+
+Con API y Vite activos, comparte el puerto **5173**, el que sirve la interfaz. Las peticiones a `/api` viajan por ese mismo tunel y Vite las reenvia al backend configurado en `PORT`; no necesitas exponer otro puerto ni claves de Supabase al telefono. Conserva los permisos actuales del tunel. Si es privado, el telefono necesita la sesion autorizada para abrirlo.
+
+Recarga la pagina del telefono despues de actualizar el codigo. Selecciona Tierra o Luna y entra en VR: Ficha, Datos, ¿Sabias? y Libros deben mostrar su informacion. Tambien puedes seleccionar directamente estando en VR. El ajuste de pantalla se expresa como **diagonal en pulgadas** y no controla la carga de datos. No hace falta modificar ese ajuste ni ejecutar SQL para recuperar las fichas.

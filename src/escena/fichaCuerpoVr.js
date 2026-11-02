@@ -1,5 +1,5 @@
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2 } from 'three'
-import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion } from './contenidoFicha.js'
+import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion, SECCIONES_FICHA } from './contenidoFicha.js'
 
 const DISTANCIA_FICHA = 32
 
@@ -15,9 +15,12 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   const malla = new Mesh(geometria, material)
   malla.visible = false
   const rayo = new Raycaster()
-  const lectura = crearEstadoLectura(alCambiarLectura)
   let cuerpo = null
   let paginas = []
+  let contenido = null
+  let recomponiendo = false
+  const avisarLectura = (estado) => alCambiarLectura?.({ ...estado, seccion: paginas[estado.pagina]?.id ?? null })
+  const lectura = crearEstadoLectura((estado) => { if (!recomponiendo) avisarLectura(estado) })
   let zonas = []
   let imagen = null
   let accionApuntada = null
@@ -69,7 +72,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.fillStyle = '#9aadb8'
     contexto.textAlign = 'center'
     contexto.fillText(`${pagina + 1} / ${total}`, ancho / 2, alto - 63)
-    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total)) {
+    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, paginas)) {
       zonas.push(zona)
       const activa = zona.accion === accionApuntada
       contexto.fillStyle = activa ? '#cce89f' : zona.actual ? '#354832' : '#1c2b36'
@@ -85,8 +88,18 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   }
 
   function componer(reiniciar = false) {
-    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: lienzo.width, alto: lienzo.height }) : []
+    const anterior = lectura.obtenerEstado().pagina
+    const seccion = paginas[anterior]?.id
+    const continuacion = anterior - paginas.findIndex((pagina) => pagina.id === seccion)
+    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: lienzo.width, alto: lienzo.height, contenido }) : []
+    recomponiendo = true
     lectura.actualizar(cuerpo?.id ?? null, paginas.length, reiniciar)
+    if (!reiniciar && seccion) {
+      const inicio = paginas.findIndex((pagina) => pagina.id === seccion)
+      if (inicio >= 0) lectura.irA(inicio + Math.min(continuacion, paginas.filter((pagina) => pagina.id === seccion).length - 1))
+    }
+    recomponiendo = false
+    avisarLectura(lectura.obtenerEstado())
     accionApuntada = null
     dibujar()
   }
@@ -97,6 +110,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     establecerCuerpo(nuevoCuerpo) {
       if (destruido || cuerpo?.id === nuevoCuerpo?.id) return
       cuerpo = nuevoCuerpo
+      contenido = null
       versionImagen += 1
       if (imagen) { imagen.onload = null; imagen.onerror = null }
       imagen = null
@@ -107,6 +121,11 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
       imagen = new Image()
       imagen.onload = imagen.onerror = () => { if (!destruido && version === versionImagen) dibujar() }
       imagen.src = cuerpo.imagen
+    },
+    establecerContenido(nuevoContenido) {
+      if (destruido || !cuerpo || contenido === nuevoContenido) return
+      contenido = nuevoContenido
+      componer()
     },
     establecerModo(modo) {
       if (destruido) return
@@ -150,7 +169,8 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
       return true
     },
     mostrarSeccion(indice) {
-      if (destruido || !lectura.irA(indice)) return false
+      const destino = paginas.findIndex((pagina) => pagina.id === SECCIONES_FICHA[indice]?.id)
+      if (destruido || destino < 0 || !lectura.irA(destino)) return false
       accionApuntada = null
       dibujar()
       return true

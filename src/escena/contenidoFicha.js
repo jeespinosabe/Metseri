@@ -27,7 +27,90 @@ export function dividirLineas(texto, medir, ancho) {
   return lineas
 }
 
-export function crearPaginasFicha(cuerpo, _contexto, { ancho = 800, alto = 720 } = {}) {
+function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
+  const paginas = []
+  const margen = 32
+  const inicio = 194
+  const limite = alto - 108
+  const anchoContenido = ancho - margen * 2
+  const tamano = Math.min(24, Math.max(16, ancho / 32))
+  function lineas(texto, fuente, espacio = anchoContenido) {
+    contexto.font = `${fuente}px system-ui, sans-serif`
+    return dividirLineas(texto, (valor) => contexto.measureText(valor).width, espacio)
+  }
+  function nuevaPagina(seccion, titulo = false) {
+    const pagina = { id: seccion.id, seccion: seccion.titulo, elementos: [] }
+    paginas.push(pagina)
+    if (titulo) pagina.elementos.push({ tipo: 'texto', texto: seccion.titulo, x: margen, y: inicio, tamano: Math.min(32, Math.max(22, ancho / 24)), acento: true })
+    return pagina
+  }
+  function parrafos(seccion, textos, titulo = false) {
+    let pagina = nuevaPagina(seccion, titulo)
+    let y = inicio + (titulo ? 52 : 6)
+    for (const texto of textos) {
+      for (const linea of lineas(texto, tamano)) {
+        if (y + tamano * 1.2 > limite) {
+          pagina = nuevaPagina(seccion, titulo)
+          y = inicio + (titulo ? 52 : 6)
+        }
+        pagina.elementos.push({ tipo: 'texto', texto: linea, x: margen, y, tamano })
+        y += tamano * 1.4
+      }
+      y += 16
+    }
+  }
+  if (contenido.fase !== 'disponible') {
+    const mensaje = contenido.fase === 'error'
+      ? 'No se pudo cargar la información. Cierra la ficha y vuelve a seleccionar el cuerpo.'
+      : 'Cargando información...'
+    SECCIONES_FICHA.forEach((seccion) => parrafos(seccion, [mensaje]))
+    return paginas
+  }
+  const ficha = contenido.ficha
+  parrafos(SECCIONES_FICHA[0], [ficha.descripcion || 'Información no disponible.'])
+  const columna = (anchoContenido - 24) / 2
+  const fuenteEtiqueta = Math.min(23, Math.max(16, ancho / 34))
+  const fuenteValor = Math.min(34, Math.max(22, ancho / 24))
+  const fuenteUnidad = Math.min(18, Math.max(13, ancho / 40))
+  const datos = obtenerDatosPrincipales(cuerpo).map((dato, indice) => ficha.datos[indice] ?? dato)
+  let pagina = nuevaPagina(SECCIONES_FICHA[1])
+  let y = inicio
+  for (let fila = 0; fila < 4; fila += 2) {
+    const bloques = datos.slice(fila, fila + 2).map((dato, indice) => {
+      const elementos = []
+      let posicion = 0
+      const x = margen + indice * (columna + 24)
+      for (const [texto, fuente, tenue] of [[dato.etiqueta, fuenteEtiqueta, true], [dato.valor, fuenteValor, false], [dato.unidad, fuenteUnidad, true]]) {
+        if (texto) {
+          for (const linea of lineas(texto, fuente, columna)) {
+            elementos.push({ tipo: 'texto', texto: linea, x, y: posicion, tamano: fuente, tenue })
+            posicion += fuente * 1.4
+          }
+        } else {
+          elementos.push({ tipo: 'espacio', x, y: posicion, ancho: columna * .65, alto: 20 })
+          posicion += 24
+        }
+        posicion += 8
+      }
+      return { elementos, alto: posicion - 8 }
+    })
+    const altoFila = Math.max(...bloques.map((bloque) => bloque.alto))
+    if (y + altoFila > limite && y > inicio) {
+      pagina = nuevaPagina(SECCIONES_FICHA[1])
+      y = inicio
+    }
+    for (const bloque of bloques) for (const elemento of bloque.elementos) {
+      pagina.elementos.push({ ...elemento, y: elemento.y + y })
+    }
+    y += altoFila + 16
+  }
+  parrafos(SECCIONES_FICHA[2], ficha.curiosidades.length ? ficha.curiosidades : ['Información no disponible.'], true)
+  parrafos(SECCIONES_FICHA[3], [ficha.invitacion || 'Información no disponible.'], true)
+  return paginas
+}
+
+export function crearPaginasFicha(cuerpo, contexto, { ancho = 800, alto = 720, contenido = null } = {}) {
+  if (contenido) return crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido)
   const margen = 32
   const inicio = 194
   const limite = alto - 108
@@ -84,12 +167,12 @@ export function crearEstadoLectura(alCambiar = () => {}) {
   return { obtenerEstado, actualizar, irA, mover: (desplazamiento) => irA(pagina + desplazamiento) }
 }
 
-export function obtenerZonasNavegacion(ancho, alto, pagina, total) {
+export function obtenerZonasNavegacion(ancho, alto, pagina, total, paginas = null) {
   const anchoPestana = (ancho - 64 - 24) / SECCIONES_FICHA.length
   const anchoBoton = Math.min(148, (ancho - 96) / 2)
   return [
     { accion: 'cerrar', texto: '×', x: ancho - 62, y: 14, ancho: 46, alto: 46 },
-    ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: 122, ancho: anchoPestana, alto: 44, actual: pagina === seccion.pagina })),
+    ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: 122, ancho: anchoPestana, alto: 44, actual: paginas ? paginas[pagina]?.id === seccion.id : pagina === seccion.pagina })),
     ...(pagina > 0 ? [{ accion: 'anterior', texto: '← Anterior', x: 32, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
     ...(pagina < total - 1 ? [{ accion: 'siguiente', texto: 'Siguiente →', x: ancho - 32 - anchoBoton, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
   ]

@@ -13,6 +13,7 @@ import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
 import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
+import { iniciarConsultaContenido } from '../servicios/consultaContenido.js'
 
 const MENSAJE_SIN_RENDERIZADO =
   'Tu navegador no pudo iniciar los gráficos necesarios para mostrar el cielo. Comprueba que la aceleración gráfica esté activada e inténtalo de nuevo.'
@@ -42,6 +43,17 @@ function obtenerAnguloPantalla() {
   return window.screen?.orientation?.angle ?? window.orientation ?? 0
 }
 
+function FichaConContenido({ cuerpo, modo, alCambiarContenido, ...propiedades }) {
+  const [contenido, setContenido] = useState(null)
+  useEffect(() => {
+    return iniciarConsultaContenido(cuerpo, (nuevoContenido) => {
+      setContenido(nuevoContenido)
+      alCambiarContenido(cuerpo.id, nuevoContenido)
+    })
+  }, [cuerpo, alCambiarContenido])
+  return <FichaCuerpoCeleste {...propiedades} cuerpo={cuerpo} modo={modo} contenido={contenido} />
+}
+
 export function EscenaEstelar() {
   const raizRef = useRef(null)
   const superficieRef = useRef(null)
@@ -58,6 +70,10 @@ export function EscenaEstelar() {
   const cuerpo = obtenerCuerpoCeleste(lectura.cuerpoId)
   const { intento, mensajeError } = estado
   const enVertical = useSyncExternalStore(suscribirseAOrientacion, estaEnVertical)
+
+  const actualizarContenidoFicha = useCallback((cuerpoId, contenido) => {
+    campoRef.current?.establecerContenidoFicha(cuerpoId, contenido)
+  }, [])
 
   const salirModoVr = useCallback(() => {
     controlesRef.current?.salirVr()
@@ -221,11 +237,12 @@ export function EscenaEstelar() {
         <>
           {modo === 'normal' && <PunteroCruz modo={modo} />}
           <span className="solo-lectores" role="status">{cuerpo ? `Ficha de ${cuerpo.nombre} abierta.` : 'Sin ficha abierta.'}</span>
-          {cuerpo && <FichaCuerpoCeleste
-            key={`${cuerpo.id}-${modo}`}
+          {cuerpo && <FichaConContenido
+            key={cuerpo.id}
             cuerpo={cuerpo}
             modo={modo}
             lectura={lectura}
+            alCambiarContenido={actualizarContenidoFicha}
             alAccionar={(accion) => campoRef.current?.ejecutarAccionFicha(accion)}
             alEntrar={() => campoRef.current?.limpiarApuntado()}
             alCerrar={cerrarFicha}

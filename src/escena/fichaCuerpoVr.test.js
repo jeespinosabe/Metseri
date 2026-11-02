@@ -5,6 +5,8 @@ import { crearFichaCuerpoVr } from './fichaCuerpoVr.js'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { obtenerZonasNavegacion } from './contenidoFicha.js'
 import { etiquetaCubiertaPorFicha } from './etiquetasPlanetas.js'
+import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
+import { adaptarContenido } from '../servicios/consultaContenido.js'
 
 function preparar(t) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
@@ -21,6 +23,57 @@ function preparar(t) {
   t.after(() => ficha.destruir())
   return { ficha, cambios, imagenes, lienzo, textos, obtenerDibujos: () => dibujos }
 }
+
+it('rellena el Canvas, conserva Libros al llegar la API y navega continuaciones con las mismas pestañas', (t) => {
+  const { ficha, cambios, textos, obtenerDibujos } = preparar(t)
+  const cuerpo = CUERPOS_CELESTES.find((registro) => registro.id === 'luna')
+  const fuente = FICHAS_PRUEBA.find((registro) => registro.slug === cuerpo.id)
+  const contenido = { fase: 'disponible', ficha: adaptarContenido(cuerpo, fuente) }
+  ficha.ajustar(350, 200)
+  ficha.establecerCuerpo(cuerpo)
+  ficha.establecerModo('vr')
+  ficha.mostrarSeccion(3)
+  ficha.establecerContenido(contenido)
+  assert.equal(cambios.at(-1).seccion, 'libros')
+  assert.ok(ficha.obtenerLectura().pagina > 3)
+  ficha.mostrarSeccion(0)
+  textos.length = 0
+  ficha.establecerModo('vr')
+  while (cambios.at(-1).seccion === 'resumen') {
+    if (!ficha.moverPagina(1)) break
+  }
+  assert.ok(textos.some((texto) => texto.includes('La Luna')))
+  const cantidad = obtenerDibujos()
+  ficha.establecerContenido(contenido)
+  assert.equal(obtenerDibujos(), cantidad)
+  ficha.mostrarSeccion(3)
+  ficha.ajustar(900, 450)
+  assert.equal(cambios.at(-1).seccion, 'libros')
+  ficha.establecerModo('normal')
+  assert.equal(ficha.obtenerLectura().pagina, 0)
+  ficha.establecerModo('vr')
+  assert.equal(cambios.at(-1).seccion, 'resumen')
+  ficha.establecerCuerpo(CUERPOS_CELESTES[0])
+  assert.equal(ficha.obtenerLectura().total, 4)
+  ficha.destruir()
+  const ultimo = obtenerDibujos()
+  ficha.establecerContenido(contenido)
+  assert.equal(obtenerDibujos(), ultimo)
+})
+
+it('carga y error aparecen dentro del visor y no impiden cerrar o cambiar seccion', (t) => {
+  const { ficha, textos, cambios } = preparar(t)
+  ficha.establecerCuerpo(CUERPOS_CELESTES[0])
+  ficha.establecerModo('vr')
+  ficha.establecerContenido({ fase: 'cargando' })
+  assert.ok(textos.includes('Cargando información...'))
+  ficha.establecerContenido({ fase: 'error' })
+  ficha.mostrarSeccion(3)
+  assert.equal(cambios.at(-1).seccion, 'libros')
+  assert.ok(textos.join(' ').includes('No se pudo cargar la información.'))
+  ficha.establecerCuerpo(null)
+  assert.equal(ficha.malla.visible, false)
+})
 
 it('cada luna conserva identidad, relación e imagen al navegar y alternar modos', (t) => {
   const { ficha, textos, imagenes } = preparar(t)

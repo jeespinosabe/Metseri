@@ -2,8 +2,39 @@ import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { consumirToqueFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, dividirLineas, obtenerZonasNavegacion } from './contenidoFicha.js'
+import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
+import { adaptarContenido } from '../servicios/consultaContenido.js'
 
 const contexto = { font: '', measureText(texto) { return { width: texto.length * parseFloat(this.font) * .55 } } }
+
+for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
+  it(`contenido publicado ${ancho} × ${alto}: doce fichas completas sin recorte ni controles nuevos`, () => {
+    for (const fuente of FICHAS_PRUEBA) {
+      const cuerpo = CUERPOS_CELESTES.find((registro) => registro.id === fuente.slug)
+      const ficha = adaptarContenido(cuerpo, fuente)
+      const paginas = crearPaginasFicha(cuerpo, contexto, { ancho, alto, contenido: { fase: 'disponible', ficha } })
+      const textoSeccion = (id) => paginas.filter((pagina) => pagina.id === id).flatMap((pagina) => pagina.elementos.filter((e) => e.tipo === 'texto' && !e.acento).map((e) => e.texto)).join(' ')
+      assert.equal(textoSeccion('resumen'), ficha.descripcion)
+      assert.equal(textoSeccion('curiosidades'), ficha.curiosidades.join(' '))
+      assert.equal(textoSeccion('libros'), ficha.invitacion)
+      for (const dato of ficha.datos) assert.ok(textoSeccion('datos').includes(`${dato.etiqueta} ${dato.valor} ${dato.unidad}`))
+      if (ancho === 320) assert.ok(paginas.length > 4)
+      for (const [indice, pagina] of paginas.entries()) {
+        for (const e of pagina.elementos) {
+          assert.ok(e.y >= 194)
+          assert.ok(e.y + (e.alto ?? e.tamano * 1.2) <= alto - 100, `${fuente.slug}: ${pagina.id} ${e.texto}`)
+          if (e.texto) {
+            contexto.font = `${e.tamano}px system-ui`
+            assert.ok(e.x + contexto.measureText(e.texto).width <= ancho - 32 + .01, `${fuente.slug}: ${e.texto}`)
+          }
+        }
+        const zonas = obtenerZonasNavegacion(ancho, alto, indice, paginas.length, paginas)
+        assert.equal(zonas.filter((z) => z.actual).length, 1)
+        assert.equal(zonas.filter((z) => z.accion.startsWith('seccion:')).length, 4)
+      }
+    }
+  })
+}
 
 for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
   it(`secciones ${ancho} × ${alto}: reservas vacías y contenido dentro del área de lectura`, () => {

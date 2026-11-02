@@ -306,6 +306,11 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
 
     obtenerModo: () => modo,
 
+    establecerContenidoFicha(cuerpoId, contenido) {
+      if (destruido || contextoPerdido || cuerpoId !== seleccionadoAnterior) return
+      ficha.establecerContenido(contenido)
+    },
+
     // 'normal' = vista única; 'vr' = dos vistas contiguas con la misma escena y cámara.
     establecerModo(nuevoModo) {
       if (destruido || contextoPerdido) return
