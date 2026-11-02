@@ -1,5 +1,5 @@
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2 } from 'three'
-import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion } from './contenidoFicha.js'
+import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, dividirLineas, obtenerSeccionesFicha, obtenerZonasNavegacion } from './contenidoFicha.js'
 
 const DISTANCIA_FICHA = 32
 
@@ -15,7 +15,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   const malla = new Mesh(geometria, material)
   malla.visible = false
   const rayo = new Raycaster()
-  const lectura = crearEstadoLectura(alCambiarLectura)
+  const lectura = crearEstadoLectura()
   let cuerpo = null
   let paginas = []
   let zonas = []
@@ -24,6 +24,13 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   let enVr = false
   let destruido = false
   let versionImagen = 0
+  let versionContenido = 0
+  let contenido = { fase: 'cargando' }
+
+  function informarLectura() {
+    const estado = lectura.obtenerEstado()
+    alCambiarLectura?.({ ...estado, seccion: paginas[estado.pagina]?.id ?? null })
+  }
 
   function dibujar() {
     if (!cuerpo || destruido) return
@@ -39,18 +46,18 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.textBaseline = 'top'
     contexto.textAlign = 'left'
     contexto.fillStyle = '#c5e49b'
-    contexto.font = `${Math.max(13, Math.min(20, ancho / 32))}px system-ui, sans-serif`
-    contexto.fillText(cuerpo.clasificacion.split('·').at(-1).trim().toUpperCase(), 32, 20)
-    contexto.font = `${Math.max(30, Math.min(56, ancho / 12))}px system-ui, sans-serif`
+    const fuenteCategoria = Math.max(12, Math.min(18, ancho / 32))
+    contexto.font = `${fuenteCategoria}px system-ui, sans-serif`
+    const categoria = (contenido.ficha ?? cuerpo).clasificacion.split('·').at(-1).trim().toUpperCase()
+    dividirLineas(categoria, (texto) => contexto.measureText(texto).width, ancho - 110).forEach((linea, indice) => contexto.fillText(linea, 32, 16 + indice * (fuenteCategoria + 2)))
+    contexto.font = `${Math.max(26, Math.min(48, ancho / 14))}px system-ui, sans-serif`
     contexto.fillStyle = '#eef2f4'
-    contexto.fillText(cuerpo.nombre, 30, 44)
-    contexto.fillStyle = '#26343e'
-    contexto.fillRect(32, 102, Math.min(170, ancho * .28), 7)
+    contexto.fillText(cuerpo.nombre, 30, 62)
     if (imagen?.complete && imagen.naturalWidth > 0) {
       const anchoImagen = Math.min(130, ancho * .22)
-      const escala = Math.min(anchoImagen / imagen.naturalWidth, 84 / imagen.naturalHeight)
+      const escala = Math.min(anchoImagen / imagen.naturalWidth, 50 / imagen.naturalHeight)
       contexto.globalCompositeOperation = 'screen'
-      contexto.drawImage(imagen, ancho - 76 - anchoImagen, 25, imagen.naturalWidth * escala, imagen.naturalHeight * escala)
+      contexto.drawImage(imagen, ancho - 32 - anchoImagen, 62, imagen.naturalWidth * escala, imagen.naturalHeight * escala)
       contexto.globalCompositeOperation = 'source-over'
     }
     zonas = []
@@ -60,22 +67,31 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
         contexto.fillRect(elemento.x, elemento.y, elemento.ancho, elemento.alto)
       } else {
         contexto.font = `${elemento.tamano}px system-ui, sans-serif`
-        contexto.fillStyle = elemento.acento ? '#c5e49b' : elemento.tenue ? '#8ea0ad' : '#e2e8ed'
-        contexto.fillText(elemento.texto, elemento.x, elemento.y)
-        if (elemento.accion) zonas.push({ accion: elemento.accion, x: elemento.x, y: elemento.y, ancho: contexto.measureText(elemento.texto).width, alto: elemento.tamano * 1.35 })
+        if (elemento.accion) {
+          const zona = { accion: elemento.accion, x: elemento.x, y: elemento.y, ancho: Math.max(44, contexto.measureText(elemento.texto).width + 16), alto: 44 }
+          zonas.push(zona)
+          contexto.fillStyle = accionApuntada === elemento.accion ? '#cce89f' : '#354832'
+          contexto.fillRect(zona.x, zona.y, zona.ancho, zona.alto)
+        }
+        contexto.fillStyle = elemento.accion && accionApuntada === elemento.accion ? '#101a17' : elemento.acento ? '#c5e49b' : elemento.tenue ? '#a8b9c5' : '#e2e8ed'
+        contexto.fillText(elemento.texto, elemento.x + (elemento.accion ? 8 : 0), elemento.y + (elemento.accion ? 10 : 0))
       }
     }
-    contexto.font = `${ancho < 400 ? 16 : 22}px system-ui, sans-serif`
+    contexto.font = `${ancho < 400 ? 14 : 20}px system-ui, sans-serif`
     contexto.fillStyle = '#9aadb8'
     contexto.textAlign = 'center'
-    contexto.fillText(`${pagina + 1} / ${total}`, ancho / 2, alto - 63)
-    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total)) {
+    const seccion = paginas[pagina].id
+    const paginasSeccion = paginas.filter((entrada) => entrada.id === seccion)
+    const inicioSeccion = paginas.findIndex((entrada) => entrada.id === seccion)
+    const nombreSeccion = obtenerSeccionesFicha(paginas).find((entrada) => entrada.id === seccion).nombre
+    contexto.fillText(`${nombreSeccion} · ${pagina - inicioSeccion + 1} / ${paginasSeccion.length}`, ancho / 2, alto - 111)
+    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, obtenerSeccionesFicha(paginas), seccion)) {
       zonas.push(zona)
       const activa = zona.accion === accionApuntada
       contexto.fillStyle = activa ? '#cce89f' : zona.actual ? '#354832' : '#1c2b36'
       contexto.fillRect(zona.x, zona.y, zona.ancho, zona.alto)
       contexto.fillStyle = activa ? '#101a17' : zona.actual ? '#d5edb6' : '#d4dfe5'
-      contexto.font = `${zona.accion === 'cerrar' ? 30 : ancho < 400 ? 16 : 24}px system-ui, sans-serif`
+      contexto.font = `${zona.accion === 'cerrar' ? 30 : Math.min(22, Math.max(12, zona.ancho / 5))}px system-ui, sans-serif`
       contexto.textAlign = 'center'
       contexto.fillText(zona.texto, zona.x + zona.ancho / 2, zona.y + 14)
     }
@@ -85,18 +101,39 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   }
 
   function componer(reiniciar = false) {
-    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: lienzo.width, alto: lienzo.height }) : []
+    const anterior = lectura.obtenerEstado().pagina
+    const seccionAnterior = paginas[anterior]?.id
+    const subpagina = anterior - paginas.findIndex((pagina) => pagina.id === seccionAnterior)
+    paginas = cuerpo ? crearPaginasFicha(contenido.ficha ?? cuerpo, contexto, { ancho: lienzo.width, alto: lienzo.height, contenido }) : []
     lectura.actualizar(cuerpo?.id ?? null, paginas.length, reiniciar)
+    if (!reiniciar && seccionAnterior) {
+      const inicio = paginas.findIndex((pagina) => pagina.id === seccionAnterior)
+      const cantidad = paginas.filter((pagina) => pagina.id === seccionAnterior).length
+      if (inicio >= 0) lectura.irA(inicio + Math.min(Math.max(0, subpagina), cantidad - 1))
+    }
     accionApuntada = null
+    informarLectura()
     dibujar()
   }
 
   return {
     malla,
     obtenerLectura: lectura.obtenerEstado,
+    obtenerVersionContenido: () => versionContenido,
+    obtenerLibro: (indice) => contenido.fase === 'disponible' ? contenido.ficha.libros[indice] : undefined,
+    establecerContenido(nuevoContenido) {
+      if (destruido || !cuerpo || nuevoContenido.slug !== cuerpo.id || nuevoContenido === contenido
+        || (nuevoContenido.fase === 'disponible' && nuevoContenido.ficha?.id !== cuerpo.id)) return false
+      contenido = nuevoContenido
+      versionContenido += 1
+      componer()
+      return true
+    },
     establecerCuerpo(nuevoCuerpo) {
       if (destruido || cuerpo?.id === nuevoCuerpo?.id) return
       cuerpo = nuevoCuerpo
+      contenido = { fase: 'cargando' }
+      versionContenido += 1
       versionImagen += 1
       if (imagen) { imagen.onload = null; imagen.onerror = null }
       imagen = null
@@ -146,12 +183,15 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     moverPagina(desplazamiento) {
       if (destruido || !lectura.mover(desplazamiento)) return false
       accionApuntada = null
+      informarLectura()
       dibujar()
       return true
     },
-    mostrarSeccion(indice) {
-      if (destruido || !lectura.irA(indice)) return false
+    mostrarSeccion(destino) {
+      const indice = typeof destino === 'string' ? paginas.findIndex((pagina) => pagina.id === destino) : destino
+      if (destruido || indice < 0 || !lectura.irA(indice)) return false
       accionApuntada = null
+      informarLectura()
       dibujar()
       return true
     },

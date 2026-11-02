@@ -1,4 +1,6 @@
 import { obtenerDatosPrincipales } from '../datos/cuerposCelestes.js'
+import { INVITACION_BIBLIOTECA } from '../datos/librosCuerposCelestes.js'
+import { obtenerMensajeContenido } from '../servicios/consultaContenido.js'
 
 export const SECCIONES_FICHA = [
   { id: 'resumen', nombre: 'Ficha', titulo: 'Presentación', pagina: 0 },
@@ -27,37 +29,92 @@ export function dividirLineas(texto, medir, ancho) {
   return lineas
 }
 
-export function crearPaginasFicha(cuerpo, _contexto, { ancho = 800, alto = 720 } = {}) {
-  const margen = 32
-  const inicio = 194
-  const limite = alto - 108
-  const paginas = SECCIONES_FICHA.map((seccion) => ({ id: seccion.id, seccion: seccion.titulo, elementos: [] }))
+export function crearPaginasFicha(cuerpo, contexto, { ancho = 800, alto = 720, contenido = { fase: 'cargando' } } = {}) {
+  const margen = 32, inicio = 194, limite = alto - 132
   const anchoContenido = ancho - margen * 2
-  // Reservas estáticas, sin textos ni cifras de ejemplo ni animación de carga.
-  function espacios(pagina, y, cantidad, alturaDisponible) {
-    const paso = Math.min(40, alturaDisponible / cantidad)
-    for (let indice = 0; indice < cantidad; indice += 1) pagina.elementos.push({ tipo: 'espacio', x: margen, y: y + indice * paso, ancho: anchoContenido * (indice === cantidad - 1 ? .68 : indice % 2 ? .92 : 1), alto: Math.min(12, paso * .32) })
+  const tamano = Math.max(16, Math.min(24, ancho / 32))
+  const paso = Math.ceil(tamano * 1.4)
+  const paginas = []
+  let pagina, y
+  function nuevaPagina(seccion) {
+    pagina = { id: seccion.id, seccion: seccion.titulo, elementos: [] }
+    paginas.push(pagina)
+    y = inicio
   }
-  espacios(paginas[0], inicio + 6, 4, limite - inicio)
-  const filaAlto = (limite - inicio) / 2
-  const columnaAncho = (anchoContenido - 24) / 2
-  const tamanoEtiqueta = Math.min(23, Math.max(16, ancho / 34))
-  obtenerDatosPrincipales(cuerpo).forEach((dato, indice) => {
-    const x = margen + (indice % 2) * (columnaAncho + 24)
-    const y = inicio + Math.floor(indice / 2) * filaAlto
-    const valorY = y + tamanoEtiqueta + 9
-    const altoValor = Math.min(42, Math.max(20, filaAlto * .24))
-    paginas[1].elementos.push(
-      { tipo: 'texto', texto: dato.etiqueta, x, y, tamano: tamanoEtiqueta, tenue: true },
-      { tipo: 'espacio', x, y: valorY, ancho: columnaAncho * .65, alto: altoValor },
-      { tipo: 'texto', texto: dato.unidad, x, y: valorY + altoValor + 8, tamano: Math.min(18, Math.max(13, ancho / 40)), tenue: true },
-    )
-  })
-  for (const pagina of paginas.slice(2)) {
-    pagina.elementos.push({ tipo: 'texto', texto: pagina.seccion, x: margen, y: inicio, tamano: Math.min(32, Math.max(22, ancho / 24)), acento: true })
-    espacios(pagina, inicio + 52, 3, limite - inicio - 52)
+  function lineas(texto, fuente = tamano, espacio = anchoContenido) {
+    contexto.font = `${fuente}px system-ui, sans-serif`
+    return dividirLineas(texto, (fragmento) => contexto.measureText(fragmento).width, espacio)
+  }
+  function parrafo(texto, seccion, opciones = {}) {
+    const altura = opciones.accion ? 44 : paso
+    for (const linea of lineas(texto)) {
+      if (y + altura > limite) nuevaPagina(seccion)
+      pagina.elementos.push({ tipo: 'texto', texto: linea, x: margen, y, tamano, alto: altura, ...opciones })
+      y += altura
+    }
+    y = Math.min(limite, y + 10)
+  }
+  function datosPrincipales(seccion) {
+    const columna = (anchoContenido - 24) / 2
+    const etiqueta = Math.max(13, Math.min(20, ancho / 36))
+    const valor = Math.max(18, Math.min(32, ancho / 25))
+    const unidad = Math.max(13, Math.min(18, ancho / 40))
+    const datos = obtenerDatosPrincipales(cuerpo)
+    for (let indice = 0; indice < datos.length; indice += 2) {
+      const celdas = datos.slice(indice, indice + 2).map((dato, posicion) => {
+        const elementos = []
+        let desplazamiento = 0
+        for (const [texto, fuente, tenue] of [[dato.etiqueta, etiqueta, true], [dato.valor === '' ? 'Dato no disponible' : dato.valor, valor, false], [dato.unidad, unidad, true], ...(dato.retrograda ? [['Rotación retrógrada', unidad, true]] : [])]) {
+          for (const linea of lineas(texto, fuente, columna)) {
+            elementos.push({ tipo: 'texto', texto: linea, x: margen + posicion * (columna + 24), y: desplazamiento, tamano: fuente, tenue })
+            desplazamiento += Math.ceil(fuente * 1.25)
+          }
+          desplazamiento += 4
+        }
+        return { elementos, alto: desplazamiento }
+      })
+      const altoFila = Math.max(...celdas.map((celda) => celda.alto))
+      if (altoFila > limite - inicio) {
+        // En el lienzo mínimo, datos especialmente largos continúan en páginas de lectura.
+        for (const dato of datos.slice(indice, indice + 2)) parrafo(`${dato.etiqueta}: ${dato.valor || 'Dato no disponible'} ${dato.unidad}${dato.retrograda ? '. Rotación retrógrada' : ''}`, seccion)
+      } else {
+        if (y + altoFila > limite) nuevaPagina(seccion)
+        for (const celda of celdas) for (const elemento of celda.elementos) pagina.elementos.push({ ...elemento, y: y + elemento.y })
+        y += altoFila + 12
+      }
+    }
+  }
+  for (const seccion of SECCIONES_FICHA) {
+    nuevaPagina(seccion)
+    if (contenido.fase !== 'disponible') {
+      parrafo(obtenerMensajeContenido(contenido, cuerpo.nombre), seccion)
+      if (contenido.fase === 'error') parrafo('Reintentar', seccion, { accion: 'reintentar', acento: true })
+      continue
+    }
+    if (seccion.id === 'resumen') {
+      if (cuerpo.subtitulo) parrafo(cuerpo.subtitulo, seccion, { acento: true })
+      parrafo(cuerpo.descripcion || 'Descripción no disponible.', seccion)
+    } else if (seccion.id === 'datos') datosPrincipales(seccion)
+    else if (seccion.id === 'curiosidades') {
+      for (const curiosidad of cuerpo.curiosidades.length ? cuerpo.curiosidades : ['No hay curiosidades publicadas para este cuerpo.']) parrafo(curiosidad, seccion)
+    } else if (cuerpo.libros.length) {
+      cuerpo.libros.forEach((libro, indice) => {
+        parrafo(libro.titulo, seccion, { acento: true })
+        if (libro.autor) parrafo(libro.autor, seccion)
+        const edicion = [libro.editorial, libro.anio].filter((dato) => dato !== '' && dato !== null).join(' · ')
+        if (edicion) parrafo(edicion, seccion)
+        parrafo('Ver ficha', seccion, { accion: `libro:${indice}`, acento: true })
+      })
+    } else {
+      parrafo(`Aún no hay libros verificados asociados a ${cuerpo.nombre}.`, seccion)
+      parrafo(INVITACION_BIBLIOTECA, seccion)
+    }
   }
   return paginas
+}
+
+export function obtenerSeccionesFicha(paginas) {
+  return SECCIONES_FICHA.map((seccion) => ({ ...seccion, pagina: paginas.findIndex((pagina) => pagina.id === seccion.id) }))
 }
 
 export function crearEstadoLectura(alCambiar = () => {}) {
@@ -84,12 +141,12 @@ export function crearEstadoLectura(alCambiar = () => {}) {
   return { obtenerEstado, actualizar, irA, mover: (desplazamiento) => irA(pagina + desplazamiento) }
 }
 
-export function obtenerZonasNavegacion(ancho, alto, pagina, total) {
+export function obtenerZonasNavegacion(ancho, alto, pagina, total, secciones = SECCIONES_FICHA, seccionActual = secciones.findLast((seccion) => seccion.pagina <= pagina)?.id) {
   const anchoPestana = (ancho - 64 - 24) / SECCIONES_FICHA.length
   const anchoBoton = Math.min(148, (ancho - 96) / 2)
   return [
     { accion: 'cerrar', texto: '×', x: ancho - 62, y: 14, ancho: 46, alto: 46 },
-    ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: 122, ancho: anchoPestana, alto: 44, actual: pagina === seccion.pagina })),
+    ...secciones.map((seccion, indice) => ({ accion: `seccion:${seccion.id}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: 122, ancho: anchoPestana, alto: 44, actual: seccionActual === seccion.id })),
     ...(pagina > 0 ? [{ accion: 'anterior', texto: '← Anterior', x: 32, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
     ...(pagina < total - 1 ? [{ accion: 'siguiente', texto: 'Siguiente →', x: ancho - 32 - anchoBoton, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
   ]

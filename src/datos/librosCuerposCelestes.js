@@ -17,8 +17,13 @@ export function obtenerLibrosCuerpo(id, asociaciones = LIBROS_POR_CUERPO) {
 export function abrirFichaBibliografica(libro, { abrir = window.open.bind(window), salirVr = () => {} } = {}) {
   if (!obtenerLibrosCuerpo('actual', { actual: [libro] }).length) return false
   // Síncrono: conservar el gesto que permite abrir una pestaña, antes de liberar VR.
-  const pestana = abrir(libro.url, '_blank')
-  if (pestana) pestana.opener = null
-  salirVr()
-  return Boolean(pestana)
+  try {
+    const pestana = abrir(libro.url, '_blank')
+    if (pestana) pestana.opener = null
+    return Boolean(pestana)
+  } catch {
+    return false
+  } finally {
+    salirVr()
+  }
 }

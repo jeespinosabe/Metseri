@@ -26,7 +26,6 @@ import { DIAGONAL_PREDETERMINADA } from './perfilVisor.js'
 import { crearFichaCuerpoVr } from './fichaCuerpoVr.js'
 import { crearApuntadoMouse } from './apuntadoMouse.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
-import { obtenerLibrosCuerpo } from '../datos/librosCuerposCelestes.js'
 import { consumirToqueFicha } from './contenidoFicha.js'
 import { crearInstruccionesVr } from './instruccionesVr.js'
 
@@ -112,7 +111,7 @@ function crearGeometriaGrupo(grupo, generarAleatorio) {
  * Lanza un error si el navegador no puede crear el contexto gráfico.
  * `alPerderContexto` se invoca si el contexto gráfico se pierde después.
  */
-export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha, alSolicitarLibro, alCambiarInstruccionVr } = {}) {
+export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha, alSolicitarLibro, alReintentarFicha, alCambiarInstruccionVr } = {}) {
   const renderizador = new WebGLRenderer({ antialias: true })
   const lienzo = renderizador.domElement
   lienzo.style.display = 'block'
@@ -212,10 +211,11 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     if (destruido || contextoPerdido || !seleccion.obtenerEstado().planetaSeleccionado) return
     if (accion === 'siguiente') ficha.moverPagina(1)
     else if (accion === 'anterior') ficha.moverPagina(-1)
-    else if (accion.startsWith('seccion:')) ficha.mostrarSeccion(Number(accion.slice(8)))
+    else if (accion.startsWith('seccion:')) ficha.mostrarSeccion(accion.slice(8))
+    else if (accion === 'reintentar') alReintentarFicha?.()
     else if (accion === 'cerrar') seleccion.quitarSeleccion()
     else if (accion.startsWith('libro:')) {
-      const libro = obtenerLibrosCuerpo(seleccionadoAnterior)[Number(accion.slice(6))]
+      const libro = ficha.obtenerLibro(Number(accion.slice(6)))
       if (libro) alSolicitarLibro?.(libro)
     }
     seleccion.actualizarMirada()
@@ -346,10 +346,11 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       if (destruido || contextoPerdido || modo !== 'vr') return null
       if (instrucciones.esVisible()) { instrucciones.ocultar(); return null }
       const cuerpoInicial = seleccion.obtenerEstado().planetaSeleccionado
+      const versionContenido = ficha.obtenerVersionContenido()
       const objetivoFicha = ficha.detectar(camara)
       const objetivoCielo = objetivoFicha ? null : detector.detectarMirada()
       return () => {
-        if (destruido || contextoPerdido || modo !== 'vr' || cuerpoInicial !== seleccion.obtenerEstado().planetaSeleccionado) return
+        if (destruido || contextoPerdido || modo !== 'vr' || cuerpoInicial !== seleccion.obtenerEstado().planetaSeleccionado || versionContenido !== ficha.obtenerVersionContenido()) return
         if (!consumirToqueFicha(objetivoFicha, ejecutarAccionFicha)) seleccion.activarObjetivo(objetivoCielo)
         seleccion.actualizarMirada()
       }
@@ -358,6 +359,10 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     ocultarInstruccionVr: instrucciones.ocultar,
 
     ejecutarAccionFicha,
+    establecerContenidoFicha(contenido) {
+      if (destruido || contextoPerdido) return false
+      return ficha.establecerContenido(contenido)
+    },
     limpiarApuntado: apuntado.limpiar,
     recentrarFicha() {
       if (modo === 'vr') {
