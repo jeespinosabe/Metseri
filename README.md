@@ -193,6 +193,47 @@ api/
 2. Obtén la URL del proyecto en Supabase, **Integrations > Data API**, y la clave pública `sb_publishable_…` en **Settings > API Keys**. Se utiliza la clave pública para respetar los permisos del visitante y RLS; no una clave secreta o `service_role`.
 3. Ejecuta `npm run dev` para iniciar la interfaz y la API. Para iniciar únicamente el backend, usa `npm run start:api`, o `npm run dev:api` para reiniciar automáticamente al editarlo. `PORT` es opcional y por defecto vale 3000.
 
+### Despliegue en Vercel
+
+El proyecto publica la interfaz Vite y la función Express en el mismo dominio. `vercel.json`, junto a `package.json`, reenvía `/api/:path*` a la función `/api` exportada por `api/index.js`. Express atiende las rutas completas, como `/api/estado` y `/api/cuerpos-celestes/tierra/libros`. La regla se limita a la API y conserva las rutas de la interfaz, los archivos compilados y las imágenes locales. Consulta la [documentación de reescrituras de Vercel](https://vercel.com/docs/routing/rewrites).
+
+Para configurar el proyecto en Vercel:
+
+1. Usa la raíz del repositorio, donde están `package.json`, `vercel.json` y `api/`, y el framework **Vite**. El comando de compilación es `npm run build` y el directorio de salida es `dist`.
+2. En **Settings > Environment Variables**, configura `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` con los valores del proyecto Supabase para **Production**. La clave debe ser pública, con formato `sb_publishable_…`, como exige el servicio actual. Para probar una URL de Preview, configura también ese entorno.
+3. Conserva esos nombres sin prefijo `VITE_`: la conexión se utiliza en el servidor. El archivo `.env` local está ignorado por Git y no configura automáticamente las variables de Vercel. `PORT` corresponde al arranque local; no es la dirección de la API publicada.
+4. Publica una versión que incluya `vercel.json`. Si agregas o cambias variables, vuelve a desplegar desde **Deployments > … > Redeploy** para que se apliquen a una nueva versión. Revisa que estés probando la URL de ese despliegue. Consulta la [configuración de variables de Vercel](https://vercel.com/docs/environment-variables/managing-environment-variables).
+
+`npm run dev` inicia los dos servidores en tu computadora. El proxy `server.proxy` de Vite solo actúa en desarrollo; no sustituye las reglas de Vercel ni es el comando de compilación de producción. `server.js` conserva el arranque local; Vercel ejecuta la aplicación exportada por `api/index.js` como función.
+
+#### Comprobar el despliegue
+
+Para la URL de prueba actual, ejecuta en PowerShell:
+
+```powershell
+curl.exe -i https://metseri-prueba.vercel.app/api/estado
+curl.exe -i https://metseri-prueba.vercel.app/api/cuerpos-celestes
+curl.exe -i https://metseri-prueba.vercel.app/api/cuerpos-celestes/tierra
+curl.exe -i https://metseri-prueba.vercel.app/api/cuerpos-celestes/tierra/libros
+curl.exe -i https://metseri-prueba.vercel.app/api/cuerpos-celestes/luna
+```
+
+Sustituye el dominio si utilizas otra URL. Interpreta el estado HTTP y el tipo de contenido juntos:
+
+| Respuesta | Qué comprueba o indica |
+| --- | --- |
+| `/api/estado`: 200 y JSON con `proyecto`, `mensaje` y `estado` | La ruta llega a Express; todavía no comprueba Supabase. |
+| Listado y ficha: 200 y JSON | Comprueba el contenido real cotejando UUID y slug entre ambos. Un listado vacío no demuestra recuperación de una ficha. |
+| Libros: 200 y un arreglo JSON | La ruta anidada funciona; `[]` es válido si el cuerpo publicado no tiene libros visibles. |
+| 404 con texto `NOT_FOUND` de Vercel | La plataforma no está resolviendo esa ruta hacia la API; revisa que el despliegue incluya `vercel.json`. |
+| HTML de la interfaz al consultar `/api/...` | La ruta de API está resolviéndose hacia la página; revisa las reglas de enrutamiento. |
+| 503 JSON con `CONFIGURACION_NO_DISPONIBLE` | La API responde, pero faltan variables de Supabase o sus valores no cumplen el formato esperado. Revisa el entorno y vuelve a desplegar si cambias variables. |
+| 503 JSON con `CONTENIDO_NO_DISPONIBLE` | La API responde, pero falló la consulta a Supabase; revisa conectividad, recursos y permisos de lectura. |
+| 404 JSON con `CUERPO_NO_ENCONTRADO` | La API responde y no encuentra un cuerpo público con ese slug. |
+| 400 JSON con `SLUG_INVALIDO` | La API recibió un identificador inválido, por ejemplo `TIERRA` en mayúsculas. |
+
+Finalmente, abre la raíz del sitio y selecciona Tierra y Luna. Comprueba que las fichas reciben su contenido, que la escena y las imágenes siguen disponibles y que las peticiones de datos usan `/api` del mismo dominio. Las comprobaciones locales y las de Vercel se registran por separado en `verificacion.md` del cambio OpenSpec: una compilación o prueba local correcta no acredita que el dominio ya publique esa versión. No hace falta volver a ejecutar SQL ni publicar registros para comprobar el enrutamiento.
+
 ### Acceso administrativo
 
 El formulario está disponible en `/admin`. Configura `ADMIN_USUARIO` y `ADMIN_CONTRASENA` en `.env` antes de iniciar la API; usa una contraseña propia de al menos 12 caracteres y no la guardes en Git. En desarrollo, ejecuta `npm run dev` para iniciar la interfaz y la API juntas. Vite reenvía `/api` al servidor local de Express.
