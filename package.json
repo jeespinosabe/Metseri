@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently --kill-others --names interfaz,api \"npm run dev:interfaz\" \"npm run dev:api\"",
+    "dev:interfaz": "vite",
     "start:api": "node --env-file-if-exists=.env server.js",
     "dev:api": "node --watch --env-file-if-exists=.env server.js",
     "test:integracion": "node --env-file-if-exists=.env api/herramientas/comprobarSupabase.js",
@@ -24,6 +25,7 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.6",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.6",

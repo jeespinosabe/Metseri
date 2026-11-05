@@ -13,18 +13,17 @@ npm run dev
 
 Abre la dirección que indica Vite (por defecto `http://localhost:5173`). La escena se ve directamente, sin pantalla de bienvenida y sin necesidad de conceder permisos.
 
-Para rellenar las fichas con el contenido publicado, configura `.env` según la sección de la API e inicia también el backend en otra terminal:
+`npm run dev` inicia la interfaz y la API en la misma terminal, con los mensajes identificados como `interfaz` y `api`. La API se reinicia automáticamente al editar sus archivos. Para rellenar las fichas con el contenido publicado, configura `.env` según la sección de la API.
 
-```bash
-npm run start:api
-```
-
-Deja ambas terminales abiertas. Vite dirige `/api` al `PORT` del proceso o del archivo `.env` (3000 si no se configura). Con `PORT=3001`, la API y Vite utilizan puertos distintos. No hace falta volver a cargar datos en Supabase para iniciar la aplicación.
+Deja esa terminal abierta y usa `Ctrl+C` para detener ambos servidores. Si uno de los procesos termina, también se detiene el otro. Vite dirige `/api` al `PORT` del proceso o del archivo `.env` (3000 si no se configura). Con `PORT=3001`, la API y Vite utilizan puertos distintos. No hace falta volver a cargar datos en Supabase para iniciar la aplicación.
 
 Otros comandos disponibles:
 
 | Comando | Qué hace |
 | --- | --- |
+| `npm run dev:interfaz` | Inicia únicamente Vite. |
+| `npm run dev:api` | Inicia únicamente la API con reinicio automático al editar el backend. |
+| `npm run start:api` | Inicia únicamente la API sin reinicio automático. |
 | `npm run build` | Genera la versión de producción en `dist/`. |
 | `npm run preview` | Sirve localmente la versión ya compilada. |
 | `npm run lint` | Revisa el código con ESLint. |
@@ -120,7 +119,7 @@ Los sensores de orientación solo se entregan en un **contexto seguro**: `https:
 
 Sin la API Express ni ninguna configuración de instalación (PWA); solo el servidor de Vite:
 
-1. Arranca la aplicación: `npm run dev`.
+1. Arranca solo la interfaz: `npm run dev:interfaz`.
 2. Abre la aplicación en el móvil con una de estas opciones:
    - **Android con cable USB** (Chrome, depuración USB activada): ejecuta `adb reverse tcp:5173 tcp:5173` y abre `http://localhost:5173` en el móvil. `localhost` cuenta como contexto seguro, así que no hace falta HTTPS.
    - **Un túnel con HTTPS válido** (Android o iPhone): por ejemplo `cloudflared tunnel --url http://localhost:5173 --http-host-header localhost:5173` o `ngrok http 5173 --host-header=localhost:5173`, y abre en el móvil la dirección `https://…` que muestre. Vite rechaza (error 403) las peticiones cuyo encabezado `Host` no sea el local, por eso se reescribe a `localhost:5173`.
@@ -168,7 +167,7 @@ Como regresión, comprobar que entrar y salir de VR mantiene el cuerpo, el conte
 
 ## API de consulta de contenido
 
-El backend Express se ejecuta por separado de Vite. Requiere Node.js 22.12 o posterior compatible con Vite (también Node 24). La escena conserva sus identidades locales y utiliza la API unicamente para rellenar las fichas en ambos modos; no se agregan cuerpos a la escena.
+El backend Express es un proceso independiente de Vite; `npm run dev` inicia ambos juntos. Requiere Node.js 22.12 o posterior compatible con Vite (también Node 24). La escena conserva sus identidades locales y utiliza la API unicamente para rellenar las fichas en ambos modos; no se agregan cuerpos a la escena.
 
 ### Organización del backend
 
@@ -192,11 +191,11 @@ api/
 
 1. Copia `.env.example` como `.env` en la raíz del proyecto y completa `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY`. En PowerShell puedes usar `Copy-Item .env.example .env` si todavía no existe `.env`.
 2. Obtén la URL del proyecto en Supabase, **Integrations > Data API**, y la clave pública `sb_publishable_…` en **Settings > API Keys**. Se utiliza la clave pública para respetar los permisos del visitante y RLS; no una clave secreta o `service_role`.
-3. Ejecuta `npm run start:api`, o `npm run dev:api` para reiniciar automáticamente al editar el backend. `PORT` es opcional y por defecto vale 3000.
+3. Ejecuta `npm run dev` para iniciar la interfaz y la API. Para iniciar únicamente el backend, usa `npm run start:api`, o `npm run dev:api` para reiniciar automáticamente al editarlo. `PORT` es opcional y por defecto vale 3000.
 
 ### Acceso administrativo
 
-El formulario está disponible en `/admin`. Configura `ADMIN_USUARIO` y `ADMIN_CONTRASENA` en `.env` antes de iniciar la API; usa una contraseña propia de al menos 12 caracteres y no la guardes en Git. En desarrollo, ejecuta `npm run start:api` y `npm run dev` en terminales separadas. Vite reenvía `/api` al servidor local de Express.
+El formulario está disponible en `/admin`. Configura `ADMIN_USUARIO` y `ADMIN_CONTRASENA` en `.env` antes de iniciar la API; usa una contraseña propia de al menos 12 caracteres y no la guardes en Git. En desarrollo, ejecuta `npm run dev` para iniciar la interfaz y la API juntas. Vite reenvía `/api` al servidor local de Express.
 
 La sesión la crea y valida Express mediante una cookie `HttpOnly`, `SameSite=Strict`, válida durante ocho horas. La ruta `GET /api/admin` requiere sesión; el navegador también comprueba la sesión al abrir directamente `/admin`. Si falta la configuración, el acceso se rechaza con `503`; las credenciales incorrectas reciben `401`. La sesión se guarda en memoria del proceso y se invalida al cerrar sesión o reiniciar la API, por lo que este almacenamiento debe sustituirse por una sesión compartida si se despliega con varias instancias.
 
@@ -262,11 +261,11 @@ Ante `503`, revisa URL, tipo de clave, Data API habilitada, recursos existentes,
 
 ### Probar la API con Postman
 
-La dirección raíz del backend (`http://localhost:PUERTO/`) no tiene una ruta registrada y responde `Cannot GET /`. Para consultar el estado utiliza `/api/estado`; para ver la interfaz inicia Vite con `npm run dev` y abre la dirección que muestre, normalmente el puerto 5173. Usa puertos distintos para ambos servidores: la API tiene 3000 por defecto y puede configurarse en otro puerto libre, por ejemplo `PORT=3001` en `.env`. Reinicia `npm run start:api` después de cambiar `PORT`.
+La dirección raíz del backend (`http://localhost:PUERTO/`) no tiene una ruta registrada y responde `Cannot GET /`. Para consultar el estado utiliza `/api/estado`; para ver también la interfaz, inicia ambos servidores con `npm run dev` en lugar del arranque independiente de la API y abre la dirección que muestre Vite, normalmente el puerto 5173. Usa puertos distintos para ambos servidores: la API tiene 3000 por defecto y puede configurarse en otro puerto libre, por ejemplo `PORT=3001` en `.env`. Reinicia los servidores después de cambiar `PORT`.
 
 Si el puerto ya está ocupado, el servidor informa el conflicto y termina con código 1. Un arranque correcto mantiene la terminal ejecutándose y muestra la URL de la API.
 
-1. Inicia el backend: `npm run start:api`. Deja esa terminal ejecutándose mientras envías las consultas.
+1. Ejecuta `npm run start:api` para iniciar solo el backend, o `npm run dev` para iniciar también la interfaz. Deja esa terminal ejecutándose mientras envías las consultas. Si ya está en marcha, utiliza ese proceso sin iniciar otra API en el mismo puerto.
 2. En Postman utiliza **Import** y selecciona `postman/consultasMetseri.postman_collection.json`. También puedes arrastrar el archivo a la aplicación ([guía de importación](https://learning.postman.com/docs/getting-started/importing-and-exporting/importing-data/)).
 3. En las variables de la colección ajusta `urlBase` al puerto del mensaje del servidor. La colección incluye `http://localhost:3001` como ejemplo. `slugCuerpo` tiene `tierra` y debe identificar un cuerpo publicado.
 4. Abre **01 - Estado del servidor** y pulsa **Send**; debe responder 200 con el estado de Metseri. Después prueba listado, ficha y libros, o ejecuta la colección completa con **Run**.
