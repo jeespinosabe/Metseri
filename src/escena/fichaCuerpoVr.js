@@ -136,11 +136,12 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     ajustar(ancho, alto) {
       if (destruido) return
       lienzo.width = Math.max(320, Math.min(900, Math.round(ancho * .9)))
-      lienzo.height = Math.max(440, Math.min(1000, Math.round(alto * 1.6)))
+      const altoReferencia = Math.max(440, Math.min(1000, Math.round(alto * 1.6)))
+      lienzo.height = Math.max(440, Math.round(altoReferencia * .55))
       const altoMundo = 2 * DISTANCIA_FICHA * Math.tan(35 * Math.PI / 180) * .82
       const anchoMundo = altoMundo * (ancho / 2 / alto)
-      // Conservar la relación del canvas y limitarlo a la parte visible de cada ojo.
-      const escala = Math.min(anchoMundo / lienzo.width, altoMundo / lienzo.height)
+      // Mantener el ancho y la escala del texto al acortar el área de lectura.
+      const escala = Math.min(anchoMundo / lienzo.width, altoMundo / altoReferencia)
       malla.scale.set(lienzo.width * escala, lienzo.height * escala, 1)
       componer()
     },

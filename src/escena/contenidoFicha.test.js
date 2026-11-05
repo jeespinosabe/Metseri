@@ -7,7 +7,7 @@ import { adaptarContenido } from '../servicios/consultaContenido.js'
 
 const contexto = { font: '', measureText(texto) { return { width: texto.length * parseFloat(this.font) * .55 } } }
 
-for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
+for (const [ancho, alto] of [[320, 440], [700, 440], [760, 440], [860, 440], [900, 550], [750, 624], [900, 1000]]) {
   it(`contenido publicado ${ancho} × ${alto}: doce fichas completas sin recorte ni controles nuevos`, () => {
     for (const fuente of FICHAS_PRUEBA) {
       const cuerpo = CUERPOS_CELESTES.find((registro) => registro.id === fuente.slug)
@@ -35,6 +35,20 @@ for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
     }
   })
 }
+
+it('Datos muestra diámetro, distancia y ambas duraciones en una sola página VR compacta', () => {
+  for (const [ancho, alto] of [[700, 440], [760, 440], [860, 440], [900, 550]]) {
+    for (const fuente of FICHAS_PRUEBA) {
+      const cuerpo = CUERPOS_CELESTES.find((registro) => registro.id === fuente.slug)
+      const ficha = adaptarContenido(cuerpo, fuente)
+      const paginas = crearPaginasFicha(cuerpo, contexto, { ancho, alto, contenido: { fase: 'disponible', ficha } })
+      const datos = paginas.filter((pagina) => pagina.id === 'datos')
+      assert.equal(datos.length, 1, `${cuerpo.nombre}: ${ancho} × ${alto}`)
+      const textos = datos[0].elementos.map((elemento) => elemento.texto).join(' ')
+      for (const dato of ficha.datos) assert.ok(textos.includes(`${dato.etiqueta} ${dato.valor} ${dato.unidad}`))
+    }
+  }
+})
 
 for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
   it(`secciones ${ancho} × ${alto}: reservas vacías y contenido dentro del área de lectura`, () => {

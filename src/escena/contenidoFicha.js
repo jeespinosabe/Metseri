@@ -69,9 +69,9 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
   const ficha = contenido.ficha
   parrafos(SECCIONES_FICHA[0], [ficha.descripcion || 'Información no disponible.'])
   const columna = (anchoContenido - 24) / 2
-  const fuenteEtiqueta = Math.min(23, Math.max(16, ancho / 34))
-  const fuenteValor = Math.min(34, Math.max(22, ancho / 24))
-  const fuenteUnidad = Math.min(18, Math.max(13, ancho / 40))
+  const fuenteEtiqueta = Math.min(18, Math.max(16, ancho / 40))
+  const fuenteValor = Math.min(28, Math.max(22, ancho / 28))
+  const fuenteUnidad = Math.min(16, Math.max(13, ancho / 48))
   const datos = obtenerDatosPrincipales(cuerpo).map((dato, indice) => ficha.datos[indice] ?? dato)
   let pagina = nuevaPagina(SECCIONES_FICHA[1])
   let y = inicio
@@ -80,19 +80,36 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
       const elementos = []
       let posicion = 0
       const x = margen + indice * (columna + 24)
-      for (const [texto, fuente, tenue] of [[dato.etiqueta, fuenteEtiqueta, true], [dato.valor, fuenteValor, false], [dato.unidad, fuenteUnidad, true]]) {
+      function agregarTexto(texto, fuente, tenue) {
         if (texto) {
           for (const linea of lineas(texto, fuente, columna)) {
             elementos.push({ tipo: 'texto', texto: linea, x, y: posicion, tamano: fuente, tenue })
-            posicion += fuente * 1.4
+            posicion += fuente * 1.2
           }
         } else {
           elementos.push({ tipo: 'espacio', x, y: posicion, ancho: columna * .65, alto: 20 })
           posicion += 24
         }
-        posicion += 8
       }
-      return { elementos, alto: posicion - 8 }
+      agregarTexto(dato.etiqueta, fuenteEtiqueta, true)
+      posicion += 6
+      contexto.font = `${fuenteValor}px system-ui, sans-serif`
+      const anchoValor = contexto.measureText(dato.valor).width
+      contexto.font = `${fuenteUnidad}px system-ui, sans-serif`
+      const anchoUnidad = contexto.measureText(dato.unidad).width
+      // Compartir la línea deja espacio para las duraciones en la segunda fila.
+      if (dato.valor && dato.unidad && anchoValor + 8 + anchoUnidad <= columna) {
+        elementos.push(
+          { tipo: 'texto', texto: dato.valor, x, y: posicion, tamano: fuenteValor },
+          { tipo: 'texto', texto: dato.unidad, x: x + anchoValor + 8, y: posicion + fuenteValor - fuenteUnidad, tamano: fuenteUnidad, tenue: true },
+        )
+        posicion += fuenteValor * 1.2
+      } else {
+        agregarTexto(dato.valor, fuenteValor, false)
+        posicion += 4
+        agregarTexto(dato.unidad, fuenteUnidad, true)
+      }
+      return { elementos, alto: posicion }
     })
     const altoFila = Math.max(...bloques.map((bloque) => bloque.alto))
     if (y + altoFila > limite && y > inicio) {
@@ -102,7 +119,7 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
     for (const bloque of bloques) for (const elemento of bloque.elementos) {
       pagina.elementos.push({ ...elemento, y: elemento.y + y })
     }
-    y += altoFila + 16
+    y += altoFila + 12
   }
   parrafos(SECCIONES_FICHA[2], ficha.curiosidades.length ? ficha.curiosidades : ['Información no disponible.'], true)
   parrafos(SECCIONES_FICHA[3], [ficha.invitacion || 'Información no disponible.'], true)
