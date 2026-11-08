@@ -17,7 +17,7 @@
 .admin-acceso__orbita::before { position: absolute; inset: 9px -6px; border: 1px solid rgb(199 230 157 / 32%); border-radius: 50%; content: ''; transform: rotate(-28deg); }
 .admin-acceso__orbita span { position: absolute; top: 8px; right: 0; width: 7px; height: 7px; border-radius: 50%; background: #c7e69d; box-shadow: 0 0 12px #c7e69d; }
 .admin-acceso__sobrelinea { margin: 0 0 13px; color: #c7e69d; font-size: .66rem; letter-spacing: .23em; }
-.admin-acceso__tarjeta h1, .admin-modulo__contenido h1 { margin: 0; color: #edf2f5; font-size: clamp(1.8rem, 6vw, 2.35rem); font-weight: 400; letter-spacing: -.045em; }
+.admin-acceso__tarjeta h1 { margin: 0; color: #edf2f5; font-size: clamp(1.8rem, 6vw, 2.35rem); font-weight: 400; letter-spacing: -.045em; }
 .admin-acceso__descripcion { margin: 13px 0 29px; color: #98a9b5; font-size: .9rem; line-height: 1.7; }
 .admin-acceso__tarjeta form { display: grid; gap: 10px; }
 .admin-acceso__tarjeta label { margin-top: 7px; color: #c3ced4; font-size: .79rem; }
@@ -35,10 +35,6 @@
 .admin-modulo__cabecera { display: flex; min-height: 76px; align-items: center; justify-content: space-between; padding: 0 max(28px, calc((100vw - 1120px) / 2)); border-bottom: 1px solid rgb(166 180 192 / 12%); }
 .admin-modulo__cabecera .admin-acceso__marca { position: static; }
 .admin-modulo__cabecera button { min-height: 40px; margin: 0; border-color: #41515b; background: #111b24; color: #d8e1e6; font-size: .78rem; }
-.admin-modulo__contenido { width: min(760px, calc(100% - 48px)); margin: 14vh auto; }
-.admin-modulo__contenido > p:not(.admin-acceso__sobrelinea) { max-width: 540px; margin-top: 18px; color: #98a9b5; line-height: 1.7; }
-.admin-modulo__estado { display: inline-flex; align-items: center; gap: 10px; margin-top: 25px; padding: 11px 15px; border: 1px solid rgb(199 230 157 / 20%); border-radius: 999px; color: #c7e69d; font-size: .78rem; }
-.admin-modulo__estado span { width: 7px; height: 7px; border-radius: 50%; background: #c7e69d; box-shadow: 0 0 10px #c7e69d; }
 @media (max-width: 480px) { .admin-acceso__tarjeta { padding: 38px 25px 29px; } .admin-modulo__cabecera { padding-inline: 22px; } }
 
 .escena-estelar {
