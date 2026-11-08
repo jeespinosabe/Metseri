@@ -59,12 +59,12 @@ La llegada de texto hace crecer el contenido desplazable, como permite el panel 
 
 | Criterio | Evidencia observada |
 |---|---|
-| Seleccionar un cuerpo abre su ficha | [Tierra](../../../evidencias/rellenarFichas/fichaTierra.jpg) y [Luna](../../../evidencias/rellenarFichas/fichaLuna.jpg), seleccionadas mediante la escena. |
-| La información coincide con la selección | [Datos propios de Luna](../../../evidencias/rellenarFichas/datosLuna.jpg), [cambio directo a Luna](../../../evidencias/rellenarFichas/cambioDirectoALuna.jpg), cotejo HTTP de doce cuerpos y pruebas de respuestas fuera de orden. |
-| «Descubrir libros» está incorporado y es accesible | [Invitación de Tierra](../../../evidencias/rellenarFichas/descubrirLibrosTierra.jpg) e [invitación de Luna](../../../evidencias/rellenarFichas/descubrirLibrosLuna.jpg), dentro del espacio anterior. |
-| Navegación entre escena, ficha y libros | Recorrido real documentado abajo y [escena después del cierre](../../../evidencias/rellenarFichas/escenaTrasCerrar.jpg). El cierre dejó cero paneles y devolvió el foco al elemento de exploración. |
+| Seleccionar un cuerpo abre su ficha | [Tierra](../../../../evidencias/rellenarFichas/fichaTierra.jpg) y [Luna](../../../../evidencias/rellenarFichas/fichaLuna.jpg), seleccionadas mediante la escena. |
+| La información coincide con la selección | [Datos propios de Luna](../../../../evidencias/rellenarFichas/datosLuna.jpg), [cambio directo a Luna](../../../../evidencias/rellenarFichas/cambioDirectoALuna.jpg), cotejo HTTP de doce cuerpos y pruebas de respuestas fuera de orden. |
+| «Descubrir libros» está incorporado y es accesible | [Invitación de Tierra](../../../../evidencias/rellenarFichas/descubrirLibrosTierra.jpg) e [invitación de Luna](../../../../evidencias/rellenarFichas/descubrirLibrosLuna.jpg), dentro del espacio anterior. |
+| Navegación entre escena, ficha y libros | Recorrido real documentado abajo y [escena después del cierre](../../../../evidencias/rellenarFichas/escenaTrasCerrar.jpg). El cierre dejó cero paneles y devolvió el foco al elemento de exploración. |
 
-Otras evidencias: [referencia anterior](../../../evidencias/rellenarFichas/fichaAntes.jpg), [vista de escritorio](../../../evidencias/rellenarFichas/fichaEscritorio.jpg), [API no disponible](../../../evidencias/rellenarFichas/apiNoDisponible.jpg) y [visor conservado](../../../evidencias/rellenarFichas/vrConservado.jpg).
+Otras evidencias: [referencia anterior](../../../../evidencias/rellenarFichas/fichaAntes.jpg), [vista de escritorio](../../../../evidencias/rellenarFichas/fichaEscritorio.jpg), [API no disponible](../../../../evidencias/rellenarFichas/apiNoDisponible.jpg) y [visor conservado](../../../../evidencias/rellenarFichas/vrConservado.jpg).
 
 ### Demostración ejecutada en navegador
 
@@ -106,7 +106,7 @@ La usuaria aclaró que consulta Metseri desde un iPhone 17 Pro Max mediante el t
 | `npm run lint` | Correcto. |
 | `npm run build` | Correcto; CSS sin cambios, 14.55 kB; JS 828.88 kB, con el aviso previo de tamaño del paquete. |
 | Puerto utilizado por el túnel | `http://127.0.0.1:5173/`: HTTP 200. `/api/cuerpos-celestes/tierra` por ese mismo puerto: HTTP 200, slug Tierra, cuatro datos e invitación presentes. No es necesario exponer el puerto de Supabase o sus credenciales al teléfono. |
-| Prueba visual del navegador | La tarjeta VR muestra la descripción real en ambos ojos. Se guardó [la captura del contenido VR](../../../evidencias/rellenarFichas/vrFichaConInformacion.jpg). |
+| Prueba visual del navegador | La tarjeta VR muestra la descripción real en ambos ojos. Se guardó [la captura del contenido VR](../../../../evidencias/rellenarFichas/vrFichaConInformacion.jpg). |
 | Confirmación física de la usuaria | Tras recargar su túnel en Safari y probar Ficha y Libros en VR respondió: «Sí, ahora aparece la información en VR». Esto confirma la recuperación del contenido en su iPhone; no se presenta como evaluación completa de comodidad óptica o sensores. |
 
 El túnel privado pidió autenticación de GitHub al navegador de prueba; no se cambió su visibilidad ni se inició sesión. Por eso su lectura real se acredita con la confirmación de la usuaria, separada de las pruebas locales. Para reproducir el ajuste indicado se utilizó 6.9 en el navegador de prueba; no se alteró la configuración guardada de su teléfono.

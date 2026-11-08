@@ -22,7 +22,7 @@ Permitir consultar mediante peticiones HTTP GET el contenido astronómico y bibl
 
 ### Requirement: Ficha completa por slug
 
-`GET /api/cuerpos-celestes/:slug` SHALL devolver con estado 200 la ficha JSON del cuerpo publicado identificado por el slug. SHALL conservar las unidades base, los nombres de campos y los valores ausentes de la ficha almacenada. Un cuerpo inexistente o no publicado SHALL producir 404 sin revelar su existencia privada.
+`GET /api/cuerpos-celestes/:slug` SHALL devolver con estado 200 la ficha JSON del cuerpo publicado identificado por el slug. SHALL conservar las unidades base, los nombres de campos y los valores ausentes de la ficha almacenada, junto con `contenido_ficha` cuando esté publicado en la base. La propiedad editorial SHALL conservar las etiquetas, cifras y unidades literales del PDF y su invitación a la biblioteca. Un cuerpo inexistente o no publicado SHALL producir 404 sin revelar su existencia privada.
 
 #### Scenario: Recuperar una ficha publicada
 - **WHEN** se consulta el slug de un cuerpo publicado
@@ -30,11 +30,18 @@ Permitir consultar mediante peticiones HTTP GET el contenido astronómico y bibl
 - **AND** los datos principales corresponden al tipo planeta o satélite y conservan sus unidades base
 - **AND** los valores `null` permanecen ausentes y no se sustituyen por cero ni por textos de ejemplo
 - **AND** las colecciones sin registros se presentan como arreglos vacíos
+- **AND** si la base contiene `contenido_ficha`, se devuelve sin sustituir sus datos editoriales por conversiones de los números normalizados
 
 #### Scenario: Consultar un cuerpo no visible
 - **WHEN** se solicita un slug válido que no existe o corresponde a un cuerpo no publicado
 - **THEN** se devuelve 404 con código JSON `CUERPO_NO_ENCONTRADO`
 - **AND** ambas situaciones tienen la misma respuesta pública
+
+#### Scenario: Recuperar las cifras corregidas del PDF
+- **WHEN** se consulta Mercurio después de la corrección de contenido
+- **THEN** `contenido_ficha.datos_principales` incluye «176 días terrestres (día solar)» y `datos_principales.dia_solar_horas` conserva 4224
+- **AND** un período de rotación ausente permanece nulo y no impide devolver la ficha
+- **AND** `contenido_ficha.descubrir_libros` conserva la invitación propia de Mercurio aunque `libros` sea `[]`
 
 ### Requirement: Libros asociados a un cuerpo público
 
@@ -84,7 +91,7 @@ La API SHALL responder en JSON con forma `{ "error": { "codigo": "...", "mensaje
 
 ### Requirement: Compatibilidad con la aplicación existente
 
-`GET /api/estado` SHALL conservar su estado 200 y el JSON actual con `proyecto`, `mensaje` y `estado`, incluso sin Supabase configurado. La incorporación de la API SHALL mantener operativas la escena, sus fichas y VR con sus datos locales, sin hacerlas dependientes del backend.
+`GET /api/estado` SHALL conservar su estado 200 y el JSON actual con `proyecto`, `mensaje` y `estado`, incluso sin Supabase configurado. La escena, selección, estructura local de las fichas y VR SHALL seguir operativas sin backend. En vista unica y VR la interfaz SHALL poder consultar la ficha publicada mediante la API de Metseri; solo rellenar su contenido educativo requiere esa respuesta. La interfaz SHALL NOT consultar Supabase directamente ni incluir sus credenciales.
 
 #### Scenario: Consultar el estado sin Supabase
 - **WHEN** el servidor está en marcha y faltan las variables de conexión
@@ -92,8 +99,15 @@ La API SHALL responder en JSON con forma `{ "error": { "codigo": "...", "mensaje
 
 #### Scenario: Ejecutar la interfaz sin backend
 - **WHEN** se ejecuta la interfaz con Vite y el servidor API está detenido
-- **THEN** la escena, selección, fichas y cambio de modo mantienen el comportamiento previo
-- **AND** no aparecen solicitudes nuevas de la interfaz a Supabase o a la API
+- **THEN** la escena, selección, estructura local de las fichas y cambio de modo mantienen su comportamiento previo
+- **AND** la consulta fallida de cualquiera de los modos no bloquea sus controles ni muestra contenido de otro cuerpo
+- **AND** no aparecen solicitudes directas a Supabase ni credenciales en el navegador
+
+#### Scenario: Rellenar una ficha mediante la API existente
+- **WHEN** se selecciona un cuerpo en vista única con el backend disponible
+- **THEN** el navegador consulta la ficha de ese slug mediante la ruta de Metseri y recibe el contenido publicado
+- **AND** recorrer la misma ficha hasta libros utiliza su invitación ya recibida, sin necesitar una ruta o consulta adicional
+- **AND** los endpoints, sus permisos de lectura y los errores definidos se conservan
 
 ### Requirement: Recuperación comprobable de información almacenada
 
@@ -109,3 +123,39 @@ La integración SHALL permitir recuperar un registro publicado existente del pro
 - **WHEN** no hay configuración disponible o no existe un cuerpo publicado que pueda recuperarse
 - **THEN** la comprobación se registra como pendiente o fallida con la causa concreta
 - **AND** una prueba con datos simulados o un listado vacío no se presenta como recuperación real exitosa
+
+### Requirement: Enrutamiento de la API en Vercel
+
+El despliegue de Metseri en Vercel SHALL atender las rutas públicas existentes de estado, listado, ficha y libros bajo el mismo dominio HTTPS que la interfaz. SHALL conservar el método, la ruta completa, los parámetros de consulta y los contratos HTTP y JSON existentes. Las peticiones a esas rutas SHALL llegar a la API y SHALL NOT resolverse como HTML de la interfaz o como `NOT_FOUND` de la plataforma por falta de enrutamiento. La configuración de conexión SHALL permanecer en el servidor.
+
+#### Scenario: Consultar el estado del despliegue
+- **WHEN** se consulta `GET /api/estado` en el despliegue de Vercel, incluso sin conexión configurada con Supabase
+- **THEN** se devuelve 200 con `{ "proyecto": "Metseri", "mensaje": "API de Metseri funcionando correctamente", "estado": "activo" }`
+- **AND** la respuesta tiene tipo de contenido JSON
+
+#### Scenario: Consultar contenido público desde el dominio de la interfaz
+- **WHEN** la conexión de producción es válida, existe un cuerpo publicado y se consultan el listado y su ficha mediante `/api/cuerpos-celestes` y `/api/cuerpos-celestes/:slug`
+- **THEN** ambas rutas devuelven 200 con los contratos JSON existentes y coinciden en el identificador y slug del cuerpo
+- **AND** la selección de ese cuerpo en la interfaz puede recuperar su contenido publicado usando la URL relativa de la API
+- **AND** el navegador no recibe credenciales ni consulta Supabase directamente
+
+#### Scenario: Consultar los libros de un cuerpo publicado
+- **WHEN** se consulta `GET /api/cuerpos-celestes/:slug/libros` con la conexión válida y el slug de un cuerpo publicado
+- **THEN** se devuelve 200 con los libros públicos del cuerpo según el contrato existente, o `[]` cuando no hay asociaciones visibles
+- **AND** se conserva la ruta anidada completa al tramitar la petición
+
+#### Scenario: Conservar errores de validación y visibilidad
+- **WHEN** se consulta una ficha con un slug inválido, o con un slug válido inexistente o no publicado y una conexión válida
+- **THEN** se recibe respectivamente 400 con `SLUG_INVALIDO` o 404 con `CUERPO_NO_ENCONTRADO`
+- **AND** los errores conservan la estructura JSON de la API y se distinguen del `NOT_FOUND` de Vercel
+
+#### Scenario: Distinguir un fallo de conexión de un fallo de enrutamiento
+- **WHEN** se consulta una ruta de contenido y la configuración de producción falta o es inválida, o falla la consulta a Supabase
+- **THEN** la respuesta es 503 en JSON con `CONFIGURACION_NO_DISPONIBLE` o `CONTENIDO_NO_DISPONIBLE`, respectivamente
+- **AND** no se devuelve HTML, un 404 de la plataforma ni contenido inventado como sustituto del error
+- **AND** las variables y los detalles internos de la conexión no aparecen en la respuesta
+
+#### Scenario: Mantener la interfaz y sus recursos
+- **WHEN** se abre la raíz del despliegue y se solicitan sus archivos compilados e imágenes locales
+- **THEN** la interfaz y sus recursos se sirven con sus rutas actuales
+- **AND** las reglas de la API no envían esas peticiones al backend

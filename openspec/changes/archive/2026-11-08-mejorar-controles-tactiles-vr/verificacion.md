@@ -67,11 +67,11 @@ En la ventana de escritorio de aproximadamente 1432 × 768/720 se observó:
 
 Capturas locales, tomadas antes de la interrupción de la herramienta:
 
-- [Avance a la derecha](../../../evidencias/mejorarControlesTactilesVr/avanceDerecha.jpg).
-- [Límite inicial con cruz neutra](../../../evidencias/mejorarControlesTactilesVr/limiteInicial.jpg).
-- [Flecha de retroceso en Datos](../../../evidencias/mejorarControlesTactilesVr/retrocesoIzquierda.jpg).
-- [Símbolo y control de cierre final](../../../evidencias/mejorarControlesTactilesVr/cierreFinal.jpg).
-- [Cierre mediante teclado](../../../evidencias/mejorarControlesTactilesVr/cierreConTeclado.jpg).
+- [Avance a la derecha](../../../../evidencias/mejorarControlesTactilesVr/avanceDerecha.jpg).
+- [Límite inicial con cruz neutra](../../../../evidencias/mejorarControlesTactilesVr/limiteInicial.jpg).
+- [Flecha de retroceso en Datos](../../../../evidencias/mejorarControlesTactilesVr/retrocesoIzquierda.jpg).
+- [Símbolo y control de cierre final](../../../../evidencias/mejorarControlesTactilesVr/cierreFinal.jpg).
+- [Cierre mediante teclado](../../../../evidencias/mejorarControlesTactilesVr/cierreConTeclado.jpg).
 
 ## Alcance y estado final
 
