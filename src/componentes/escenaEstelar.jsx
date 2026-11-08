@@ -222,7 +222,7 @@ export function EscenaEstelar() {
         ref={superficieRef}
         role="application"
         aria-label={modo === 'vr'
-          ? 'Cielo con planetas y lunas en VR. Mira un cuerpo celeste y toca para abrir su ficha frente a ti. Mira una sección o una flecha y toca para navegar. Tocar el área de lectura mantiene la ficha abierta. Usa la equis para cerrar, o mira fuera de la ficha y toca para deseleccionar. Pulsa dos tap para recentrar. Ajustar visor y Salir de VR están abajo. Arrastra o usa las flechas para ajustar la mirada sin interrumpir el sensor.'
+          ? 'Cielo con planetas y lunas en VR. Mira un cuerpo celeste y toca para abrir su ficha frente a ti. Mira la mitad izquierda de la tarjeta y toca para ir a la página anterior, o la derecha para avanzar. En la primera página, retroceder la mantiene abierta. Avanzar desde la última página cierra la ficha sin salir de VR. El puntero indica la dirección o el cierre. Las pestañas y la equis tienen prioridad sobre las mitades. También puedes mirar fuera de la ficha y tocar para deseleccionar. Pulsa dos tap para recentrar. Ajustar visor y Salir de VR están abajo. Arrastra o usa las flechas para ajustar la mirada sin interrumpir el sensor.'
           : 'Cielo con planetas y lunas. Pasa el mouse sobre un cuerpo celeste para iluminarlo. Haz clic o toca para seleccionarlo y leer su ficha; pulsa de nuevo o toca el fondo para cerrar y deseleccionar. Arrastra o usa las flechas para mirar alrededor.'}
         tabIndex={mensajeError ? -1 : 0}
       />
@@ -249,8 +249,8 @@ export function EscenaEstelar() {
             alAbrirLibro={(libro) => abrirFichaBibliografica(libro, { salirVr: modo === 'vr' ? salirModoVr : undefined })}
           />}
           {modo === 'vr' && cuerpo && <div className="ficha-vr-indicaciones" aria-hidden="true">
-            <span>Mira una sección o una flecha y toca · × para cerrar</span>
-            <span>Mira una sección o una flecha y toca · × para cerrar</span>
+            <span>Mira izquierda/derecha y toca · Al final, avanzar cierra · Doble tap recentra</span>
+            <span>Mira izquierda/derecha y toca · Al final, avanzar cierra · Doble tap recentra</span>
           </div>}
           <div className="escena-estelar__avisos" role="status">
             {modo === 'vr' && instruccionVrVisible && <span className="solo-lectores">{INSTRUCCION_VR}</span>}

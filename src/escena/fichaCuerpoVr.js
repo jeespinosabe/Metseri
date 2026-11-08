@@ -1,5 +1,5 @@
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2 } from 'three'
-import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion, SECCIONES_FICHA } from './contenidoFicha.js'
+import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion, resolverAccionFicha, SECCIONES_FICHA } from './contenidoFicha.js'
 
 const DISTANCIA_FICHA = 32
 
@@ -27,6 +27,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   let enVr = false
   let destruido = false
   let versionImagen = 0
+  let revisionLectura = 0
 
   function dibujar() {
     if (!cuerpo || destruido) return
@@ -74,7 +75,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.fillText(`${pagina + 1} / ${total}`, ancho / 2, alto - 63)
     for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, paginas)) {
       zonas.push(zona)
-      const activa = zona.accion === accionApuntada
+      const activa = accionApuntada !== null && resolverAccionFicha(zona.accion, { pagina, total }) === accionApuntada
       contexto.fillStyle = activa ? '#cce89f' : zona.actual ? '#354832' : '#1c2b36'
       contexto.fillRect(zona.x, zona.y, zona.ancho, zona.alto)
       contexto.fillStyle = activa ? '#101a17' : zona.actual ? '#d5edb6' : '#d4dfe5'
@@ -88,6 +89,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   }
 
   function componer(reiniciar = false) {
+    revisionLectura += 1
     const anterior = lectura.obtenerEstado().pagina
     const seccion = paginas[anterior]?.id
     const continuacion = anterior - paginas.findIndex((pagina) => pagina.id === seccion)
@@ -107,6 +109,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   return {
     malla,
     obtenerLectura: lectura.obtenerEstado,
+    obtenerRevisionLectura: () => revisionLectura,
     establecerCuerpo(nuevoCuerpo) {
       if (destruido || cuerpo?.id === nuevoCuerpo?.id) return
       cuerpo = nuevoCuerpo
@@ -159,12 +162,13 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
       malla.updateWorldMatrix(true, false)
       rayo.setFromCamera(new Vector2(0, 0), camara)
       const impacto = rayo.intersectObject(malla, false)[0]
-      const accion = impacto ? detectarAccionFicha(impacto.uv, lienzo.width, lienzo.height, zonas) : null
+      const accion = impacto ? detectarAccionFicha(impacto.uv, lienzo.width, lienzo.height, zonas, lectura.obtenerEstado()) : null
       if (accion !== accionApuntada) { accionApuntada = accion; dibujar() }
       return impacto ? { accion, distancia: impacto.distance } : null
     },
     moverPagina(desplazamiento) {
       if (destruido || !lectura.mover(desplazamiento)) return false
+      revisionLectura += 1
       accionApuntada = null
       dibujar()
       return true
@@ -172,6 +176,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     mostrarSeccion(indice) {
       const destino = paginas.findIndex((pagina) => pagina.id === SECCIONES_FICHA[indice]?.id)
       if (destruido || destino < 0 || !lectura.irA(destino)) return false
+      revisionLectura += 1
       accionApuntada = null
       dibujar()
       return true

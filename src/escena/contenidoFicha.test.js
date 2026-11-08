@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
-import { consumirToqueFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, dividirLineas, obtenerZonasNavegacion } from './contenidoFicha.js'
+import { consumirToqueFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, dividirLineas, obtenerZonasNavegacion, resolverAccionFicha } from './contenidoFicha.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 
@@ -118,20 +118,41 @@ it('lectura conserva página al recentrar, reinicia al cambiar cuerpo/modo y lim
   assert.ok(cambios.length > 0)
 })
 
-it('acciones UV coinciden con botones habilitados; texto y bordes externos no activan', () => {
+it('acciones UV priorizan botones y navegan por mitades locales, con el centro a la derecha', () => {
   const zonas = obtenerZonasNavegacion(800, 720, 0, 4)
+  const lectura = { pagina: 0, total: 4 }
   assert.ok(!zonas.some((z) => z.accion === 'anterior'))
   for (const zona of zonas) {
     const uv = { x: (zona.x + zona.ancho / 2) / 800, y: 1 - (zona.y + zona.alto / 2) / 720 }
-    assert.equal(detectarAccionFicha(uv, 800, 720, zonas), zona.accion)
+    assert.equal(detectarAccionFicha(uv, 800, 720, zonas, lectura), zona.accion)
   }
-  assert.equal(detectarAccionFicha({ x: .5, y: .5 }, 800, 720, zonas), null)
-  assert.equal(detectarAccionFicha({ x: -.1, y: .05 }, 800, 720, zonas), null)
-  assert.ok(!obtenerZonasNavegacion(800, 720, 3, 4).some((z) => z.accion === 'siguiente'))
+  const detectar = (uv, pagina = 0) => detectarAccionFicha(uv, 800, 720, obtenerZonasNavegacion(800, 720, pagina, 4), { pagina, total: 4 })
+  assert.equal(detectar({ x: .5, y: .5 }), 'siguiente')
+  assert.equal(detectar({ x: .499, y: .5 }), null)
+  assert.equal(detectar({ x: .499, y: .5 }, 1), 'anterior')
+  assert.equal(detectar({ x: .9, y: .5 }, 2), 'siguiente')
+  assert.equal(detectar({ x: .9, y: .5 }, 3), 'cerrar')
+  for (const uv of [{ x: -.1, y: .5 }, { x: 1.1, y: .5 }, { x: .5, y: -.1 }, { x: .5, y: 1.1 }, { x: NaN, y: .5 }, null]) {
+    assert.equal(detectar(uv), null)
+  }
   assert.equal(zonas.filter((z) => z.accion.startsWith('seccion:')).length, 4)
 })
 
-it('salto directo de sección y toques de lectura no cierran ni avanzan por accidente', () => {
+it('el avance final ofrece cierre y los controles explícitos conservan prioridad en ambas mitades', () => {
+  const lectura = { pagina: 3, total: 4 }
+  const zonas = obtenerZonasNavegacion(800, 720, lectura.pagina, lectura.total)
+  assert.equal(zonas.find((zona) => zona.accion === 'siguiente').texto, 'Cerrar →')
+  for (const zona of zonas) {
+    const uv = { x: (zona.x + zona.ancho / 2) / 800, y: 1 - (zona.y + zona.alto / 2) / 720 }
+    assert.equal(detectarAccionFicha(uv, 800, 720, zonas, lectura), zona.accion === 'siguiente' ? 'cerrar' : zona.accion)
+  }
+  assert.equal(resolverAccionFicha('siguiente', { pagina: 0, total: 1 }), 'cerrar')
+  for (const estado of [{ pagina: 0, total: 0 }, { pagina: 4, total: 4 }, { pagina: -1, total: 4 }]) {
+    assert.equal(resolverAccionFicha('siguiente', estado), null)
+  }
+})
+
+it('salto directo de sección y retroceso no disponible consumen un solo toque', () => {
   const lectura = crearEstadoLectura()
   lectura.actualizar('saturno', 4)
   const acciones = []

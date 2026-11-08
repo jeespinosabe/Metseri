@@ -191,14 +191,24 @@ export function obtenerZonasNavegacion(ancho, alto, pagina, total, paginas = nul
     { accion: 'cerrar', texto: '×', x: ancho - 62, y: 14, ancho: 46, alto: 46 },
     ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: 122, ancho: anchoPestana, alto: 44, actual: paginas ? paginas[pagina]?.id === seccion.id : pagina === seccion.pagina })),
     ...(pagina > 0 ? [{ accion: 'anterior', texto: '← Anterior', x: 32, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
-    ...(pagina < total - 1 ? [{ accion: 'siguiente', texto: 'Siguiente →', x: ancho - 32 - anchoBoton, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
+    ...(total > 0 ? [{ accion: 'siguiente', texto: pagina === total - 1 ? 'Cerrar →' : 'Siguiente →', x: ancho - 32 - anchoBoton, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
   ]
 }
 
-export function detectarAccionFicha(uv, ancho, alto, zonas) {
+export function resolverAccionFicha(accion, { pagina, total }) {
+  if (!Number.isInteger(total) || total <= 0 || !Number.isInteger(pagina) || pagina < 0 || pagina >= total) return null
+  if (accion === 'anterior' && pagina === 0) return null
+  if (accion === 'siguiente' && pagina === total - 1) return 'cerrar'
+  return accion ?? null
+}
+
+export function detectarAccionFicha(uv, ancho, alto, zonas, lectura) {
+  if (!Number.isFinite(uv?.x) || !Number.isFinite(uv?.y) || uv.x < 0 || uv.x > 1 || uv.y < 0 || uv.y > 1) return null
   const x = uv.x * ancho
   const y = (1 - uv.y) * alto
-  return zonas.find((zona) => x >= zona.x && x <= zona.x + zona.ancho && y >= zona.y && y <= zona.y + zona.alto)?.accion ?? null
+  const accion = zonas.find((zona) => x >= zona.x && x <= zona.x + zona.ancho && y >= zona.y && y <= zona.y + zona.alto)?.accion
+    ?? (uv.x < .5 ? 'anterior' : 'siguiente')
+  return resolverAccionFicha(accion, lectura)
 }
 
 export function consumirToqueFicha(objetivo, alAccionar) {

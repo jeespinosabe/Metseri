@@ -27,7 +27,7 @@ import { crearFichaCuerpoVr } from './fichaCuerpoVr.js'
 import { crearApuntadoMouse } from './apuntadoMouse.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { obtenerLibrosCuerpo } from '../datos/librosCuerposCelestes.js'
-import { consumirToqueFicha } from './contenidoFicha.js'
+import { consumirToqueFicha, resolverAccionFicha } from './contenidoFicha.js'
 import { crearInstruccionesVr } from './instruccionesVr.js'
 
 const COLOR_FONDO = 0x080b12
@@ -112,8 +112,8 @@ function crearGeometriaGrupo(grupo, generarAleatorio) {
  * Lanza un error si el navegador no puede crear el contexto gráfico.
  * `alPerderContexto` se invoca si el contexto gráfico se pierde después.
  */
-export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha, alSolicitarLibro, alCambiarInstruccionVr } = {}) {
-  const renderizador = new WebGLRenderer({ antialias: true })
+export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha, alSolicitarLibro, alCambiarInstruccionVr, crearRenderizador = (opciones) => new WebGLRenderer(opciones) } = {}) {
+  const renderizador = crearRenderizador({ antialias: true })
   const lienzo = renderizador.domElement
   lienzo.style.display = 'block'
   lienzo.style.width = '100%'
@@ -210,6 +210,8 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
 
   function ejecutarAccionFicha(accion) {
     if (destruido || contextoPerdido || !seleccion.obtenerEstado().planetaSeleccionado) return
+    accion = resolverAccionFicha(accion, ficha.obtenerLectura())
+    if (!accion) return
     if (accion === 'siguiente') ficha.moverPagina(1)
     else if (accion === 'anterior') ficha.moverPagina(-1)
     else if (accion.startsWith('seccion:')) ficha.mostrarSeccion(Number(accion.slice(8)))
@@ -253,6 +255,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
 
   function dibujarSiHaceFalta() {
     if (!necesitaDibujo) return
+    if (modo === 'vr') efectoEstereo.establecerAccionPuntero(instrucciones.esVisible() ? null : ficha.detectar(camara)?.accion)
     necesitaDibujo = false
     etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight, ficha.malla)
     etiquetasVisor.actualizar(camara, modo)
@@ -352,9 +355,11 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       if (instrucciones.esVisible()) { instrucciones.ocultar(); return null }
       const cuerpoInicial = seleccion.obtenerEstado().planetaSeleccionado
       const objetivoFicha = ficha.detectar(camara)
+      const revisionInicial = ficha.obtenerRevisionLectura()
       const objetivoCielo = objetivoFicha ? null : detector.detectarMirada()
       return () => {
         if (destruido || contextoPerdido || modo !== 'vr' || cuerpoInicial !== seleccion.obtenerEstado().planetaSeleccionado) return
+        if (revisionInicial !== ficha.obtenerRevisionLectura()) return
         if (!consumirToqueFicha(objetivoFicha, ejecutarAccionFicha)) seleccion.activarObjetivo(objetivoCielo)
         seleccion.actualizarMirada()
       }

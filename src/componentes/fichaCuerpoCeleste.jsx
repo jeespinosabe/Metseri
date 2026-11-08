@@ -17,6 +17,7 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
   const [imagenFallida, setImagenFallida] = useState(false)
   const panelRef = useRef(null)
   const libros = obtenerLibrosCuerpo(cuerpo.id)
+  const ultimaPagina = lectura?.total > 0 && lectura.pagina === lectura.total - 1
   const ficha = contenido?.fase === 'disponible' ? contenido.ficha : null
   const datos = obtenerDatosPrincipales(cuerpo).map((dato, indice) => ficha?.datos[indice] ?? dato)
   const descripcion = ficha?.descripcion || cuerpo.descripcion
@@ -73,7 +74,7 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
         {SECCIONES_FICHA.map((seccion) => <button key={seccion.id} type="button" aria-current={(lectura.seccion ?? SECCIONES_FICHA[lectura.pagina]?.id) === seccion.id ? 'page' : undefined} onClick={() => alAccionar(`seccion:${seccion.pagina}`)}>{seccion.nombre}</button>)}
         <p>Página {lectura.pagina + 1} de {lectura.total}</p>
         <button type="button" disabled={lectura.pagina === 0} onClick={() => alAccionar('anterior')}>← Anterior</button>
-        <button type="button" disabled={lectura.pagina >= lectura.total - 1} onClick={() => alAccionar('siguiente')}>Siguiente →</button>
+        <button type="button" disabled={!lectura.total} onClick={ultimaPagina ? alCerrar : () => alAccionar('siguiente')}>{ultimaPagina ? 'Cerrar →' : 'Siguiente →'}</button>
       </nav>}
     </section>
   )

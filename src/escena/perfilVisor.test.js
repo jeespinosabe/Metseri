@@ -74,13 +74,13 @@ describe('óptica del HOMIDO GRAB', () => {
 })
 
 describe('ciclo de renderizado del visor', () => {
-  function crearRenderizador() {
-    const estado = { destino: null, viewport: new Vector4(0, 0, 844, 390), recorte: new Vector4(4, 5, 800, 350), prueba: false }
+  function crearRenderizador({ ancho = 844, alto = 390, proporcion = 1.5 } = {}) {
+    const estado = { destino: null, viewport: new Vector4(0, 0, ancho, alto), recorte: new Vector4(4, 5, 800, 350), prueba: false }
     const pasadas = []
     return {
       estado, pasadas, autoClear: false,
-      getPixelRatio: () => 1.5,
-      getSize: (vector) => vector.set(844, 390),
+      getPixelRatio: () => proporcion,
+      getSize: (vector) => vector.set(ancho, alto),
       getRenderTarget: () => estado.destino,
       setRenderTarget: (destino) => { estado.destino = destino },
       getViewport: (vector) => vector.copy(estado.viewport),
@@ -89,7 +89,12 @@ describe('ciclo de renderizado del visor', () => {
       setScissor: (...valores) => { estado.recorte = valores[0]?.isVector4 ? valores[0].clone() : new Vector4(...valores) },
       getScissorTest: () => estado.prueba,
       setScissorTest: (prueba) => { estado.prueba = prueba },
-      render: () => { pasadas.push({ ...estado, viewport: estado.viewport.clone() }) },
+      render: (escena) => {
+        const uniformes = escena.children?.[0]?.material?.uniforms
+        pasadas.push({ ...estado, viewport: estado.viewport.clone(),
+          puntero: uniformes ? { tipo: uniformes.tipoPuntero.value, paso: uniformes.pasoPuntero.value, centro: uniformes.centroPuntero.value,
+            lente: uniformes.centroLente.value.toArray(), campo: uniformes.campo.value.toArray(), pantalla: uniformes.tamanoFisico.value.toArray() } : null })
+      },
     }
   }
 
@@ -125,5 +130,59 @@ describe('ciclo de renderizado del visor', () => {
     assert.equal(renderizador.estado.prueba, false)
     assert.equal(renderizador.autoClear, false)
     efecto.destruir()
+  })
+
+  it('ambos ojos comparten la figura contextual sin alterar sus centros ni parámetros ópticos', () => {
+    const renderizador = crearRenderizador()
+    const efecto = crearEfectoVisor(renderizador)
+    efecto.ajustar({ ancho: 844, alto: 390, diagonal: 6.1 })
+    const camara = new PerspectiveCamera()
+    efecto.render({}, camara)
+    const opticaInicial = [renderizador.pasadas[1].puntero, renderizador.pasadas[3].puntero]
+    for (const [accion, tipo] of [['anterior', -1], ['siguiente', 1], ['cerrar', 2], ['seccion:3', 0], [null, 0]]) {
+      renderizador.pasadas.length = 0
+      efecto.establecerAccionPuntero(accion)
+      efecto.render({}, camara)
+      for (const [ojo, indice] of [1, 3].entries()) {
+        assert.deepEqual(renderizador.pasadas[indice].puntero, { ...opticaInicial[ojo], tipo })
+      }
+    }
+    efecto.destruir()
+  })
+
+  it('conserva figuras, escala y alineación en horizontal y vertical con tres diagonales y dos densidades', () => {
+    for (const [ancho, alto] of [[844, 390], [390, 844], [1280, 720]]) {
+      for (const diagonal of [5.5, 6.1, 6.5]) {
+        for (const proporcion of [1, 1.5]) {
+          const renderizador = crearRenderizador({ ancho, alto, proporcion })
+          const efecto = crearEfectoVisor(renderizador)
+          efecto.ajustar({ ancho, alto, diagonal })
+          const camara = new PerspectiveCamera()
+          camara.focus = 60
+          for (const [accion, tipo] of [[null, 0], ['anterior', -1], ['siguiente', 1], ['cerrar', 2], ['seccion:3', 0]]) {
+            renderizador.pasadas.length = 0
+            efecto.establecerAccionPuntero(accion)
+            efecto.render({}, camara)
+            const izquierdo = renderizador.pasadas[1]
+            const derecho = renderizador.pasadas[3]
+            assert.deepEqual([izquierdo.puntero.tipo, derecho.puntero.tipo], [tipo, tipo])
+            assert.deepEqual(izquierdo.viewport.toArray(), [0, 0, ancho / 2, alto])
+            assert.deepEqual(derecho.viewport.toArray(), [ancho / 2, 0, ancho / 2, alto])
+            cerca(izquierdo.puntero.paso, derecho.puntero.paso)
+            cerca(izquierdo.puntero.paso * PERFIL_HOMIDO_GRAB.distanciaPantalla * Math.hypot(ancho, alto), diagonal * 25.4)
+            cerca(izquierdo.puntero.pantalla[0] + derecho.puntero.lente[0] - izquierdo.puntero.lente[0], 60)
+            cerca(izquierdo.puntero.centro, .03 / camara.focus)
+            cerca(derecho.puntero.centro, -.03 / camara.focus)
+            for (const ojo of [izquierdo, derecho]) {
+              cerca(ojo.puntero.lente[1], ojo.puntero.pantalla[1] / 2)
+              assert.ok(ojo.puntero.campo.every((limite) => Number.isFinite(limite) && limite > 0))
+            }
+            assert.equal(renderizador.pasadas[0].destino.width, Math.ceil(ancho / 2 * proporcion))
+            assert.equal(renderizador.pasadas[0].destino.height, Math.ceil(alto * proporcion))
+          }
+          efecto.destruir()
+        }
+      }
+    }
   })
 })

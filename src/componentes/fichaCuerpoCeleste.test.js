@@ -79,3 +79,15 @@ it('los campos ausentes siguen reservados y el contenido recibido no ejecuta HTM
   assert.equal(html.includes('<img src=x'), false)
   assert.ok(html.includes('Valor pendiente'))
 })
+
+it('VR permite avanzar hasta un cierre final habilitado, con retroceso inicial deshabilitado', () => {
+  const ficha = FICHAS_PRUEBA[0]
+  const inicial = representar(ficha, { modo: 'vr' })
+  assert.match(inicial, /<button type="button" disabled="">← Anterior<\/button>/)
+  assert.match(inicial, /<button type="button">Siguiente →<\/button>/)
+  const final = representar(ficha, { modo: 'vr', lectura: { cuerpoId: ficha.slug, pagina: 8, total: 9, seccion: 'libros' } })
+  assert.match(final, /<button type="button">← Anterior<\/button>/)
+  assert.match(final, /<button type="button">Cerrar →<\/button>/)
+  assert.equal(final.includes('Siguiente →'), false)
+  assert.equal(representar(ficha).includes('Cerrar →'), false)
+})

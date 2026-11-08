@@ -111,7 +111,7 @@ it('un plano compartido permite apuntar acciones reales y conserva la lectura al
   ficha.establecerModo('vr')
   ficha.reubicar(camara)
   assert.equal(ficha.malla.visible, true)
-  assert.equal(ficha.detectar(camara)?.accion, null, 'aparece enfrente, con la cruz sobre la lectura y no sobre un botón')
+  assert.equal(ficha.detectar(camara)?.accion, 'siguiente', 'el centro de la lectura permite avanzar')
   const { pagina, total } = ficha.obtenerLectura()
   const zona = obtenerZonasNavegacion(lienzo.width, lienzo.height, pagina, total).find((z) => z.accion === 'siguiente')
   const punto = new Vector3((zona.x + zona.ancho / 2) / lienzo.width - .5, .5 - (zona.y + zona.alto / 2) / lienzo.height, 0)
@@ -128,6 +128,49 @@ it('un plano compartido permite apuntar acciones reales y conserva la lectura al
   ficha.establecerModo('normal')
   assert.equal(ficha.malla.visible, false)
   assert.equal(ficha.obtenerLectura().pagina, 0)
+})
+
+it('el rayo distingue ambas mitades, consume el límite inicial y respeta pestañas y cierre', (t) => {
+  const { ficha, lienzo } = preparar(t)
+  const camara = new PerspectiveCamera(70, 2, .1, 1000)
+  ficha.ajustar(900, 450)
+  ficha.establecerCuerpo(CUERPOS_CELESTES[0])
+  ficha.establecerModo('vr')
+  ficha.reubicar(camara)
+  const apuntar = (x, y) => {
+    camara.lookAt(ficha.malla.localToWorld(new Vector3(x - .5, .5 - y, 0)))
+    return ficha.detectar(camara)
+  }
+  assert.ok(apuntar(.25, .5), 'la mitad sin acción sigue bloqueando el cielo')
+  assert.equal(apuntar(.25, .5).accion, null)
+  assert.equal(apuntar(.75, .5).accion, 'siguiente')
+  ficha.moverPagina(1)
+  assert.equal(apuntar(.25, .5).accion, 'anterior')
+  ficha.mostrarSeccion(3)
+  assert.equal(apuntar(.75, .5).accion, 'cerrar')
+  for (const zona of obtenerZonasNavegacion(lienzo.width, lienzo.height, 3, 4)) {
+    assert.equal(apuntar((zona.x + zona.ancho / 2) / lienzo.width, (zona.y + zona.alto / 2) / lienzo.height).accion,
+      zona.accion === 'siguiente' ? 'cerrar' : zona.accion)
+  }
+  assert.equal(apuntar(1.5, .5), null)
+})
+
+it('la revisión invalida lectura sustituida, pero no mirada, resaltado, imagen ni recentrado', (t) => {
+  const { ficha, imagenes } = preparar(t)
+  const camara = new PerspectiveCamera(70, 2, .1, 1000)
+  ficha.establecerCuerpo(CUERPOS_CELESTES[0])
+  ficha.establecerModo('vr')
+  ficha.reubicar(camara)
+  const inicial = ficha.obtenerRevisionLectura()
+  ficha.detectar(camara)
+  imagenes[0].onload()
+  ficha.reubicar(camara)
+  assert.equal(ficha.obtenerRevisionLectura(), inicial)
+  for (const cambiar of [() => ficha.moverPagina(1), () => ficha.mostrarSeccion(3), () => ficha.establecerContenido({ fase: 'cargando' }), () => ficha.ajustar(900, 450), () => ficha.establecerCuerpo(CUERPOS_CELESTES[1])]) {
+    const antes = ficha.obtenerRevisionLectura()
+    cambiar()
+    assert.ok(ficha.obtenerRevisionLectura() > antes)
+  }
 })
 
 it('sin cambios no redibuja; libera cada recurso una vez e ignora imágenes tardías', (t) => {

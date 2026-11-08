@@ -17,7 +17,13 @@ uniform float distanciaPantalla;
 uniform vec4 campo;
 uniform float pasoPuntero;
 uniform float centroPuntero;
+uniform float tipoPuntero;
 varying vec2 coordenadaPantalla;
+float trazo(vec2 punto, vec2 inicio, vec2 fin) {
+  vec2 tramo = fin - inicio;
+  float avance = clamp(dot(punto - inicio, tramo) / dot(tramo, tramo), 0.0, 1.0);
+  return 1.0 - smoothstep(0.7, 1.3, length(punto - inicio - avance * tramo));
+}
 void main() {
   vec2 panel = (coordenadaPantalla * tamanoFisico - centroLente) / distanciaPantalla;
   float radioCuadrado = dot(panel, panel);
@@ -29,11 +35,20 @@ void main() {
     vec2 borde = min(muestra, 1.0 - muestra);
     float vineta = smoothstep(0.0, 0.025, min(borde.x, borde.y));
     gl_FragColor = vec4(texture2D(imagenOjo, muestra).rgb * vineta, 1.0);
-    // La cruz atraviesa la misma corrección óptica y converge sobre el eje común.
-    vec2 cruz = abs((direccion - vec2(centroPuntero, 0.0)) / pasoPuntero);
+    // Todas las figuras comparten la escala y el eje óptico de la cruz original.
+    vec2 posicion = (direccion - vec2(centroPuntero, 0.0)) / pasoPuntero;
+    vec2 cruz = abs(posicion);
     float horizontal = (1.0 - smoothstep(0.7, 1.3, cruz.y)) * smoothstep(2.5, 3.5, cruz.x) * (1.0 - smoothstep(10.5, 11.5, cruz.x));
     float vertical = (1.0 - smoothstep(0.7, 1.3, cruz.x)) * smoothstep(2.5, 3.5, cruz.y) * (1.0 - smoothstep(10.5, 11.5, cruz.y));
-    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), max(horizontal, vertical));
+    float puntero = max(horizontal, vertical);
+    if (tipoPuntero == 2.0) {
+      puntero = max(trazo(posicion, vec2(-7.0, -7.0), vec2(7.0, 7.0)), trazo(posicion, vec2(-7.0, 7.0), vec2(7.0, -7.0)));
+    } else if (abs(tipoPuntero) == 1.0) {
+      posicion.x *= tipoPuntero;
+      puntero = max(trazo(posicion, vec2(-10.0, 0.0), vec2(10.0, 0.0)),
+        max(trazo(posicion, vec2(3.0, -7.0), vec2(10.0, 0.0)), trazo(posicion, vec2(3.0, 7.0), vec2(10.0, 0.0))));
+    }
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), puntero);
   }
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -73,6 +88,7 @@ export function crearEfectoVisor(renderizador) {
       campo: { value: new Vector4() },
       pasoPuntero: { value: 1 },
       centroPuntero: { value: 0 },
+      tipoPuntero: { value: 0 },
     },
     vertexShader: PROGRAMA_VERTICES,
     fragmentShader: PROGRAMA_FRAGMENTOS,
@@ -83,6 +99,9 @@ export function crearEfectoVisor(renderizador) {
   let optica
 
   return {
+    establecerAccionPuntero(accion) {
+      material.uniforms.tipoPuntero.value = accion === 'anterior' ? -1 : accion === 'siguiente' ? 1 : accion === 'cerrar' ? 2 : 0
+    },
     ajustar(parametros) {
       optica = calcularOpticaVisor(parametros)
       const proporcion = renderizador.getPixelRatio()
