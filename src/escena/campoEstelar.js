@@ -175,6 +175,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   let contextoPerdido = false
   let necesitaDibujo = true
   let seleccionadoAnterior = null
+  let librosPublicados = []
   const ficha = crearFichaCuerpoVr({
     alInvalidar: () => { necesitaDibujo = true },
     alCambiarLectura: (lectura) => alCambiarFicha?.(lectura),
@@ -197,6 +198,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       etiquetasVisor.actualizarAspecto(estado)
       if (estado.planetaSeleccionado !== seleccionadoAnterior) {
         seleccionadoAnterior = estado.planetaSeleccionado
+        librosPublicados = []
         ficha.establecerCuerpo(obtenerCuerpoCeleste(seleccionadoAnterior))
         if (modo === 'vr') ficha.reubicar(camara)
       }
@@ -217,7 +219,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     else if (accion.startsWith('seccion:')) ficha.mostrarSeccion(Number(accion.slice(8)))
     else if (accion === 'cerrar') seleccion.quitarSeleccion()
     else if (accion.startsWith('libro:')) {
-      const libro = obtenerLibrosCuerpo(seleccionadoAnterior)[Number(accion.slice(6))]
+      const libro = librosPublicados[Number(accion.slice(6))] ?? obtenerLibrosCuerpo(seleccionadoAnterior)[Number(accion.slice(6))]
       if (libro) alSolicitarLibro?.(libro)
     }
     seleccion.actualizarMirada()
@@ -311,6 +313,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
 
     establecerContenidoFicha(cuerpoId, contenido) {
       if (destruido || contextoPerdido || cuerpoId !== seleccionadoAnterior) return
+      librosPublicados = contenido?.bibliografia?.fase === 'disponible' ? contenido.bibliografia.libros : []
       ficha.establecerContenido(contenido)
     },
 

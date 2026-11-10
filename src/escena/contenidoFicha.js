@@ -34,8 +34,8 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
   const limite = alto - 108
   const anchoContenido = ancho - margen * 2
   const tamano = Math.min(24, Math.max(16, ancho / 32))
-  function lineas(texto, fuente, espacio = anchoContenido) {
-    contexto.font = `${fuente}px system-ui, sans-serif`
+  function lineas(texto, fuente, espacio = anchoContenido, negrita = false) {
+    contexto.font = `${negrita ? '700 ' : ''}${fuente}px system-ui, sans-serif`
     return dividirLineas(texto, (valor) => contexto.measureText(valor).width, espacio)
   }
   function nuevaPagina(seccion, titulo = false) {
@@ -59,11 +59,52 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
       y += 16
     }
   }
+  function agregarLibros() {
+    const seccion = SECCIONES_FICHA[3]
+    const bibliografia = contenido.bibliografia
+    const invitacion = contenido.ficha?.invitacion
+    if (!bibliografia) { parrafos(seccion, [invitacion || 'Información no disponible.'], true); return }
+    const libros = bibliografia.fase === 'disponible' ? bibliografia.libros : []
+    const mensajes = !libros.length && invitacion ? [invitacion] : []
+    if (bibliografia.fase === 'cargando') mensajes.push('Cargando recomendaciones...')
+    else if (bibliografia.fase === 'error') mensajes.push('No se pudieron cargar los libros. Cierra la ficha y vuelve a abrirla para intentarlo de nuevo.')
+    else if (libros.length < 3) mensajes.push('Estamos preparando más recomendaciones.')
+    if (mensajes.length) parrafos(seccion, mensajes, true)
+    libros.forEach((libro, indice) => {
+      let pagina = nuevaPagina(seccion)
+      let y = inicio + 6
+      const x = margen + 34
+      function numerar() {
+        pagina.elementos.push({ tipo: 'texto', texto: String(indice + 1).padStart(2, '0'), x: margen, y, tamano: tamano * .8, acento: true })
+      }
+      numerar()
+      for (const bloque of [
+        { texto: libro.titulo, negrita: true },
+        { texto: libro.autor },
+        { texto: [libro.editorial, libro.anio].filter(Boolean).join(' · '), tenue: true },
+      ]) {
+        if (!bloque.texto) continue
+        for (const linea of lineas(bloque.texto, tamano, anchoContenido - 34, bloque.negrita)) {
+          if (y + tamano * 1.2 > limite) {
+            pagina = nuevaPagina(seccion)
+            y = inicio + 6
+            numerar()
+          }
+          pagina.elementos.push({ tipo: 'texto', ...bloque, texto: linea, x, y, tamano })
+          y += tamano * 1.4
+        }
+        y += 16
+      }
+    })
+  }
   if (contenido.fase !== 'disponible') {
     const mensaje = contenido.fase === 'error'
       ? 'No se pudo cargar la información. Cierra la ficha y vuelve a seleccionar el cuerpo.'
       : 'Cargando información...'
-    SECCIONES_FICHA.forEach((seccion) => parrafos(seccion, [mensaje]))
+    SECCIONES_FICHA.forEach((seccion) => {
+      if (seccion.id === 'libros' && contenido.bibliografia) agregarLibros()
+      else parrafos(seccion, [mensaje])
+    })
     return paginas
   }
   const ficha = contenido.ficha
@@ -122,7 +163,7 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
     y += altoFila + 12
   }
   parrafos(SECCIONES_FICHA[2], ficha.curiosidades.length ? ficha.curiosidades : ['Información no disponible.'], true)
-  parrafos(SECCIONES_FICHA[3], [ficha.invitacion || 'Información no disponible.'], true)
+  agregarLibros()
   return paginas
 }
 

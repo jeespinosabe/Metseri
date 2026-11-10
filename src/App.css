@@ -323,6 +323,17 @@
   border: 0;
 }
 
+.recomendaciones-libros { margin: 24px 0 0; padding: 0; list-style: none; counter-reset: recomendacion; }
+.recomendaciones-libros > li { position: relative; counter-increment: recomendacion; padding: 22px 0 22px 34px; border-top: 1px solid #2b3942; overflow-wrap: anywhere; }
+.recomendaciones-libros > li::before { content: counter(recomendacion, decimal-leading-zero); position: absolute; top: 24px; left: 0; color: #c7e69d; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.recomendaciones-libros h3 { margin: 0 0 8px; color: #edf2f5; font-size: 1.125rem; font-weight: 500; line-height: 1.4; }
+.ficha-cuerpo--accesible .recomendaciones-libros h3 { font-weight: 700; }
+.ficha-cuerpo .recomendaciones-libros p { margin: 6px 0; font-size: 1rem; line-height: 1.6; }
+.recomendaciones-libros__autor { color: #d8e1e6; }
+.recomendaciones-libros__edicion, .recomendaciones-libros__pendientes { color: #a6b4c0; }
+.ficha-cuerpo .recomendaciones-libros a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #c7e69d; font-size: 1rem; text-underline-offset: 4px; }
+.recomendaciones-libros a:hover { color: #edf2f5; }
+
 .ficha-cuerpo {
   position: absolute;
   z-index: 20;
@@ -331,6 +342,7 @@
   bottom: 84px;
   width: min(540px, calc(100% - 44px));
   overflow: auto;
+  overflow-wrap: anywhere;
   overscroll-behavior: contain;
   touch-action: pan-y;
   scrollbar-width: thin;

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { obtenerDatosPrincipales } from '../datos/cuerposCelestes.js'
-import { obtenerLibrosCuerpo } from '../datos/librosCuerposCelestes.js'
 import { SECCIONES_FICHA } from '../escena/contenidoFicha.js'
 
 function EspacioContenido({ lineas = 3, nombre }) {
@@ -16,7 +15,8 @@ function IconoDestello() {
 export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAccionar, alEntrar, alCerrar, alAbrirLibro }) {
   const [imagenFallida, setImagenFallida] = useState(false)
   const panelRef = useRef(null)
-  const libros = obtenerLibrosCuerpo(cuerpo.id)
+  const bibliografia = contenido?.bibliografia
+  const libros = bibliografia?.fase === 'disponible' ? bibliografia.libros : []
   const ultimaPagina = lectura?.total > 0 && lectura.pagina === lectura.total - 1
   const ficha = contenido?.fase === 'disponible' ? contenido.ficha : null
   const datos = obtenerDatosPrincipales(cuerpo).map((dato, indice) => ficha?.datos[indice] ?? dato)
@@ -66,8 +66,18 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
       </section>
       <section className="ficha-cuerpo__libros" aria-labelledby="libros-ficha">
         <h2 id="libros-ficha">Descubrir libros</h2>
-        {ficha?.invitacion ? <p>{ficha.invitacion}</p> : libros.length ? <ul>{libros.map((libro) => <li key={libro.url}><a href={libro.url} target="_blank" rel="noopener noreferrer" onClick={(evento) => { evento.preventDefault(); alAbrirLibro(libro) }}>{libro.titulo} <span className="solo-lectores">(abre otra pestaña)</span></a></li>)}</ul>
-          : <EspacioContenido lineas={2} nombre="Libros" />}
+        {ficha?.invitacion && (modo !== 'vr' || !libros.length) && <p>{ficha.invitacion}</p>}
+        {bibliografia?.fase === 'cargando' && <p role="status">Cargando recomendaciones...</p>}
+        {bibliografia?.fase === 'error' && <p role="status">No se pudieron cargar los libros. Cierra la ficha y vuelve a abrirla para intentarlo de nuevo.</p>}
+        {libros.length > 0 && <ol className="recomendaciones-libros">{libros.map((libro) => <li key={libro.id}>
+          <h3>{libro.titulo}</h3>
+          {libro.autor && <p className="recomendaciones-libros__autor">{libro.autor}</p>}
+          <p className="recomendaciones-libros__edicion">{[libro.editorial, libro.anio].filter(Boolean).join(' · ')}</p>
+          {modo !== 'vr' && libro.explicacion && <p>{libro.explicacion}</p>}
+          {modo !== 'vr' && <a href={libro.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver ficha de ${libro.titulo} en la biblioteca (abre otra pestaña)`} onClick={(evento) => { evento.preventDefault(); alAbrirLibro(libro) }}>Ver ficha en la biblioteca <span aria-hidden="true">↗</span></a>}
+        </li>)}</ol>}
+        {bibliografia?.fase === 'disponible' && libros.length < 3 && <p className="recomendaciones-libros__pendientes">Estamos preparando más recomendaciones.</p>}
+        {!bibliografia && !ficha?.invitacion && <EspacioContenido lineas={2} nombre="Libros" />}
       </section>
       <footer className="ficha-cuerpo__fuentes"><a href={cuerpo.imagenOriginal} target="_blank" rel="noopener noreferrer" title={cuerpo.credito}>Créditos de imagen ↗</a></footer>
       {modo === 'vr' && <nav className="ficha-cuerpo__navegacion" aria-label="Secciones de la ficha VR">

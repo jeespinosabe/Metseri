@@ -14,6 +14,7 @@ import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
 import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
 import { iniciarConsultaContenido } from '../servicios/consultaContenido.js'
+import { iniciarConsultaLibros } from '../servicios/consultaLibros.js'
 
 const MENSAJE_SIN_RENDERIZADO =
   'Tu navegador no pudo iniciar los gráficos necesarios para mostrar el cielo. Comprueba que la aceleración gráfica esté activada e inténtalo de nuevo.'
@@ -46,10 +47,22 @@ function obtenerAnguloPantalla() {
 function FichaConContenido({ cuerpo, modo, alCambiarContenido, ...propiedades }) {
   const [contenido, setContenido] = useState(null)
   useEffect(() => {
-    return iniciarConsultaContenido(cuerpo, (nuevoContenido) => {
-      setContenido(nuevoContenido)
-      alCambiarContenido(cuerpo.id, nuevoContenido)
+    let actual = { fase: 'cargando' }
+    let bibliografia = { fase: 'cargando', libros: [] }
+    const publicar = () => {
+      const combinado = { ...actual, bibliografia }
+      setContenido(combinado)
+      alCambiarContenido(cuerpo.id, combinado)
+    }
+    const cancelarContenido = iniciarConsultaContenido(cuerpo, (nuevoContenido) => {
+      actual = nuevoContenido
+      publicar()
     })
+    const cancelarLibros = iniciarConsultaLibros(cuerpo.id, (nuevoEstado) => {
+      bibliografia = nuevoEstado
+      publicar()
+    })
+    return () => { cancelarContenido(); cancelarLibros() }
   }, [cuerpo, alCambiarContenido])
   return <FichaCuerpoCeleste {...propiedades} cuerpo={cuerpo} modo={modo} contenido={contenido} />
 }

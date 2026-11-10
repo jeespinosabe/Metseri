@@ -1,5 +1,7 @@
 # Metseri
 
+La [guía de gestión bibliográfica](bd/gestionBibliografica.md) documenta la API administrativa de libros, su configuración y su consumo desde el panel.
+
 Experiencia de astronomía en el navegador: un cielo de estrellas envolvente con los ocho planetas del sistema solar y cuatro satélites naturales en 3D, hecho con React, Vite y Three.js.
 
 ## Cómo ejecutarla

@@ -63,7 +63,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
         contexto.fillStyle = '#24323c'
         contexto.fillRect(elemento.x, elemento.y, elemento.ancho, elemento.alto)
       } else {
-        contexto.font = `${elemento.tamano}px system-ui, sans-serif`
+        contexto.font = `${elemento.negrita ? '700 ' : ''}${elemento.tamano}px system-ui, sans-serif`
         contexto.fillStyle = elemento.acento ? '#c5e49b' : elemento.tenue ? '#8ea0ad' : '#e2e8ed'
         contexto.fillText(elemento.texto, elemento.x, elemento.y)
         if (elemento.accion) zonas.push({ accion: elemento.accion, x: elemento.x, y: elemento.y, ancho: contexto.measureText(elemento.texto).width, alto: elemento.tamano * 1.35 })

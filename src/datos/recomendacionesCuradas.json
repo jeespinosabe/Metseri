@@ -1,0 +1,46 @@
+{
+  "cb4561ac-7b9c-42b7-8648-402d3f036ee9": {
+    "mercurio": "Apartado de Mercurio: superficie y órbita. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "venus": "Apartado de Venus: atmósfera y rotación. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "tierra": "Apartado terrestre: comparación con otros planetas. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "marte": "Apartado marciano: superficie y exploración. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "jupiter": "Apartado joviano: estructura y satélites. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "saturno": "Apartado de Saturno: anillos y lunas. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "urano": "Apartado de Urano: inclinación y exploración. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "neptuno": "Apartado de Neptuno: descubrimiento y exploración. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "luna": "Apartado lunar: origen y características. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "europa": "Apartado de Europa: hielo y océano propuesto. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "titan": "Apartado de Titán: atmósfera y composición. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "triton": "Apartado de Tritón: observaciones de Voyager. Lectura histórica; consultar la ficha astronómica para los datos actualizados."
+  },
+  "ea2b91c6-ddf5-47b4-8d6e-98129fe2d7c3": {
+    "mercurio": "III: Mercurio. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "venus": "IV–V: Venus. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "tierra": "VI–VII: Tierra. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "marte": "XI–XII: Marte. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "jupiter": "XVI: Júpiter. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "saturno": "XVIII: Saturno. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "urano": "XXI: Urano. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "neptuno": "XXII–XXIII: Neptuno. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "luna": "VIII–IX: Luna. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "europa": "XVI: contexto del sistema joviano, donde orbita Europa. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "titan": "XIX–XX: Titán y Huygens. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "triton": "XXIV: encuentro de Voyager con Tritón. Lectura histórica; consultar la ficha astronómica para los datos actualizados."
+  },
+  "0d6efdf2-fc32-4556-8bb3-7e61a2d754f2": {
+    "mercurio": "XV y XXV: escalas orbitales y movimientos planetarios. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "venus": "XV y XXV: escalas orbitales y movimientos planetarios. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "tierra": "XLV: impactos; XXIV: eclipses. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "marte": "IV y LIV: satélites y exploración marciana. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "jupiter": "LIII: exploración del sistema joviano por Galileo. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "saturno": "XV y XLIII: distancias y formación planetaria. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "urano": "XV y XLIII: distancias y formación planetaria. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "neptuno": "XVII: historia del descubrimiento de Neptuno. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "luna": "XIII y LV: exploración lunar. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "europa": "LIII: contexto de exploración del sistema joviano. Lectura histórica; consultar la ficha astronómica para los datos actualizados."
+  },
+  "a5a75fe1-7ea0-4c5d-bdad-39d5de225a84": {
+    "titan": "La reseña describe contenidos sobre Titán. Lectura histórica; consultar la ficha astronómica para los datos actualizados.",
+    "triton": "La reseña describe contenidos sobre Tritón. Lectura histórica; consultar la ficha astronómica para los datos actualizados."
+  }
+}

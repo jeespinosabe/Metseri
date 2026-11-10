@@ -1,10 +1,12 @@
 import { Router } from 'express'
+import { crearRutasLibros } from './libros.js'
 
-export function crearRutasAdministracion(autenticacion) {
+export function crearRutasAdministracion(autenticacion, gestionLibros) {
   const rutas = Router()
   rutas.post('/sesion', (peticion, respuesta) => autenticacion.iniciar(peticion, respuesta))
   rutas.get('/sesion', (peticion, respuesta) => autenticacion.consultar(peticion, respuesta))
   rutas.delete('/sesion', (peticion, respuesta) => autenticacion.cerrar(peticion, respuesta))
+  rutas.use('/libros', crearRutasLibros(gestionLibros, autenticacion.exigirAdministrador))
   rutas.get('/', autenticacion.exigirAdministrador, (_peticion, respuesta) => {
     respuesta.json({ modulo: 'administracion', acceso: 'autorizado' })
   })
