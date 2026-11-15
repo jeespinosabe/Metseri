@@ -56,6 +56,7 @@ describe('contenedor del panel', () => {
     }
     for (const retirado of [...TEXTOS_RETIRADOS, '<article', 'Todavía no hay registros bibliográficos']) assert.equal(html.includes(retirado), false, retirado)
     assert.match(html, /aria-current="page">\s*Registros bibliográficos/)
+    assert.match(html, /data-foco="agregar-navegacion">\s*Agregar libro/)
     assert.equal(html.includes('<dialog'), false)
   })
 })

@@ -204,7 +204,7 @@ api/
 
 ### Despliegue en Vercel
 
-El proyecto publica la interfaz Vite y la función Express en el mismo dominio. `vercel.json`, junto a `package.json`, reenvía `/api/:path*` a la función `/api` exportada por `api/index.js`. Express atiende las rutas completas, como `/api/estado` y `/api/cuerpos-celestes/tierra/libros`. La regla se limita a la API y conserva las rutas de la interfaz, los archivos compilados y las imágenes locales. Consulta la [documentación de reescrituras de Vercel](https://vercel.com/docs/routing/rewrites).
+El proyecto publica la interfaz Vite y la función Express en el mismo dominio. `vercel.json` reenvía `/api/(.*)?` a la función `/api` exportada por `api/index.js`. El grupo sin nombre conserva la consulta original, incluidos los parámetros de paginación del catálogo administrativo. Express atiende rutas como `/api/estado` y `/api/cuerpos-celestes/tierra/libros`. La regla se limita a la API. Consulta la [documentación de reescrituras de Vercel](https://vercel.com/docs/routing/rewrites).
 
 Para configurar el proyecto en Vercel:
 
@@ -212,6 +212,8 @@ Para configurar el proyecto en Vercel:
 2. En **Settings > Environment Variables**, configura `SUPABASE_URL` y `SUPABASE_PUBLISHABLE_KEY` con los valores del proyecto Supabase para **Production**. La clave debe ser pública, con formato `sb_publishable_…`, como exige el servicio actual. Para probar una URL de Preview, configura también ese entorno.
 3. Conserva esos nombres sin prefijo `VITE_`: la conexión se utiliza en el servidor. El archivo `.env` local está ignorado por Git y no configura automáticamente las variables de Vercel. `PORT` corresponde al arranque local; no es la dirección de la API publicada.
 4. Publica una versión que incluya `vercel.json`. Si agregas o cambias variables, vuelve a desplegar desde **Deployments > … > Redeploy** para que se apliquen a una nueva versión. Revisa que estés probando la URL de ese despliegue. Consulta la [configuración de variables de Vercel](https://vercel.com/docs/environment-variables/managing-environment-variables).
+
+Para administrar el catálogo en Vercel, configura también `ADMIN_USUARIO`, `ADMIN_CONTRASENA` y `SUPABASE_SECRET_KEY` en el entorno del despliegue. Consulta la [guía de gestión bibliográfica](bd/gestionBibliografica.md).
 
 `npm run dev` inicia los dos servidores en tu computadora. Vite utiliza `server.proxy` en desarrollo y lo hereda en `npm run preview` para las pruebas locales del build. En producción, Vercel resuelve las rutas mediante `vercel.json` y ejecuta la aplicación exportada por `api/index.js` como función. `server.js` arranca la API local.
 

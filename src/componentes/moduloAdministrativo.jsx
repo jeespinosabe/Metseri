@@ -104,10 +104,14 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
   function guardarLibro(datos, id) {
     return realizarOperacion(async () => {
       const libro = await guardarLibroAdministrativo(datos, id)
-      setCatalogo(({ registros }) => ({
-        fase: 'disponible',
-        registros: id ? registros.map((registro) => registro.id === id ? libro : registro) : [libro, ...registros],
-      }))
+      if (id) {
+        setCatalogo(({ registros }) => ({
+          fase: 'disponible',
+          registros: registros.map((registro) => registro.id === id ? libro : registro),
+        }))
+      } else {
+        volverAConsultar()
+      }
       setAviso(id ? 'Cambios guardados.' : 'Libro agregado al catálogo.')
       volverAlListado()
     })
@@ -137,7 +141,7 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
           <button type="button" className="panel-admin__pestana" disabled={operando} aria-current={pantallaVisible !== 'alta' ? 'page' : undefined} onClick={() => { focoAlVolver.current = null; volverAlListado(); volverAConsultar() }}>
             Registros bibliográficos
           </button>
-          <button type="button" className="panel-admin__pestana" data-foco="agregar-navegacion" disabled={operando || catalogo.fase !== 'disponible'} aria-current={pantallaVisible === 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible !== 'alta') abrirAlta('agregar-navegacion') }}>
+          <button type="button" className="panel-admin__pestana" data-foco="agregar-navegacion" disabled={operando} aria-current={pantallaVisible === 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible !== 'alta') abrirAlta('agregar-navegacion') }}>
             Agregar libro
           </button>
         </nav>
