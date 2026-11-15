@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { EscenaEstelar } from './componentes/escenaEstelar.jsx'
 import { AccesoAdministrativo } from './componentes/accesoAdministrativo.jsx'
 import { ModuloAdministrativo } from './componentes/moduloAdministrativo.jsx'
+import { DescargaSinConexion } from './componentes/descargaSinConexion.jsx'
 import './App.css'
 
 function App() {
@@ -41,7 +42,10 @@ function App() {
   return (
     <main className="aplicacion">
       <EscenaEstelar />
-      <a className="enlace-administracion" href="/admin" onClick={(evento) => { evento.preventDefault(); navegar('/admin') }}>Administración</a>
+      <div className="acciones-aplicacion">
+        <a className="enlace-administracion" href="/admin" onClick={(evento) => { evento.preventDefault(); navegar('/admin') }}>Administración</a>
+        <DescargaSinConexion />
+      </div>
     </main>
   )
 }

@@ -1,12 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { admiteDescargaSinConexion, esperarArchivosSinConexion } from '../servicios/archivosSinConexion.js'
 import { leerCopiaEducativa } from '../servicios/copiaEducativa.js'
 import { descargarContenidoEducativo } from '../servicios/descargaEducativa.js'
 import { etiquetaCopiaDescargada } from '../servicios/fechaDescarga.js'
 
-export function DescargaSinConexion({ visible, alEntrar }) {
+function suscribirseAConexion(alCambiar) {
+  window.addEventListener('online', alCambiar)
+  window.addEventListener('offline', alCambiar)
+  return () => {
+    window.removeEventListener('online', alCambiar)
+    window.removeEventListener('offline', alCambiar)
+  }
+}
+
+function estaSinConexion() {
+  return !navigator.onLine
+}
+
+export function DescargaSinConexion() {
   const admite = admiteDescargaSinConexion()
+  const sinConexion = useSyncExternalStore(suscribirseAConexion, estaSinConexion)
   const [fecha, setFecha] = useState(null)
   const [progreso, setProgreso] = useState(null)
   const [error, setError] = useState('')
@@ -34,10 +48,10 @@ export function DescargaSinConexion({ visible, alEntrar }) {
     }
   }
 
-  if (!visible || !import.meta.env.PROD) return null
+  if (!import.meta.env.PROD) return null
 
   return (
-    <div className="descarga-sin-conexion" onPointerEnter={alEntrar}>
+    <div className="descarga-sin-conexion">
       {admite && <button type="button" disabled={progreso !== null} onClick={descargar}>
         {fecha === null ? 'Descargar para usar sin conexión' : 'Actualizar descarga'}
       </button>}
@@ -46,7 +60,7 @@ export function DescargaSinConexion({ visible, alEntrar }) {
         {progreso !== null && <p>Preparando {progreso} de {CUERPOS_CELESTES.length} cuerpos…</p>}
         {error && <p>{error} Vuelve a intentarlo con conexión.</p>}
         {fecha !== null && <p>Disponible sin conexión. {etiquetaCopiaDescargada(fecha)}.</p>}
-        {admite && fecha === null && progreso === null && !error && <p>Se necesita conexión para descargar las fichas.</p>}
+        {admite && sinConexion && fecha === null && progreso === null && !error && <p>Se necesita conexión para descargar las fichas.</p>}
       </div>
     </div>
   )

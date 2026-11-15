@@ -16,7 +16,6 @@ import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
 import { iniciarConsultaContenido } from '../servicios/consultaContenido.js'
 import { iniciarConsultaLibros } from '../servicios/consultaLibros.js'
 import { leerCuerpoDescargado } from '../servicios/copiaEducativa.js'
-import { DescargaSinConexion } from './descargaSinConexion.jsx'
 
 const MENSAJE_SIN_RENDERIZADO =
   'Tu navegador no pudo iniciar los gráficos necesarios para mostrar el cielo. Comprueba que la aceleración gráfica esté activada e inténtalo de nuevo.'
@@ -243,7 +242,6 @@ export function EscenaEstelar() {
           : 'Cielo con planetas y lunas. Pasa el mouse sobre un cuerpo celeste para iluminarlo. Haz clic o toca para seleccionarlo y leer su ficha; pulsa de nuevo o toca el fondo para cerrar y deseleccionar. Arrastra o usa las flechas para mirar alrededor.'}
         tabIndex={mensajeError ? -1 : 0}
       />
-      <DescargaSinConexion visible={modo === 'normal'} alEntrar={() => campoRef.current?.limpiarApuntado()} />
       {mensajeError ? (
         <div className="escena-estelar__error" role="alert">
           <p>{mensajeError}</p>
