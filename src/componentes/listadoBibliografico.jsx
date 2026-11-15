@@ -6,7 +6,7 @@ export function ListadoBibliografico({ total, registros, hayCriterios, alAgregar
     return (
       <div className="panel-admin__vacio">
         <h2>Todavía no hay registros bibliográficos</h2>
-        <p>Cuando el catálogo administrativo tenga libros, aparecerán en este listado. Mientras tanto puedes revisar el formulario de alta.</p>
+        <p>Agrega el primer libro del catálogo.</p>
         <button type="button" className="panel-admin__boton" data-foco="agregar-vacio" onClick={() => alAgregar('agregar-vacio')}>Agregar libro</button>
       </div>
     )
@@ -22,7 +22,7 @@ export function ListadoBibliografico({ total, registros, hayCriterios, alAgregar
           <button type="button" className="panel-admin__boton panel-admin__boton--secundario" onClick={alLimpiarFiltros}>Limpiar filtros</button>
         </div>
       ) : (
-        <ul className="panel-admin__galeria" aria-label="Registros bibliográficos de ejemplo">
+        <ul className="panel-admin__galeria" aria-label="Registros bibliográficos">
           {registros.map((registro) => (
             <li key={registro.id}><TarjetaLibro registro={registro} alEditar={alEditar} alEliminar={alEliminar} /></li>
           ))}

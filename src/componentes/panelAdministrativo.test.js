@@ -4,11 +4,9 @@ import { readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createServer } from 'vite'
-import { REGISTROS_BIBLIOGRAFICOS_EJEMPLO } from '../datos/registrosBibliograficosEjemplo.js'
 import { crearBorradorLibro, crearRegistroVistaPrevia } from '../administracion/registrosBibliograficos.js'
 
-// Pruebas de representación estática: comprueban etiquetas, estados y controles
-// deshabilitados. La interacción, el foco y el diálogo modal se revisan en navegador.
+// Pruebas de representación estática del panel y sus controles.
 let vite
 let componentes
 before(async () => {
@@ -28,40 +26,37 @@ after(async () => { await vite?.close() })
 const nada = () => {}
 const representar = (nombre, propiedades = {}) => renderToStaticMarkup(createElement(componentes[nombre], propiedades))
 const contar = (html, texto) => html.split(texto).length - 1
-const [TIERRA_LUNA, , MARTE, COSMOS, , SIN_CUERPOS] = REGISTROS_BIBLIOGRAFICOS_EJEMPLO
+const REGISTROS_PRUEBA = [
+  ['Atlas de muestra', ['tierra', 'luna']], ['Órbitas de muestra', ['jupiter', 'europa']],
+  ['Marte de muestra', ['marte']], ['Planetas de muestra', ['marte', 'venus']],
+  ['Anillos de muestra', ['saturno']], ['Guía de muestra', []],
+].map(([titulo, cuerposIds], indice) => ({
+  id: `libro-${indice}`, titulo, cuerposIds, autoria: 'Ana de Prueba', editorial: 'Editorial de muestra', anio: 2014,
+  urlFicha: `https://example.org/libro-${indice}`, fotografia: { url: `/pruebas/portada-${indice}.webp`, encuadre: { x: 50, y: 50 } },
+}))
+const [TIERRA_LUNA, , MARTE, PLANETAS, , SIN_CUERPOS] = REGISTROS_PRUEBA
 // Los libros reales tienen sus datos completos: los casos ausentes se derivan aquí.
 const SIN_EDITORIAL = Object.freeze({ ...MARTE, editorial: null })
-const SIN_ANIO = Object.freeze({ ...COSMOS, anio: null })
+const SIN_ANIO = Object.freeze({ ...PLANETAS, anio: null })
 const SIN_ASOCIAR = Object.freeze({ ...SIN_CUERPOS, editorial: null, anio: null })
 
 // Textos retirados de la interfaz a petición del usuario: no deben reaparecer.
 const TEXTOS_RETIRADOS = ['Vista previa · Datos de ejemplo', 'Los cambios aún no se guardan', 'REGISTROS BIBLIOGRÁFICOS', 'El guardado estará disponible', '<h1']
 
 function botonGuardar(html, texto) {
-  assert.ok(html.includes(`<button type="submit" class="panel-admin__boton" disabled="">${texto}</button>`), `falta ${texto} deshabilitado`)
+  assert.ok(html.includes(`<button type="submit" class="panel-admin__boton">${texto}</button>`), `falta ${texto} habilitado`)
   for (const retirado of TEXTOS_RETIRADOS) assert.equal(html.includes(retirado), false, retirado)
 }
 
 describe('contenedor del panel', () => {
-  it('muestra navegación, filtros y el listado con los ejemplos, sin encabezado ni aviso de vista previa', () => {
+  it('muestra navegación y espera el catálogo real sin mostrar registros de ejemplo', () => {
     const html = representar('ModuloAdministrativo', { alCerrarSesion: nada })
-    for (const texto of ['aria-label="Panel administrativo"', 'Registros bibliográficos</button>', 'Agregar libro</button>', 'Volver a la exploración</a>', 'Cerrar sesión</button>', 'aria-label="Listado de registros bibliográficos"', 'Buscar por título o autoría', 'Todos los cuerpos', 'Limpiar filtros</button>', '6 registros de ejemplo']) {
+    for (const texto of ['aria-label="Panel administrativo"', 'Registros bibliográficos</button>', 'Agregar libro</button>', 'Volver a la exploración</a>', 'Cerrar sesión</button>', 'aria-label="Listado de registros bibliográficos"', 'Cargando catálogo…']) {
       assert.ok(html.includes(texto), texto)
     }
-    for (const retirado of [...TEXTOS_RETIRADOS, 'Revisa los libros de ejemplo']) assert.equal(html.includes(retirado), false, retirado)
+    for (const retirado of [...TEXTOS_RETIRADOS, '<article', 'Todavía no hay registros bibliográficos']) assert.equal(html.includes(retirado), false, retirado)
     assert.match(html, /aria-current="page">\s*Registros bibliográficos/)
     assert.equal(html.includes('<dialog'), false)
-    assert.equal(contar(html, '<option value="'), 13)
-    assert.ok(html.includes('<option value="luna">Luna (Tierra)</option>'))
-  })
-
-  it('una colección explícitamente vacía no se rellena con ejemplos', () => {
-    const html = representar('ModuloAdministrativo', { alCerrarSesion: nada, registros: [] })
-    assert.ok(html.includes('Todavía no hay registros bibliográficos'))
-    assert.ok(html.includes('data-foco="agregar-vacio">Agregar libro</button>'))
-    for (const ausente of [...TEXTOS_RETIRADOS, '<table', 'role="search"', 'Limpiar filtros', 'Ningún registro coincide', ...REGISTROS_BIBLIOGRAFICOS_EJEMPLO.map((registro) => registro.titulo)]) {
-      assert.equal(html.includes(ausente), false, ausente)
-    }
   })
 })
 
@@ -70,11 +65,11 @@ describe('galería bibliográfica', () => {
   const tarjetas = (html) => html.split('<article').slice(1).map((parte) => parte.split('</article>')[0])
 
   it('muestra cada libro una sola vez en una tarjeta con relaciones, cantidad de cuerpos y acciones vinculadas', () => {
-    const html = representar('ListadoBibliografico', { ...propiedades, registros: REGISTROS_BIBLIOGRAFICOS_EJEMPLO })
-    assert.ok(html.includes('<ul class="panel-admin__galeria" aria-label="Registros bibliográficos de ejemplo">'))
+    const html = representar('ListadoBibliografico', { ...propiedades, registros: REGISTROS_PRUEBA })
+    assert.ok(html.includes('<ul class="panel-admin__galeria" aria-label="Registros bibliográficos">'))
     assert.equal(html.includes('<table'), false)
-    assert.equal(tarjetas(html).length, REGISTROS_BIBLIOGRAFICOS_EJEMPLO.length)
-    for (const registro of REGISTROS_BIBLIOGRAFICOS_EJEMPLO) {
+    assert.equal(tarjetas(html).length, REGISTROS_PRUEBA.length)
+    for (const registro of REGISTROS_PRUEBA) {
       assert.equal(contar(html, `>${registro.titulo}</h2>`), 1, registro.titulo)
       assert.ok(html.includes(`aria-label="Editar ${registro.titulo}">Editar</button>`))
       assert.ok(html.includes(`aria-label="Eliminar ${registro.titulo}">Eliminar</button>`))
@@ -84,7 +79,7 @@ describe('galería bibliográfica', () => {
   })
 
   it('sin criterios termina con Agregar libro y con criterios la oculta', () => {
-    const sinCriterios = representar('ListadoBibliografico', { ...propiedades, registros: REGISTROS_BIBLIOGRAFICOS_EJEMPLO })
+    const sinCriterios = representar('ListadoBibliografico', { ...propiedades, registros: REGISTROS_PRUEBA })
     assert.match(sinCriterios, /data-foco="agregar-galeria">.*Agregar libro<\/button><\/li><\/ul>$/s)
     const conCriterios = representar('ListadoBibliografico', { ...propiedades, hayCriterios: true, registros: [TIERRA_LUNA] })
     assert.equal(conCriterios.includes('agregar-galeria'), false)
@@ -107,7 +102,7 @@ describe('galería bibliográfica', () => {
     const sinCoincidencias = representar('ListadoBibliografico', { ...propiedades, hayCriterios: true, registros: [] })
     assert.ok(sinCoincidencias.includes('Ningún registro coincide con la búsqueda'))
     assert.ok(sinCoincidencias.includes('Limpiar filtros</button>'))
-    assert.ok(sinCoincidencias.includes('role="status">0 de 6 registros de ejemplo</p>'))
+    assert.ok(sinCoincidencias.includes('role="status">0 de 6 registros</p>'))
     assert.equal(sinCoincidencias.includes('Todavía no hay'), false)
     assert.equal(sinCoincidencias.includes('panel-admin__galeria'), false)
 
@@ -120,7 +115,7 @@ describe('galería bibliográfica', () => {
 
   it('informa la cantidad filtrada', () => {
     const html = representar('ListadoBibliografico', { ...propiedades, hayCriterios: true, registros: [TIERRA_LUNA, SIN_ANIO] })
-    assert.ok(html.includes('role="status">2 de 6 registros de ejemplo</p>'))
+    assert.ok(html.includes('role="status">2 de 6 registros</p>'))
   })
 })
 
@@ -137,17 +132,17 @@ describe('tarjeta de libro', () => {
   })
 
   it('sin fotografía muestra el espacio de portada vacío, sin órbitas, imágenes ni indicaciones', () => {
-    for (const registro of REGISTROS_BIBLIOGRAFICOS_EJEMPLO.map((ejemplo) => ({ ...ejemplo, fotografia: null }))) {
+    for (const registro of REGISTROS_PRUEBA.map((ejemplo) => ({ ...ejemplo, fotografia: null }))) {
       const html = representar('TarjetaLibro', { registro, alEditar: nada, alEliminar: nada })
       assert.ok(html.startsWith(`<article class="panel-admin__tarjeta">${PORTADA_VACIA}<div class="panel-admin__tarjeta-cuerpo"><h2 class="panel-admin__tarjeta-titulo">`), registro.id)
       for (const ausente of ['<img', ...RESTOS_ORBITALES]) assert.equal(html.includes(ausente), false, `${registro.id}: ${ausente}`)
     }
   })
 
-  it('los ejemplos muestran su portada enlazada desde Open Library como imagen decorativa', () => {
-    const html = representar('ListadoBibliografico', { total: 6, hayCriterios: true, registros: REGISTROS_BIBLIOGRAFICOS_EJEMPLO, alAgregar: nada, alEditar: nada, alEliminar: nada, alLimpiarFiltros: nada })
+  it('muestra las portadas recibidas como imágenes decorativas', () => {
+    const html = representar('ListadoBibliografico', { total: 6, hayCriterios: true, registros: REGISTROS_PRUEBA, alAgregar: nada, alEditar: nada, alEliminar: nada, alLimpiarFiltros: nada })
     const imagenes = [...html.matchAll(/<img src="([^"]+)" alt=""/g)].map(([, src]) => src)
-    assert.deepEqual(imagenes, REGISTROS_BIBLIOGRAFICOS_EJEMPLO.map((registro) => registro.fotografia.url))
+    assert.deepEqual(imagenes, REGISTROS_PRUEBA.map((registro) => registro.fotografia.url))
     assert.equal(html.includes('panel-admin__portada--vacia'), false)
   })
 
@@ -163,7 +158,7 @@ describe('tarjeta de libro', () => {
 describe('campo de fotografía', () => {
   it('sin fotografía ofrece elegirla o arrastrarla, con formatos y vista previa con portada vacía', () => {
     const html = representar('CampoFotografiaLibro', { fotografia: null, alCambiar: nada, registroVistaPrevia: crearRegistroVistaPrevia(crearBorradorLibro()) })
-    assert.ok(html.includes('<legend>Fotografía del libro <span class="panel-admin__marca-campo">Opcional</span></legend>'))
+    assert.ok(html.includes('<legend>Fotografía del libro <span class="panel-admin__marca-campo">Vista previa</span></legend>'))
     assert.match(html, /<input type="file" accept="image\/jpeg,image\/png,image\/webp" hidden=""/)
     assert.match(html, /aria-describedby="[^"]+-formatos"[^>]*>Elegir fotografía<\/button>/)
     assert.ok(html.includes('JPG, PNG o WebP · hasta 5 MB'))
@@ -185,20 +180,21 @@ describe('campo de fotografía', () => {
 })
 
 describe('formulario de libro', () => {
-  it('el alta empieza vacía, identifica obligatorios y mantiene el guardado deshabilitado', () => {
+  it('el alta empieza vacía, identifica obligatorios y permite enviar el formulario', () => {
     const html = representar('FormularioLibro', { modo: 'alta', alVolver: nada })
     assert.match(html, /<form [^>]*novalidate=""[^>]*aria-label="Agregar libro"/i)
     assert.equal(html.includes('Completa un borrador temporal'), false)
-    for (const campo of ['titulo', 'autoria', 'editorial', 'anio', 'urlFicha']) assert.match(html, new RegExp(`name="${campo}"[^>]*value=""`))
-    assert.equal(contar(html, '>Obligatorio</span>'), 3)
+    for (const campo of ['titulo', 'editorial', 'anio', 'urlFicha']) assert.match(html, new RegExp(`name="${campo}"[^>]*value=""`))
+    assert.match(html, /<textarea[^>]*name="autoria"[^>]*><\/textarea>/)
+    assert.equal(contar(html, '>Obligatorio</span>'), 2)
     assert.equal(contar(html, '>Opcional</span>'), 4)
     assert.ok(html.indexOf('Fotografía del libro') > html.indexOf('name="urlFicha"'))
     assert.ok(html.indexOf('Fotografía del libro') < html.indexOf('Cuerpos celestes relacionados'))
     assert.ok(html.includes('Elegir fotografía</button>') && html.includes(PORTADA_VACIA))
     assert.match(html, /type="text" inputMode="numeric"[^>]*name="anio"/)
     assert.match(html, /type="url"[^>]*name="urlFicha"/)
-    assert.equal(contar(html, 'type="checkbox"'), 12)
-    assert.equal(html.includes('checked=""'), false)
+    assert.equal(contar(html, 'type="checkbox"'), 14)
+    assert.equal(contar(html, 'checked=""'), 1)
     assert.ok(html.includes('aria-live="polite">Sin asociar</p>'))
     assert.equal(html.includes('aria-invalid'), false)
     assert.ok(html.includes('<button type="button" class="panel-admin__boton panel-admin__boton--secundario">Cancelar</button>'))
@@ -210,12 +206,13 @@ describe('formulario de libro', () => {
     const html = representar('FormularioLibro', { modo: 'edicion', registro: TIERRA_LUNA, alVolver: nada })
     assert.match(html, /<form [^>]*aria-label="Editar libro"/)
     assert.equal(html.includes('Modificas un borrador temporal'), false)
-    for (const [campo, valor] of [['titulo', TIERRA_LUNA.titulo], ['autoria', TIERRA_LUNA.autoria], ['editorial', TIERRA_LUNA.editorial], ['anio', String(TIERRA_LUNA.anio)], ['urlFicha', TIERRA_LUNA.urlFicha]]) {
+    for (const [campo, valor] of [['titulo', TIERRA_LUNA.titulo], ['editorial', TIERRA_LUNA.editorial], ['anio', String(TIERRA_LUNA.anio)], ['urlFicha', TIERRA_LUNA.urlFicha]]) {
       assert.match(html, new RegExp(`name="${campo}"[^>]*value="${valor}"`))
     }
     assert.ok(html.includes('checked="" value="tierra"'))
     assert.ok(html.includes('checked="" value="luna"'))
-    assert.equal(contar(html, 'checked=""'), 2)
+    assert.match(html, /<textarea[^>]*name="autoria"[^>]*>Ana de Prueba<\/textarea>/)
+    assert.equal(contar(html, 'checked=""'), 3)
     assert.ok(html.includes('Seleccionados: Tierra, Luna'))
     assert.ok(html.includes(`src="${TIERRA_LUNA.fotografia.url}" alt="Fotografía elegida del libro`))
     assert.ok(html.includes('Quitar foto</button>'))
@@ -242,7 +239,7 @@ describe('selector de cuerpos celestes', () => {
 })
 
 describe('confirmación de eliminación', () => {
-  it('identifica el libro y sus relaciones con la confirmación deshabilitada', () => {
+  it('identifica el libro y sus relaciones con la confirmación habilitada', () => {
     const html = representar('ConfirmacionEliminarLibro', { registro: TIERRA_LUNA, alCerrar: nada })
     assert.ok(html.startsWith('<dialog'))
     assert.ok(html.includes(`«${TIERRA_LUNA.titulo}»`))
@@ -250,9 +247,7 @@ describe('confirmación de eliminación', () => {
     assert.ok(html.includes('<li>Tierra</li><li>Luna</li>'))
     assert.ok(html.includes('aria-label="Cerrar confirmación"'))
     assert.ok(html.includes('panel-admin__boton--secundario">Cancelar</button>'))
-    const confirmar = html.match(/disabled="" aria-describedby="([^"]+)">Eliminar libro<\/button>/)
-    assert.ok(confirmar)
-    assert.match(html, new RegExp(`id="${confirmar[1]}" class="panel-admin__pendiente">La eliminación estará disponible en una próxima etapa`))
+    assert.match(html, /class="panel-admin__boton panel-admin__boton--peligro">Eliminar libro<\/button>/)
     assert.equal(/eliminad[oa] (correctamente|con éxito)/i.test(html), false)
   })
 
@@ -263,7 +258,7 @@ describe('confirmación de eliminación', () => {
   })
 })
 
-it('los componentes bibliográficos no realizan escrituras de red ni guardan borradores', () => {
+it('los componentes delegan las peticiones al servicio y conservan los borradores en memoria', () => {
   for (const archivo of ['moduloAdministrativo.jsx', 'listadoBibliografico.jsx', 'tarjetaLibro.jsx', 'campoFotografiaLibro.jsx', 'formularioLibro.jsx', 'selectorCuerposCelestes.jsx', 'confirmacionEliminarLibro.jsx', '../administracion/registrosBibliograficos.js']) {
     const fuente = readFileSync(new URL(archivo, import.meta.url), 'utf8')
     for (const prohibido of ['fetch(', 'XMLHttpRequest', 'sendBeacon', 'localStorage', 'sessionStorage', 'indexedDB', 'document.cookie', 'FileReader']) {

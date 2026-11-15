@@ -27,6 +27,9 @@ export function TarjetaLibro({ registro, alEditar, alEliminar, vistaPrevia = fal
           <span aria-hidden="true"> · </span>
           <span className={Number.isInteger(registro.anio) ? undefined : 'panel-admin__ausente'}>{anio}</span>
         </p>
+        {typeof registro.activo === 'boolean' && <p className="panel-admin__tarjeta-datos">
+          {!registro.activo ? 'Inactivo' : registro.verificado ? 'Activo y verificado' : 'Pendiente de verificación'}
+        </p>}
         {cuerpos.length > 0 ? (
           <ul className="panel-admin__cuerpos" aria-label="Cuerpos celestes relacionados">
             {cuerpos.map((cuerpo) => <li key={cuerpo.id}>{cuerpo.nombre}</li>)}

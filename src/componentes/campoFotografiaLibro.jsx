@@ -79,7 +79,8 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
 
   return (
     <fieldset className={`panel-admin__fotografia${arrastrando ? ' panel-admin__fotografia--arrastrando' : ''}`} {...eventosArrastre}>
-      <legend>Fotografía del libro <span className="panel-admin__marca-campo">Opcional</span></legend>
+      <legend>Fotografía del libro <span className="panel-admin__marca-campo">Vista previa</span></legend>
+      <p className="panel-admin__ayuda">La fotografía elegida solo se muestra en este formulario.</p>
       <input
         ref={entrada}
         type="file"

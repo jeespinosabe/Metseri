@@ -42,20 +42,21 @@
 .panel-admin__campo { display: grid; align-content: start; gap: 7px; min-width: 0; }
 .panel-admin__campo > label { color: var(--panel-etiqueta); font-size: .82rem; }
 .panel-admin__marca-campo { margin-left: 4px; color: var(--panel-tenue); font-size: .72rem; letter-spacing: .04em; }
-.panel-admin__campo input, .panel-admin__campo select { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--panel-borde-control); border-radius: 9px; outline: none; background: #0a1118; color: var(--panel-titulo); font: inherit; font-size: 1rem; }
-.panel-admin__campo input:focus, .panel-admin__campo select:focus { border-color: var(--panel-acento); box-shadow: 0 0 0 3px rgb(199 230 157 / 14%); }
-.panel-admin__campo input[aria-invalid='true'] { border-color: var(--panel-error); }
+.panel-admin__campo :is(input, textarea, select) { width: 100%; min-height: 46px; padding: 0 14px; border: 1px solid var(--panel-borde-control); border-radius: 9px; outline: none; background: #0a1118; color: var(--panel-titulo); font: inherit; font-size: 1rem; }
+.panel-admin__campo textarea { padding-block: 8px; resize: vertical; }
+.panel-admin__campo :is(input, textarea, select):focus { border-color: var(--panel-acento); box-shadow: 0 0 0 3px rgb(199 230 157 / 14%); }
+.panel-admin__campo :is(input, textarea)[aria-invalid='true'] { border-color: var(--panel-error); }
 .panel-admin__ayuda { margin: 0; color: var(--panel-tenue); font-size: .76rem; }
 .panel-admin__error-campo { margin: 0; color: var(--panel-error); font-size: .8rem; }
 .panel-admin__error-campo:not(:empty)::before { content: 'Error: '; font-weight: 600; }
-.panel-admin__pendiente { margin: 0; color: var(--panel-suave); font-size: .82rem; }
 .panel-admin__botones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; }
-.panel-admin :is(a, input, select):focus-visible { outline: 2px solid var(--panel-texto); outline-offset: 3px; }
+.panel-admin :is(a, input, textarea, select):focus-visible { outline: 2px solid var(--panel-texto); outline-offset: 3px; }
 .panel-admin__opcion-cuerpo:has(input:focus-visible) { outline: 2px solid var(--panel-texto); outline-offset: 2px; }
 
 /* Filtros y listado */
 .panel-admin__filtros { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; align-items: end; gap: 12px; margin: 0 0 14px; padding: 16px; border: 1px solid var(--panel-borde); border-radius: 14px; background: rgb(10 17 24 / 55%); }
 .panel-admin__cantidad { margin: 0 0 12px; color: var(--panel-suave); font-size: .82rem; }
+.panel-admin__aviso:not(:empty) { margin-bottom: 14px; color: var(--panel-acento); }
 .panel-admin__ausente { color: var(--panel-tenue); font-style: italic; }
 .panel-admin__cuerpos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; font-style: normal; }
 .panel-admin__cuerpos li { padding: 2px 10px; border: 1px solid rgb(199 230 157 / 30%); border-radius: 999px; color: #d6e8bf; font-size: .76rem; }
@@ -87,6 +88,7 @@
 
 /* Formulario y selector de cuerpos */
 .panel-admin__formulario { display: grid; gap: 28px; padding: 26px; border: 1px solid var(--panel-borde); border-radius: 16px; background: var(--panel-superficie); }
+.panel-admin__contenido-formulario { display: grid; gap: 28px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .panel-admin__campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
 .panel-admin__campo--completo { grid-column: 1 / -1; }
 .panel-admin__selector { min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -103,11 +105,14 @@
 .panel-admin__nombre-cuerpo, .panel-admin__detalle-cuerpo { display: block; }
 .panel-admin__detalle-cuerpo { color: var(--panel-tenue); font-size: .74rem; }
 .panel-admin__resumen-seleccion { margin: 14px 0 0; color: var(--panel-acento); font-size: .84rem; }
+.panel-admin__ordenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; margin-top: 10px; }
+.panel-admin__publicacion .panel-admin__opcion-cuerpo + * { margin-top: 8px; }
 .panel-admin__pie-formulario { display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid rgb(166 180 192 / 12%); }
 
 /* Fotografía del libro */
 .panel-admin__fotografia { min-width: 0; margin: 0; padding: 0; border: 0; }
 .panel-admin__fotografia > legend { padding: 0 0 12px; color: var(--panel-texto); font-size: .95rem; }
+.panel-admin__fotografia > .panel-admin__ayuda { margin-bottom: 10px; }
 .panel-admin__foto-disposicion { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); align-items: start; gap: 20px; }
 .panel-admin__foto-zona { display: grid; justify-items: center; gap: 10px; padding: 30px 18px; border: 1px dashed rgb(166 180 192 / 32%); border-radius: 14px; color: var(--panel-suave); font-size: .86rem; text-align: center; }
 .panel-admin__foto-zona p { margin: 0; }
@@ -138,7 +143,8 @@
 .panel-admin__dialogo-texto strong { color: var(--panel-titulo); font-weight: 600; }
 .panel-admin__dialogo-subtitulo { margin: 20px 0 10px; color: var(--panel-etiqueta); font-size: .78rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; }
 .panel-admin__dialogo > .panel-admin__ausente { margin: 0; font-size: .86rem; }
-.panel-admin__dialogo .panel-admin__pendiente { margin: 20px 0; padding: 12px 14px; border: 1px dashed rgb(199 230 157 / 35%); border-radius: 10px; }
+.panel-admin__dialogo .panel-admin__botones { margin-top: 20px; }
+.panel-admin__dialogo .panel-admin__error-campo { margin-top: 14px; }
 
 @media (max-width: 900px) {
   .panel-admin__foto-disposicion { grid-template-columns: minmax(0, 1fr); }

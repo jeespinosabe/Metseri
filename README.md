@@ -166,9 +166,7 @@ Los registros locales de satélite usan `tipo: 'satelite'`, `planetaId` y `plane
 
 ### Descubrir libros
 
-Se conserva el encabezado y la ubicación existentes. En vista normal y VR se presenta la invitacion del PDF correspondiente al cuerpo elegido, recibida en `contenido_ficha.descubrir_libros`, aunque `libros` sea `[]`. Se accede desplazando el panel y se puede volver hacia arriba o cerrar con los controles actuales; no se añaden botones o pantallas.
-
-Los dos libros provisionales de la carga anterior se retiraron durante la corrección de contenido. La biblioteca todavía no ha entregado su catálogo: no se agregan títulos, portadas o enlaces de relleno. `LIBROS_POR_CUERPO`, en `src/datos/librosCuerposCelestes.js`, permanece vacío y conserva su contrato futuro de título y URL HTTP/HTTPS válida. La incorporación y comprobación de títulos reales corresponde a su avance posterior.
+La sección consulta el catálogo público de Supabase y muestra hasta tres libros activos, verificados y asociados al cuerpo seleccionado, por orden de recomendación. En vista normal incluye la invitación del PDF y los enlaces institucionales. La pestaña **Libros** de VR muestra el título, la autoría, la editorial y el año de esos mismos registros.
 
 ### Comprobar las fichas
 
@@ -253,19 +251,15 @@ La sesión la crea y valida Express mediante una cookie `HttpOnly`, `SameSite=St
 
 Para comprobar el flujo, inicia sesión con los valores configurados, prueba una contraseña incorrecta, abre `/admin` en una ventana privada y, ya autenticado, cierra sesión e intenta consultar `GET /api/admin` otra vez. Las respuestas esperadas son respectivamente acceso autorizado, error de credenciales, formulario sin sesión y `401` tras cerrar sesión.
 
-#### Panel bibliográfico (vista previa)
+#### Panel bibliográfico
 
-Tras iniciar sesión en `/admin` o `/admin/`, la pantalla inicial es el listado de **Registros bibliográficos**. Sin sesión se muestra primero «Verificando acceso…» y después el formulario de acceso; el panel no tiene una entrada alternativa. La cabecera ofrece **Volver a la exploración** (abre la escena en `/`) y **Cerrar sesión**; la navegación compacta ofrece **Registros bibliográficos** y **Agregar libro**.
+**Registros bibliográficos** consulta el catálogo de Supabase a través de la API administrativa. Configura `SUPABASE_SECRET_KEY` en el servidor y comprueba que está aplicada la migración indicada en la [guía de gestión bibliográfica](bd/gestionBibliografica.md).
 
-El panel es una vista previa de la interfaz. Sus registros de ejemplo se definen en `src/datos/registrosBibliograficosEjemplo.js`. Provisionalmente, sus portadas se enlazan por ISBN desde el servicio de portadas de Open Library (`covers.openlibrary.org`), sin copiarlas al proyecto; para retirarlas basta con dejar `fotografia: null` en cada registro. Solo los importa el módulo administrativo; no aparecen en las fichas, en VR ni en la API de consulta. Aparte de esas imágenes de portada, las únicas peticiones reales del panel son las de sesión (`GET`, `POST` y `DELETE /api/admin/sesion`).
+1. En `/admin`, elige **Agregar libro**. Para guardar un borrador, indica el título y escribe un nombre por línea en **Autoría**. La fotografía del formulario sirve para la vista previa.
+2. Marca los planetas o satélites relacionados y elige el orden en cada ficha. Los números más bajos aparecen primero.
+3. Para mostrar el libro al público, déjalo activo, indica la editorial, el año y el enlace institucional, y confirma que comprobaste el ejemplar en la biblioteca. Pulsa **Guardar libro**.
 
-- **Búsqueda y filtro:** la búsqueda por título o autoría ignora mayúsculas, tildes y espacios exteriores, y se combina con el filtro por cuerpo celeste. La cantidad de resultados se actualiza y **Limpiar filtros** recupera todos los registros. Una búsqueda sin coincidencias se distingue de un catálogo vacío.
-- **Agregar libro y Editar:** comparten el formulario con los campos Título, Autoría y URL de la ficha bibliográfica (obligatorios), y Editorial y Año de publicación (opcionales). Los errores aparecen al abandonar un campo modificado y desaparecen al corregirlo: título y autoría no admiten solo espacios, la URL debe ser absoluta con `http://` o `https://`, y el año, si se indica, debe ser un entero de 1 a 9999.
-- **Relaciones:** el formulario permite marcar cero, uno o varios de los doce cuerpos locales, agrupados en planetas y satélites; cada satélite indica su planeta principal. Sin selección se muestra «Sin asociar». Las relaciones usan los identificadores locales de `cuerposCelestes.js` y solo existen en el borrador.
-- **Borradores temporales:** los cambios de un formulario se descartan al cancelar, volver al listado, recargar la página o cerrar sesión; no se guardan en el navegador. **Guardar libro** y **Guardar cambios** están deshabilitados y pulsar Enter no envía el formulario. Volver al listado conserva la búsqueda y el filtro de esa visita.
-- **Eliminar:** abre un diálogo de confirmación con el título del libro y las relaciones que se retirarían. Se cierra con Cancelar, Cerrar o Escape, devolviendo el foco al botón Eliminar del registro. El botón **Eliminar libro** del diálogo está deshabilitado: la eliminación real queda pendiente y ningún registro desaparece del listado.
-
-Para revisar el panel, inicia sesión, combina una búsqueda con un cuerpo celeste, abre Agregar libro y Editar, provoca y corrige errores de validación, marca y desmarca cuerpos, cancela y abre la confirmación de eliminación. Los registros deben seguir igual y la pestaña Red de las herramientas del navegador solo debe mostrar peticiones de sesión y las imágenes de portada. La conexión con un catálogo administrativo real y la habilitación del guardado o la eliminación requieren un cambio posterior con su propia API.
+El listado permite buscar por título o autoría y filtrar por cuerpo celeste. **Editar** guarda cambios en el catálogo. Al cambiar metadatos de un libro verificado, se debe confirmar de nuevo la verificación. **Eliminar** pide confirmación y retira el libro de sus fichas. La API protege los libros que respaldan una ficha como fuente científica.
 
 `.env` está ignorado por Git. El ejemplo solo contiene marcadores; las variables no llevan prefijo `VITE_`. Los comandos cargan `.env` con Node y siguen funcionando si el archivo no existe: `/api/estado` está disponible y las rutas de contenido indican configuración pendiente. El proxy de Vite reutiliza `PORT` sin exportar credenciales al navegador. Reinicia Vite y la API después de cambiar ese puerto. No se añade CORS para otros orígenes.
 

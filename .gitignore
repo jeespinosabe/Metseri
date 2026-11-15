@@ -16,6 +16,8 @@ dev-dist/
 .vite-temp/
 .cache/
 .eslintcache
+libros disponibles hasta el momento/
+Logos Tec Tepic y Solon Arguello/
 
 # Cobertura de pruebas
 coverage/
