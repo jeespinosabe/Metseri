@@ -6,6 +6,30 @@
 
 .enlace-administracion { position: fixed; z-index: 31; bottom: 18px; left: 22px; padding: 9px 15px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 999px; background: rgb(8 11 18 / 65%); color: #a6b4c0; font-size: .75rem; letter-spacing: .08em; text-decoration: none; }
 .enlace-administracion:hover { border-color: #c7e69d; color: #c7e69d; }
+
+.descarga-sin-conexion {
+  position: absolute;
+  z-index: 29;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  max-width: min(260px, calc(100% - 32px));
+}
+
+.descarga-sin-conexion button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #71808f;
+  border-radius: 999px;
+  background: #111b24;
+  color: #eef2f4;
+  font: inherit;
+  font-size: .85rem;
+  cursor: pointer;
+}
+
+.descarga-sin-conexion button:disabled { opacity: .65; cursor: default; }
+.descarga-sin-conexion button:focus-visible { outline: 2px solid #c7e69d; outline-offset: 3px; }
+.descarga-sin-conexion__estado p { margin: 6px 0 0; color: #c5d1db; font-size: .8rem; text-shadow: 0 1px 3px #080b12; }
 .admin-cargando { display: grid; width: 100%; height: 100%; place-items: center; color: #c7e69d; }
 .admin-acceso, .admin-modulo { position: fixed; inset: 0; overflow: auto; background: radial-gradient(ellipse at 50% 44%, #17252b 0, #0b1119 42%, #080b12 78%); color: #e8ecf5; font-family: inherit; }
 .admin-acceso { display: grid; min-height: 100%; place-items: center; padding: 76px 22px; }
@@ -373,6 +397,7 @@
 .ficha-cuerpo__imagen-alternativa { width: 90px; height: 90px; margin: 15px auto; border-radius: 50%; background: #263640; }
 .ficha-cuerpo__descripcion { min-height: 126px; margin: 12px 0 28px; }
 .ficha-cuerpo__descripcion p { margin: 0; font-size: 1.02rem; line-height: 1.9; }
+.ficha-cuerpo p.ficha-cuerpo__copia { color: #a6b4c0; font-size: .8rem; }
 .espacio-contenido { display: grid; gap: 21px; width: 100%; padding-top: 7px; }
 .espacio-contenido > span { display: block; height: 9px; width: 100%; border-radius: 3px; background: rgb(159 182 198 / 10%); }
 .espacio-contenido > span:nth-child(even) { width: 94%; }

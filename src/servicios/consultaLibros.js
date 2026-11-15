@@ -1,4 +1,5 @@
 import recomendacionesCuradas from '../datos/recomendacionesCuradas.json' with { type: 'json' }
+import { consultarJsonPublico, iniciarConsultaPublica } from './consultaPublica.js'
 
 export function seleccionarLibrosPublicos(registros, cuerpoId, explicaciones = recomendacionesCuradas) {
   if (!Array.isArray(registros)) throw new Error('Respuesta bibliográfica inválida.')
@@ -26,31 +27,12 @@ export function seleccionarLibrosPublicos(registros, cuerpoId, explicaciones = r
   }))
 }
 
-export function iniciarConsultaLibros(cuerpoId, alCambiar, { solicitar = fetch, plazoMs = 12000 } = {}) {
-  const controlador = new AbortController()
-  let vigente = true
-  const terminar = (estado) => {
-    if (!vigente) return
-    vigente = false
-    clearTimeout(temporizador)
-    alCambiar(estado)
-  }
-  const temporizador = setTimeout(() => {
-    controlador.abort()
-    terminar({ fase: 'error', libros: [] })
-  }, plazoMs)
-  void Promise.resolve().then(async () => {
-    if (!vigente) return
-    alCambiar({ fase: 'cargando', libros: [] })
-    try {
-      const respuesta = await solicitar(`/api/cuerpos-celestes/${encodeURIComponent(cuerpoId)}/libros`, { signal: controlador.signal })
-      if (!respuesta.ok) throw new Error('Libros no disponibles.')
-      terminar({ fase: 'disponible', libros: seleccionarLibrosPublicos(await respuesta.json(), cuerpoId) })
-    } catch { terminar({ fase: 'error', libros: [] }) }
+export function consultarLibros(cuerpoId, opciones) {
+  return consultarJsonPublico(`/api/cuerpos-celestes/${encodeURIComponent(cuerpoId)}/libros`, (registros) => seleccionarLibrosPublicos(registros, cuerpoId), opciones)
+}
+
+export function iniciarConsultaLibros(cuerpoId, alCambiar, { leerCopia, ...opciones } = {}) {
+  return iniciarConsultaPublica((signal) => consultarLibros(cuerpoId, { ...opciones, signal }), alCambiar, {
+    campo: 'libros', estadoInicial: { libros: [] }, leerCopia,
   })
-  return () => {
-    vigente = false
-    clearTimeout(temporizador)
-    controlador.abort()
-  }
 }

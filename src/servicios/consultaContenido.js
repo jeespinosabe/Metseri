@@ -1,3 +1,5 @@
+import { consultarJsonPublico, iniciarConsultaPublica } from './consultaPublica.js'
+
 function textoDisponible(valor) {
   return typeof valor === 'string' && valor.trim() ? valor : ''
 }
@@ -26,38 +28,12 @@ export function adaptarContenido(cuerpo, ficha) {
   }
 }
 
-// Cada montaje de ficha tiene una sola consulta; cancelarla invalida tambien
-// transportes que respondan despues de ignorar la señal de aborto.
-export function iniciarConsultaContenido(cuerpo, alCambiar, { solicitar = fetch, plazoMs = 12000 } = {}) {
-  const controlador = new AbortController()
-  let vigente = true
-  const temporizador = setTimeout(() => {
-    if (!vigente) return
-    vigente = false
-    controlador.abort()
-    alCambiar({ fase: 'error' })
-  }, plazoMs)
+export function consultarContenido(cuerpo, opciones) {
+  return consultarJsonPublico(`/api/cuerpos-celestes/${encodeURIComponent(cuerpo.id)}`, (ficha) => adaptarContenido(cuerpo, ficha), opciones)
+}
 
-  void Promise.resolve().then(async () => {
-    if (!vigente) return
-    alCambiar({ fase: 'cargando' })
-    try {
-      const respuesta = await solicitar(`/api/cuerpos-celestes/${encodeURIComponent(cuerpo.id)}`, {
-        signal: controlador.signal,
-      })
-      if (!respuesta.ok) throw new Error('Contenido no disponible.')
-      const ficha = adaptarContenido(cuerpo, await respuesta.json())
-      if (vigente) alCambiar({ fase: 'disponible', ficha })
-    } catch {
-      if (vigente) alCambiar({ fase: 'error' })
-    } finally {
-      clearTimeout(temporizador)
-    }
+export function iniciarConsultaContenido(cuerpo, alCambiar, { leerCopia, ...opciones } = {}) {
+  return iniciarConsultaPublica((signal) => consultarContenido(cuerpo, { ...opciones, signal }), alCambiar, {
+    campo: 'ficha', leerCopia,
   })
-
-  return () => {
-    vigente = false
-    clearTimeout(temporizador)
-    controlador.abort()
-  }
 }

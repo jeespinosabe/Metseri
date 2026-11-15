@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { obtenerDatosPrincipales } from '../datos/cuerposCelestes.js'
 import { SECCIONES_FICHA } from '../escena/contenidoFicha.js'
+import { etiquetaCopiaDescargada } from '../servicios/fechaDescarga.js'
 
 function EspacioContenido({ lineas = 3, nombre }) {
   return <div className="espacio-contenido" role="img" aria-label={`${nombre}: espacio reservado`}>
@@ -46,6 +47,7 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
         {subtitulo ? <p className="ficha-cuerpo__subtitulo">{subtitulo}</p> : <EspacioContenido lineas={1} nombre="Subtítulo" />}
       </header>
       <div className="ficha-cuerpo__descripcion">
+        {contenido?.fechaDescarga != null && <p className="ficha-cuerpo__copia">{etiquetaCopiaDescargada(contenido.fechaDescarga)}</p>}
         {mensaje ? <p role="status">{mensaje}</p> : descripcion ? <p>{descripcion}</p> : <EspacioContenido lineas={4} nombre="Descripción" />}
       </div>
       <section className="ficha-cuerpo__datos-seccion" aria-label="Datos principales">
@@ -67,6 +69,7 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
       <section className="ficha-cuerpo__libros" aria-labelledby="libros-ficha">
         <h2 id="libros-ficha">Descubrir libros</h2>
         {ficha?.invitacion && (modo !== 'vr' || !libros.length) && <p>{ficha.invitacion}</p>}
+        {bibliografia?.fechaDescarga != null && <p className="ficha-cuerpo__copia">{etiquetaCopiaDescargada(bibliografia.fechaDescarga)}</p>}
         {bibliografia?.fase === 'cargando' && <p role="status">Cargando recomendaciones...</p>}
         {bibliografia?.fase === 'error' && <p role="status">No se pudieron cargar los libros. Cierra la ficha y vuelve a abrirla para intentarlo de nuevo.</p>}
         {libros.length > 0 && <ol className="recomendaciones-libros">{libros.map((libro) => <li key={libro.id}>
@@ -76,7 +79,9 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
           {modo !== 'vr' && libro.explicacion && <p>{libro.explicacion}</p>}
           {modo !== 'vr' && <a href={libro.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver ficha de ${libro.titulo} en la biblioteca (abre otra pestaña)`} onClick={(evento) => { evento.preventDefault(); alAbrirLibro(libro) }}>Ver ficha en la biblioteca <span aria-hidden="true">↗</span></a>}
         </li>)}</ol>}
-        {bibliografia?.fase === 'disponible' && libros.length < 3 && <p className="recomendaciones-libros__pendientes">Estamos preparando más recomendaciones.</p>}
+        {bibliografia?.fase === 'disponible' && libros.length < 3 && <p className="recomendaciones-libros__pendientes">
+          {!libros.length && bibliografia.fechaDescarga != null ? 'La copia descargada no contiene recomendaciones.' : 'Estamos preparando más recomendaciones.'}
+        </p>}
         {!bibliografia && !ficha?.invitacion && <EspacioContenido lineas={2} nombre="Libros" />}
       </section>
       <footer className="ficha-cuerpo__fuentes"><a href={cuerpo.imagenOriginal} target="_blank" rel="noopener noreferrer" title={cuerpo.credito}>Créditos de imagen ↗</a></footer>

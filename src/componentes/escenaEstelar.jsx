@@ -15,6 +15,8 @@ import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
 import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
 import { iniciarConsultaContenido } from '../servicios/consultaContenido.js'
 import { iniciarConsultaLibros } from '../servicios/consultaLibros.js'
+import { leerCuerpoDescargado } from '../servicios/copiaEducativa.js'
+import { DescargaSinConexion } from './descargaSinConexion.jsx'
 
 const MENSAJE_SIN_RENDERIZADO =
   'Tu navegador no pudo iniciar los gráficos necesarios para mostrar el cielo. Comprueba que la aceleración gráfica esté activada e inténtalo de nuevo.'
@@ -49,6 +51,8 @@ function FichaConContenido({ cuerpo, modo, alCambiarContenido, ...propiedades })
   useEffect(() => {
     let actual = { fase: 'cargando' }
     let bibliografia = { fase: 'cargando', libros: [] }
+    let lecturaLocal
+    const leerCopia = () => (lecturaLocal ??= leerCuerpoDescargado(cuerpo.id))
     const publicar = () => {
       const combinado = { ...actual, bibliografia }
       setContenido(combinado)
@@ -57,11 +61,11 @@ function FichaConContenido({ cuerpo, modo, alCambiarContenido, ...propiedades })
     const cancelarContenido = iniciarConsultaContenido(cuerpo, (nuevoContenido) => {
       actual = nuevoContenido
       publicar()
-    })
+    }, { leerCopia })
     const cancelarLibros = iniciarConsultaLibros(cuerpo.id, (nuevoEstado) => {
       bibliografia = nuevoEstado
       publicar()
-    })
+    }, { leerCopia })
     return () => { cancelarContenido(); cancelarLibros() }
   }, [cuerpo, alCambiarContenido])
   return <FichaCuerpoCeleste {...propiedades} cuerpo={cuerpo} modo={modo} contenido={contenido} />
@@ -239,6 +243,7 @@ export function EscenaEstelar() {
           : 'Cielo con planetas y lunas. Pasa el mouse sobre un cuerpo celeste para iluminarlo. Haz clic o toca para seleccionarlo y leer su ficha; pulsa de nuevo o toca el fondo para cerrar y deseleccionar. Arrastra o usa las flechas para mirar alrededor.'}
         tabIndex={mensajeError ? -1 : 0}
       />
+      <DescargaSinConexion visible={modo === 'normal'} alEntrar={() => campoRef.current?.limpiarApuntado()} />
       {mensajeError ? (
         <div className="escena-estelar__error" role="alert">
           <p>{mensajeError}</p>

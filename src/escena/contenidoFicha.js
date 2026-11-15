@@ -1,4 +1,5 @@
 import { obtenerDatosPrincipales } from '../datos/cuerposCelestes.js'
+import { etiquetaCopiaDescargada } from '../servicios/fechaDescarga.js'
 
 export const SECCIONES_FICHA = [
   { id: 'resumen', nombre: 'Ficha', titulo: 'Presentación', pagina: 0 },
@@ -41,6 +42,10 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
   function nuevaPagina(seccion, titulo = false) {
     const pagina = { id: seccion.id, seccion: seccion.titulo, elementos: [] }
     paginas.push(pagina)
+    const fechaDescarga = seccion.id === 'libros' ? contenido.bibliografia?.fechaDescarga : contenido.fechaDescarga
+    if (fechaDescarga != null) {
+      pagina.elementos.push({ tipo: 'texto', texto: etiquetaCopiaDescargada(fechaDescarga), x: margen, y: 173, tamano: 16, tenue: true })
+    }
     if (titulo) pagina.elementos.push({ tipo: 'texto', texto: seccion.titulo, x: margen, y: inicio, tamano: Math.min(32, Math.max(22, ancho / 24)), acento: true })
     return pagina
   }
@@ -68,7 +73,10 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
     const mensajes = !libros.length && invitacion ? [invitacion] : []
     if (bibliografia.fase === 'cargando') mensajes.push('Cargando recomendaciones...')
     else if (bibliografia.fase === 'error') mensajes.push('No se pudieron cargar los libros. Cierra la ficha y vuelve a abrirla para intentarlo de nuevo.')
-    else if (libros.length < 3) mensajes.push('Estamos preparando más recomendaciones.')
+    else if (libros.length < 3) {
+      mensajes.push(!libros.length && bibliografia.fechaDescarga != null
+        ? 'La copia descargada no contiene recomendaciones.' : 'Estamos preparando más recomendaciones.')
+    }
     if (mensajes.length) parrafos(seccion, mensajes, true)
     libros.forEach((libro, indice) => {
       let pagina = nuevaPagina(seccion)

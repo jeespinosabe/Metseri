@@ -91,3 +91,23 @@ it('VR permite avanzar hasta un cierre final habilitado, con retroceso inicial d
   assert.equal(final.includes('Siguiente →'), false)
   assert.equal(representar(ficha).includes('Cerrar →'), false)
 })
+
+it('marca solo el contenido que procede de la descarga, también en la lectura accesible VR', () => {
+  const ficha = FICHAS_PRUEBA[0]
+  const fechaDescarga = Date.UTC(2026, 10, 15, 14)
+  for (const modo of ['normal', 'vr']) {
+    const soloFicha = representar(ficha, { modo, contenido: {
+      fase: 'disponible', ficha: adaptarContenido(obtenerCuerpoCeleste(ficha.slug), ficha), fechaDescarga,
+      bibliografia: { fase: 'error', libros: [] },
+    } })
+    assert.equal((soloFicha.match(/Copia del /gu) ?? []).length, 1)
+    assert.match(soloFicha, /No se pudieron cargar los libros/u)
+
+    const soloLibros = representar(ficha, { modo, contenido: {
+      fase: 'error', bibliografia: { fase: 'disponible', libros: [], fechaDescarga },
+    } })
+    assert.equal((soloLibros.match(/Copia del /gu) ?? []).length, 1)
+    assert.match(soloLibros, /La copia descargada no contiene recomendaciones/u)
+    assert.match(soloLibros, /No se pudo cargar la información/u)
+  }
+})

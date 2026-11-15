@@ -50,6 +50,28 @@ it('Datos muestra diámetro, distancia y ambas duraciones en una sola página VR
   }
 })
 
+it('en VR la fecha identifica la sección descargada sin cubrir la navegación', () => {
+  const cuerpo = CUERPOS_CELESTES[0]
+  const ficha = adaptarContenido(cuerpo, FICHAS_PRUEBA.find(({ slug }) => slug === cuerpo.id))
+  const fechaDescarga = Date.UTC(2026, 10, 15, 14)
+  const opciones = { ancho: 320, alto: 440 }
+  for (const estado of [
+    { fase: 'disponible', ficha, fechaDescarga, bibliografia: { fase: 'error', libros: [] } },
+    { fase: 'error', bibliografia: { fase: 'disponible', libros: [], fechaDescarga } },
+  ]) {
+    const paginas = crearPaginasFicha(cuerpo, contexto, { ...opciones, contenido: estado })
+    for (const pagina of paginas) {
+      const etiqueta = pagina.elementos.find((elemento) => elemento.texto?.startsWith('Copia del '))
+      assert.equal(Boolean(etiqueta), pagina.id === 'libros' ? !estado.fechaDescarga : Boolean(estado.fechaDescarga))
+      if (etiqueta) {
+        assert.ok(etiqueta.y > 166 && etiqueta.y + etiqueta.tamano * 1.2 < 194)
+        contexto.font = etiqueta.tamano + 'px system-ui'
+        assert.ok(contexto.measureText(etiqueta.texto).width <= opciones.ancho - 64)
+      }
+    }
+  }
+})
+
 for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
   it(`secciones ${ancho} × ${alto}: reservas vacías y contenido dentro del área de lectura`, () => {
     for (const cuerpo of CUERPOS_CELESTES) {

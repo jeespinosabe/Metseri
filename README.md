@@ -120,7 +120,7 @@ Los sensores de orientación solo se entregan en un **contexto seguro**: `https:
 
 ### Probar los sensores desde un móvil
 
-Sin la API Express ni ninguna configuración de instalación (PWA); solo el servidor de Vite:
+Para comprobar solo los sensores, basta el servidor de desarrollo de Vite:
 
 1. Arranca solo la interfaz: `npm run dev:interfaz`.
 2. Abre la aplicación en el móvil con una de estas opciones:
@@ -134,11 +134,19 @@ Sin la API Express ni ninguna configuración de instalación (PWA); solo el serv
 
 Los pasos 2 y 3 requieren un móvil físico y, en su caso, las herramientas indicadas (`adb`, `cloudflared` o `ngrok`), que no forman parte del proyecto. Los eventos de sensor simulados en un navegador de escritorio no acreditan la compatibilidad con un visor real.
 
+## Instalar Metseri y usarla sin conexión
+
+1. Inicia la API con `npm run start:api`. En otra terminal, ejecuta `npm run build` y `npm run preview -- --host localhost --port 4173 --strictPort`. Abre `http://localhost:4173/`. La vista previa usa el proxy de Vite para la API del mismo origen. La descarga completa requiere que la API pueda servir las doce fichas públicas.
+2. En Chrome compatible, instala **Metseri** desde el icono de instalación o el menú del navegador. En Safari de iPhone, abre **Compartir**, elige **Agregar a inicio** y activa **Abrir como app web** si aparece esa opción. Para probar desde el teléfono, usa un origen HTTPS que sirva el build y la API en el mismo dominio. Si usas un túnel de prueba, apunta al puerto `4173` y configura el encabezado `Host` de destino como `localhost:4173`, como en el ejemplo de sensores.
+3. Abre Metseri desde su icono con internet, especialmente en iPhone, donde la app instalada tiene su propio almacenamiento. En la vista 360, pulsa **Descargar para usar sin conexión**. Espera a que indique **Disponible sin conexión** y muestre la fecha de la copia.
+4. Cierra la app, activa el modo avión y vuelve a abrirla desde el icono. Comprueba que puedes explorar el cielo, abrir fichas de planetas y lunas y leer sus recomendaciones en pantalla y en VR. Las fichas indican cuándo muestran la copia descargada. La exploración en una pestaña también puede preparar su propia copia desde la vista 360.
+5. Con internet, pulsa **Actualizar descarga** para guardar una copia nueva. Si la actualización falla, queda disponible la descarga completa anterior. Administración y los enlaces a sitios externos requieren conexión.
+
 ## Alcance
 
 - Las estrellas, los ocho planetas y las cuatro lunas son una **representación visual generada**, sin posiciones ni escalas astronómicas reales. Hay nombres y fichas educativas; no hay órbitas, rotación automática, Sol, otros satélites ni constelaciones.
 - La escena, su selección y sus imágenes funcionan en el cliente. El contenido educativo de las fichas en vista normal y VR se consulta mediante la API Express; no se consulta un catálogo externo ni se cargan imágenes remotas.
-- Esta versión **no incluye instalación como aplicación (PWA) ni uso sin conexión**; quedan para un cambio posterior.
+- El build de producción admite instalación y uso offline tras preparar una descarga completa.
 
 ## Fichas educativas
 
@@ -146,7 +154,7 @@ La ficha sigue la referencia visual: clasificación discreta, nombre grande, ima
 
 En vista normal, seleccionar un cuerpo consulta `GET /api/cuerpos-celestes/:slug` y rellena su descripción, clasificación, cuatro datos y curiosidades dentro del diseño existente. Se conservan los textos, etiquetas, cifras, unidades y notas del PDF del equipo almacenados en Supabase. `contenido_ficha.datos_principales` es la fuente de presentación: no se sustituyen los días solares por rotación ni se recalculan los años aproximados. El subtítulo ausente conserva su reserva.
 
-Mientras se consulta aparece «Cargando información…» en el espacio de descripción. Si la API falla, se informa la indisponibilidad y se mantienen la identidad, imagen y cierre; cerrar y volver a seleccionar permite intentarlo de nuevo. Cambiar de cuerpo descarta la respuesta anterior. Los datos locales de `src/datos/cuerposCelestes.js` conservan su contenido editorial vacío y no simulan una respuesta remota.
+Mientras se consulta aparece «Cargando información…» en el espacio de descripción. Si no se recibe respuesta por un fallo de transporte y existe una descarga completa, la ficha muestra el contenido descargado con su fecha. Si la API responde con un error o no hay copia disponible, se informa la indisponibilidad y se mantienen la identidad, imagen y cierre. Cerrar y volver a seleccionar permite intentarlo de nuevo. Cambiar de cuerpo descarta la respuesta anterior. Los datos locales de `src/datos/cuerposCelestes.js` conservan su contenido editorial vacío y no simulan una respuesta remota.
 
 En escritorio se muestra un panel lateral; en móvil conserva desplazamiento propio. El cierre devuelve el foco al cielo. Desplazar o usar flechas dentro del panel no gira la escena. Apuntar no abre ni sustituye la ficha, y la selección conserva su iluminación al apartar el mouse o la mirada.
 
@@ -207,7 +215,7 @@ Para configurar el proyecto en Vercel:
 3. Conserva esos nombres sin prefijo `VITE_`: la conexión se utiliza en el servidor. El archivo `.env` local está ignorado por Git y no configura automáticamente las variables de Vercel. `PORT` corresponde al arranque local; no es la dirección de la API publicada.
 4. Publica una versión que incluya `vercel.json`. Si agregas o cambias variables, vuelve a desplegar desde **Deployments > … > Redeploy** para que se apliquen a una nueva versión. Revisa que estés probando la URL de ese despliegue. Consulta la [configuración de variables de Vercel](https://vercel.com/docs/environment-variables/managing-environment-variables).
 
-`npm run dev` inicia los dos servidores en tu computadora. El proxy `server.proxy` de Vite solo actúa en desarrollo; no sustituye las reglas de Vercel ni es el comando de compilación de producción. `server.js` conserva el arranque local; Vercel ejecuta la aplicación exportada por `api/index.js` como función.
+`npm run dev` inicia los dos servidores en tu computadora. Vite utiliza `server.proxy` en desarrollo y lo hereda en `npm run preview` para las pruebas locales del build. En producción, Vercel resuelve las rutas mediante `vercel.json` y ejecuta la aplicación exportada por `api/index.js` como función. `server.js` arranca la API local.
 
 #### Comprobar el despliegue
 
