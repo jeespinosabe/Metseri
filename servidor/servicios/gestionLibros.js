@@ -1,5 +1,6 @@
 import { esSlugValido } from './consultaSupabase.js'
 import { decodificarPortada } from './portadasLibros.js'
+import { obtenerConfiguracionPrivada, solicitarRpcPrivada } from './supabasePrivada.js'
 
 const CAMPOS = ['titulo', 'editorial', 'anio', 'url_ficha', 'activo', 'verificado', 'autores', 'cuerpos', 'portada']
 export const esIdLibroValido = (valor) => typeof valor === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valor)
@@ -73,21 +74,12 @@ export function validarLibro(datos, parcial = false) {
 
 export function crearGestionLibros({ entorno = process.env, solicitar = fetch } = {}) {
   async function ejecutar(funcion, parametros) {
-    let url
-    const clave = entorno.SUPABASE_SECRET_KEY
-    try {
-      url = new URL(entorno.SUPABASE_URL)
-      if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash
-        || url.pathname !== '/' || !/^sb_secret_[A-Za-z0-9_-]+$/.test(clave ?? '')) throw new Error()
-    } catch {
+    const configuracion = obtenerConfiguracionPrivada(entorno)
+    if (!configuracion) {
       throw new ErrorLibros(503, 'BIBLIOGRAFIA_NO_CONFIGURADA', 'La administración de libros aún no está configurada.')
     }
-    url.pathname = `/rest/v1/rpc/${funcion}`
     try {
-      const respuesta = await solicitar(url, {
-        method: 'POST', headers: { apikey: clave, 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(parametros), signal: AbortSignal.timeout(5000), redirect: 'error',
-      })
+      const respuesta = await solicitarRpcPrivada(configuracion, funcion, parametros, solicitar)
       const contenido = await respuesta.json()
       if (!respuesta.ok) {
         const errores = {

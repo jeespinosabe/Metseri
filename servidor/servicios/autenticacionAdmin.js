@@ -1,6 +1,7 @@
-import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { obtenerConfiguracionPrivada, solicitarRpcPrivada } from './supabasePrivada.js'
 
-const DURACION_SESION_MS = 8 * 60 * 60 * 1000
+const DURACION_SESION_SEGUNDOS = 8 * 60 * 60
 const COOKIE_SESION = 'metseri_admin'
 
 function compararSeguro(primero, segundo) {
@@ -9,9 +10,7 @@ function compararSeguro(primero, segundo) {
   return timingSafeEqual(hashPrimero, hashSegundo)
 }
 
-export function crearAutenticacionAdmin({ entorno = process.env, ahora = Date.now } = {}) {
-  const sesiones = new Map()
-
+export function crearAutenticacionAdmin({ entorno = process.env, solicitar = fetch } = {}) {
   function credencialesConfiguradas() {
     return typeof entorno.ADMIN_USUARIO === 'string'
       && entorno.ADMIN_USUARIO.length > 0
@@ -19,32 +18,49 @@ export function crearAutenticacionAdmin({ entorno = process.env, ahora = Date.no
       && entorno.ADMIN_CONTRASENA.length >= 12
   }
 
-  function leerToken(peticion) {
+  function leerHuella(peticion) {
     const cookies = peticion.headers.cookie ?? ''
     const cookie = cookies.split(';').map((parte) => parte.trim())
       .find((parte) => parte.startsWith(`${COOKIE_SESION}=`))
-    return cookie?.slice(COOKIE_SESION.length + 1) ?? ''
+    const token = cookie?.slice(COOKIE_SESION.length + 1) ?? ''
+    return /^[A-Za-z0-9_-]{43}$/.test(token) && credencialesConfiguradas() ? calcularHuella(token) : null
   }
 
-  function tieneSesion(peticion) {
-    const token = leerToken(peticion)
-    const vence = sesiones.get(token)
-    if (!token || !vence) return false
-    if (vence <= ahora()) {
-      sesiones.delete(token)
-      return false
+  function calcularHuella(token) {
+    return createHmac('sha256', entorno.ADMIN_CONTRASENA).update(JSON.stringify([entorno.ADMIN_USUARIO, token])).digest('hex')
+  }
+
+  async function gestionarSesion(funcion, huella) {
+    const configuracion = obtenerConfiguracionPrivada(entorno)
+    if (!configuracion) throw new Error()
+    const respuesta = await solicitarRpcPrivada(configuracion, funcion, { p_huella: huella }, solicitar)
+    if (!respuesta.ok) throw new Error()
+    const resultado = await respuesta.json()
+    if (typeof resultado !== 'boolean') throw new Error()
+    return resultado
+  }
+
+  async function tieneSesion(peticion) {
+    const huella = leerHuella(peticion)
+    return huella ? gestionarSesion('consultarSesionAdministrativa', huella) : false
+  }
+
+  function sesionNoDisponible(respuesta) {
+    return respuesta.status(503).json({ error: { codigo: 'SESION_NO_DISPONIBLE', mensaje: 'No se pudo gestionar la sesión administrativa. Inténtalo de nuevo.' } })
+  }
+
+  async function exigirAdministrador(peticion, respuesta, siguiente) {
+    try {
+      if (await tieneSesion(peticion)) return siguiente()
+    } catch {
+      return sesionNoDisponible(respuesta)
     }
-    return true
-  }
-
-  function exigirAdministrador(peticion, respuesta, siguiente) {
-    if (tieneSesion(peticion)) return siguiente()
     return respuesta.status(401).json({ error: { codigo: 'SESION_REQUERIDA', mensaje: 'Inicia sesión para acceder al módulo administrativo.' } })
   }
 
   function establecerCookie(respuesta, token) {
     const segura = entorno.NODE_ENV === 'production' ? '; Secure' : ''
-    respuesta.set('Set-Cookie', `${COOKIE_SESION}=${token}; HttpOnly; Path=/api/admin; SameSite=Strict; Max-Age=${DURACION_SESION_MS / 1000}${segura}`)
+    respuesta.set('Set-Cookie', `${COOKIE_SESION}=${token}; HttpOnly; Path=/api/admin; SameSite=Strict; Max-Age=${DURACION_SESION_SEGUNDOS}${segura}`)
   }
 
   function borrarCookie(respuesta) {
@@ -54,7 +70,7 @@ export function crearAutenticacionAdmin({ entorno = process.env, ahora = Date.no
   return {
     exigirAdministrador,
     estaConfigurada: credencialesConfiguradas,
-    iniciar(peticion, respuesta) {
+    async iniciar(peticion, respuesta) {
       if (!credencialesConfiguradas()) {
         return respuesta.status(503).json({ error: { codigo: 'AUTENTICACION_NO_CONFIGURADA', mensaje: 'El acceso administrativo aún no está configurado.' } })
       }
@@ -66,17 +82,30 @@ export function crearAutenticacionAdmin({ entorno = process.env, ahora = Date.no
         return respuesta.status(401).json({ error: { codigo: 'CREDENCIALES_INVALIDAS', mensaje: 'El usuario o la contraseña son incorrectos.' } })
       }
       const token = randomBytes(32).toString('base64url')
-      sesiones.set(token, ahora() + DURACION_SESION_MS)
+      try {
+        if (!await gestionarSesion('crearSesionAdministrativa', calcularHuella(token))) return sesionNoDisponible(respuesta)
+      } catch {
+        return sesionNoDisponible(respuesta)
+      }
       establecerCookie(respuesta, token)
       return respuesta.json({ autenticado: true })
     },
-    consultar(peticion, respuesta) {
-      respuesta.json({ autenticado: tieneSesion(peticion) })
+    async consultar(peticion, respuesta) {
+      try {
+        return respuesta.json({ autenticado: await tieneSesion(peticion) })
+      } catch {
+        return sesionNoDisponible(respuesta)
+      }
     },
-    cerrar(peticion, respuesta) {
-      sesiones.delete(leerToken(peticion))
+    async cerrar(peticion, respuesta) {
+      const huella = leerHuella(peticion)
+      try {
+        if (huella && !await gestionarSesion('revocarSesionAdministrativa', huella)) return sesionNoDisponible(respuesta)
+      } catch {
+        return sesionNoDisponible(respuesta)
+      }
       borrarCookie(respuesta)
-      respuesta.json({ autenticado: false })
+      return respuesta.json({ autenticado: false })
     },
   }
 }

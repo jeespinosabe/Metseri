@@ -17,6 +17,7 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
   const [intentoConsulta, setIntentoConsulta] = useState(0)
   const [operando, setOperando] = useState(false)
   const [aviso, setAviso] = useState('')
+  const [errorSesion, setErrorSesion] = useState('')
   const [pantalla, setPantalla] = useState('listado')
   const [registroActivoId, setRegistroActivoId] = useState(null)
   const [registroEliminarId, setRegistroEliminarId] = useState(null)
@@ -101,6 +102,17 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
     }
   }
 
+  function cerrarSesion() {
+    return realizarOperacion(async () => {
+      setErrorSesion('')
+      try {
+        await alCerrarSesion()
+      } catch {
+        setErrorSesion('No se pudo cerrar la sesión. Inténtalo de nuevo.')
+      }
+    })
+  }
+
   function guardarLibro(datos, id) {
     return realizarOperacion(async () => {
       const libro = await guardarLibroAdministrativo(datos, id)
@@ -132,11 +144,12 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
         <a className="admin-acceso__marca" href="/" aria-label="Metseri, ir a la exploración">MET<span>S</span>ERI</a>
         <div className="panel-admin__sesion">
           <a className="panel-admin__enlace" href="/"><span aria-hidden="true">←</span> Volver a la exploración</a>
-          <button type="button" disabled={operando} onClick={alCerrarSesion}>Cerrar sesión</button>
+          <button type="button" disabled={operando} onClick={cerrarSesion}>Cerrar sesión</button>
         </div>
       </header>
 
       <div className="panel-admin__cuerpo">
+        {errorSesion && <p className="panel-admin__error-campo" role="alert">{errorSesion}</p>}
         <nav className="panel-admin__navegacion" aria-label="Panel administrativo">
           <button type="button" className="panel-admin__pestana" disabled={operando} aria-current={pantallaVisible !== 'alta' ? 'page' : undefined} onClick={() => { focoAlVolver.current = null; volverAlListado(); volverAConsultar() }}>
             Registros bibliográficos

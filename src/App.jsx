@@ -33,7 +33,8 @@ function App() {
   if (ruta === '/admin' || ruta === '/admin/') {
     if (sesion === 'comprobando') return <main className="aplicacion"><div className="admin-cargando" role="status">Verificando acceso…</div></main>
     if (sesion === 'autenticada') return <ModuloAdministrativo alCerrarSesion={async () => {
-      await fetch('/api/admin/sesion', { method: 'DELETE', credentials: 'same-origin' })
+      const respuesta = await fetch('/api/admin/sesion', { method: 'DELETE', credentials: 'same-origin', signal: AbortSignal.timeout(12000) })
+      if (!respuesta.ok) throw new Error('No se pudo cerrar la sesión.')
       setSesion('sin-sesion')
     }} />
     return <AccesoAdministrativo alIniciarSesion={() => setSesion('autenticada')} />

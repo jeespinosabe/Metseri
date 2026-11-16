@@ -6,10 +6,11 @@ Implementación para el módulo 01 existente, con el login propio de Metseri. No
 
 1. Revisar y ejecutar completo `bd/agregarGestionBibliografica.sql` en el SQL Editor de Supabase con el rol postgres. Es transaccional y repetible; añade cuatro funciones administrativas, concede acceso a service_role y excluye su ejecución pública. No cambia las políticas de lectura ni las fichas astronómicas.
 2. Ejecutar completo [`publicarLibrosActivos.sql`](publicarLibrosActivos.sql) en el SQL Editor. La migración actualiza la vista pública que usan las fichas y su listado de libros. Un libro activo asociado a un cuerpo publicado queda disponible en ambos recursos.
-3. Ejecutar [`guardarPortadasLibros.sql`](guardarPortadasLibros.sql) en el SQL Editor antes de publicar la versión con portadas. La migración añade las imágenes y el encuadre sin modificar los registros que ya existen. Si ya aplicaste los pasos 1 y 2, ejecuta únicamente esta migración.
-4. En el archivo local `.env`, conservar la URL y la clave pública existentes y completar `SUPABASE_SECRET_KEY` con una clave **Secret** del mismo proyecto (formato `sb_secret_…`). Se obtiene en Project Settings → API Keys. No usar la clave Publishable para escribir. La implementación usa la clave Secret en el encabezado apikey, según la documentación oficial de Supabase.
-5. Completar `ADMIN_USUARIO` y `ADMIN_CONTRASENA` (mínimo 12 caracteres). No subir `.env` ni poner la clave secreta en el frontend, Postman o capturas. Reiniciar el servidor después de cambiar el entorno.
-6. Iniciar `npm run dev` o `npm run start:api`. El puerto por defecto es 3000. Ajustar la variable urlBase de Postman al puerto efectivo.
+3. Ejecutar [`guardarPortadasLibros.sql`](guardarPortadasLibros.sql) en el SQL Editor antes de publicar la versión con portadas. La migración añade las imágenes y el encuadre sin modificar los registros que ya existen.
+4. Ejecutar [`guardarSesionesAdministrativas.sql`](guardarSesionesAdministrativas.sql) antes de desplegar la API con sesiones compartidas. Si el catálogo y las portadas ya funcionan, aplicar solo esta nueva migración. Las sesiones anteriores requieren iniciar sesión de nuevo.
+5. En el archivo local `.env`, conservar la URL y la clave pública existentes y completar `SUPABASE_SECRET_KEY` con una clave **Secret** del mismo proyecto (formato `sb_secret_…`). Se obtiene en Project Settings → API Keys. No usar la clave Publishable para escribir. La implementación usa la clave Secret en el encabezado apikey, según la documentación oficial de Supabase.
+6. Completar `ADMIN_USUARIO` y `ADMIN_CONTRASENA` (mínimo 12 caracteres). No subir `.env` ni poner la clave secreta en el frontend, Postman o capturas. Reiniciar el servidor después de cambiar el entorno.
+7. Iniciar `npm run dev` o `npm run start:api`. El puerto por defecto es 3000. Ajustar la variable urlBase de Postman al puerto efectivo.
 
 Documentación del proveedor: [API keys](https://supabase.com/docs/guides/getting-started/api-keys), [funciones y permisos](https://supabase.com/docs/guides/database/functions).
 
@@ -58,4 +59,4 @@ La vista normal muestra la invitación y los datos bibliográficos. Si hay una e
 
 Deshabilitar el montaje de las rutas bibliográficas y retirar SUPABASE_SECRET_KEY del servidor. Como postgres, revocar ejecución a service_role sobre las cuatro funciones añadidas y retirarlas solo después de comprobar sus dependencias (listar/guardar dependen de obtener). No usar DROP CASCADE, no retirar las funciones/vistas públicas y no borrar tablas o libros para revertir las rutas. Revisar individualmente cualquier libro creado durante las pruebas.
 
-**Límite de despliegue:** el login existente conserva sesiones en memoria. Reiniciar el servidor o cambiar de instancia puede perderlas. Antes de habilitar administración en un despliegue con varias instancias debe abordarse esa persistencia; esta implementación no modifica el sistema de login.
+Las instancias de la API consultan las sesiones administrativas en Supabase. La tabla guarda una huella de cada sesión y su fecha de vencimiento. Al cerrar sesión, la API elimina esa huella para revocar el acceso en todas las instancias.

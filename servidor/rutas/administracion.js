@@ -3,6 +3,10 @@ import { crearRutasLibros } from './libros.js'
 
 export function crearRutasAdministracion(autenticacion, gestionLibros) {
   const rutas = Router()
+  rutas.use((_peticion, respuesta, siguiente) => {
+    respuesta.set('Cache-Control', 'private, no-store')
+    siguiente()
+  })
   rutas.post('/sesion', (peticion, respuesta) => autenticacion.iniciar(peticion, respuesta))
   rutas.get('/sesion', (peticion, respuesta) => autenticacion.consultar(peticion, respuesta))
   rutas.delete('/sesion', (peticion, respuesta) => autenticacion.cerrar(peticion, respuesta))
