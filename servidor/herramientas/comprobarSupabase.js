@@ -1,7 +1,7 @@
 import { once } from 'node:events'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { crearAplicacion } from '../index.js'
+import { crearAplicacion } from '../../api/index.js'
 import { esSlugValido } from '../servicios/consultaSupabase.js'
 
 export async function comprobarSupabase({

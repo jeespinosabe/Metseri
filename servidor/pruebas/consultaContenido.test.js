@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { it } from 'node:test'
-import { crearAplicacion } from '../index.js'
+import { crearAplicacion } from '../../api/index.js'
 import { crearConsultaSupabase, ErrorConsulta } from '../servicios/consultaSupabase.js'
 import { comprobarSupabase } from '../herramientas/comprobarSupabase.js'
 

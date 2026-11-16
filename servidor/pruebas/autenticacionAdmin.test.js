@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { crearAplicacion } from '../index.js'
+import { crearAplicacion } from '../../api/index.js'
 
 const entornoPrueba = {
   ADMIN_USUARIO: 'admin-prueba',

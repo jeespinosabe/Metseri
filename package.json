@@ -8,7 +8,7 @@
     "dev:interfaz": "vite",
     "start:api": "node --env-file-if-exists=.env server.js",
     "dev:api": "node --watch --env-file-if-exists=.env server.js",
-    "test:integracion": "node --env-file-if-exists=.env api/herramientas/comprobarSupabase.js",
+    "test:integracion": "node --env-file-if-exists=.env servidor/herramientas/comprobarSupabase.js",
     "build": "vite build",
     "lint": "eslint .",
     "test": "node --test",

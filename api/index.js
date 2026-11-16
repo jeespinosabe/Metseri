@@ -1,9 +1,9 @@
 import express from 'express';
-import { crearConsultaSupabase } from './servicios/consultaSupabase.js';
-import { crearRutasContenido } from './rutas/contenidoCeleste.js';
-import { crearRutasAdministracion } from './rutas/administracion.js';
-import { crearAutenticacionAdmin } from './servicios/autenticacionAdmin.js';
-import { crearGestionLibros } from './servicios/gestionLibros.js';
+import { crearConsultaSupabase } from '../servidor/servicios/consultaSupabase.js';
+import { crearRutasContenido } from '../servidor/rutas/contenidoCeleste.js';
+import { crearRutasAdministracion } from '../servidor/rutas/administracion.js';
+import { crearAutenticacionAdmin } from '../servidor/servicios/autenticacionAdmin.js';
+import { crearGestionLibros } from '../servidor/servicios/gestionLibros.js';
 
 export function crearAplicacion({ consulta = crearConsultaSupabase(), autenticacion = crearAutenticacionAdmin(), gestionLibros = crearGestionLibros() } = {}) {
     const app = express();

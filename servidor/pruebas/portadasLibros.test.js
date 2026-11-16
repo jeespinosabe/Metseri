@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { test } from 'node:test'
-import { crearAplicacion } from '../index.js'
+import { crearAplicacion } from '../../api/index.js'
 import { crearGestionLibros } from '../servicios/gestionLibros.js'
 
 test('la API acepta portadas en alta y edición, y sirve solo la imagen disponible', async (contexto) => {

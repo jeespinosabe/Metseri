@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { pathToFileURL } from 'node:url'
-import { crearConsultaSupabase } from '../api/servicios/consultaSupabase.js'
+import { crearConsultaSupabase } from '../servidor/servicios/consultaSupabase.js'
 
 const [rutaEsquema, rutaCarga, rutaModulo] = process.argv.slice(2)
 assert.ok(rutaEsquema && rutaCarga && rutaModulo, 'Indica esquema original, carga anterior y modulo PGlite')

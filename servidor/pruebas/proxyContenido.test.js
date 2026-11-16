@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve, sep } from 'node:path'
@@ -8,6 +8,13 @@ import { fileURLToPath } from 'node:url'
 import { it } from 'node:test'
 import { createServer as crearServidorVite, resolveConfig } from 'vite'
 import configuracionVercel from '../../vercel.json' with { type: 'json' }
+
+it('Vercel recibe un único punto de entrada de la API', async () => {
+  const entradas = await readdir(new URL('../../api/', import.meta.url))
+  assert.deepEqual(entradas, ['index.js'])
+  const regla = configuracionVercel.rewrites.find(({ source }) => source === '/api/(.*)?')
+  assert.equal(regla?.destination, '/api')
+})
 
 it('Vercel sirve la interfaz al abrir o recargar el panel con ambas variantes de la ruta', () => {
   for (const ruta of ['/admin', '/admin/']) {
