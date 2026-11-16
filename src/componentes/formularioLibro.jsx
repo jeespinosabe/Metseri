@@ -11,7 +11,6 @@ const CAMPOS_FORMULARIO = [
   { campo: 'autoria', etiqueta: 'Autoría', obligatorio: true, ayuda: 'Escribe un nombre por línea, en el orden de la ficha.' },
   { campo: 'editorial', etiqueta: 'Editorial', obligatorio: false },
   { campo: 'anio', etiqueta: 'Año de publicación', obligatorio: false, inputMode: 'numeric', ayuda: 'Año entre 1000 y 2100.' },
-  { campo: 'urlFicha', etiqueta: 'URL de la ficha bibliográfica', obligatorio: false, completo: true, tipo: 'url', ayuda: 'Enlace institucional completo que comience con http:// o https://.' },
 ]
 
 function agregarCampo(conjunto, campo) {
@@ -33,7 +32,7 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
   useEffect(() => { campoInicial.current?.focus() }, [])
 
   function cambiarCampo(campo, valor) {
-    setBorrador((actual) => ({ ...actual, [campo]: valor, verificado: false }))
+    setBorrador((actual) => ({ ...actual, [campo]: valor }))
   }
 
   async function guardar(evento) {
@@ -62,25 +61,24 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
       <form className="panel-admin__formulario" noValidate aria-label={nombreOperacion} onSubmit={guardar}>
         <fieldset className="panel-admin__contenido-formulario" disabled={guardando}>
           <div className="panel-admin__campos">
-            {CAMPOS_FORMULARIO.map(({ campo, etiqueta, obligatorio, completo, tipo = 'text', inputMode, ayuda }) => {
+            {CAMPOS_FORMULARIO.map(({ campo, etiqueta, obligatorio, completo, inputMode, ayuda }) => {
               const error = enviado || conErrorVisible.has(campo) ? errores[campo] : ''
               const descripcion = [ayuda && `${id}-${campo}-ayuda`, error && `${id}-${campo}-error`].filter(Boolean).join(' ')
               const Control = campo === 'autoria' ? 'textarea' : 'input'
-              const requerido = obligatorio || borrador.verificado
               return (
                 <div key={campo} className={`panel-admin__campo${completo ? ' panel-admin__campo--completo' : ''}`}>
                   <label htmlFor={`${id}-${campo}`}>
-                    {etiqueta} <span className="panel-admin__marca-campo">{requerido ? 'Obligatorio' : 'Opcional'}</span>
+                    {etiqueta} <span className="panel-admin__marca-campo">{obligatorio ? 'Obligatorio' : 'Opcional'}</span>
                   </label>
                   <Control
                     ref={campo === 'titulo' ? campoInicial : undefined}
                     id={`${id}-${campo}`}
                     name={campo}
-                    type={Control === 'input' ? tipo : undefined}
+                    type={Control === 'input' ? 'text' : undefined}
                     rows={Control === 'textarea' ? 3 : undefined}
                     inputMode={inputMode}
                     autoComplete="off"
-                    required={requerido}
+                    required={obligatorio}
                     value={borrador[campo]}
                     aria-invalid={error ? 'true' : undefined}
                     aria-describedby={descripcion || undefined}
@@ -136,11 +134,7 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
               <input type="checkbox" checked={borrador.activo} onChange={(evento) => { const activo = evento.target.checked; setBorrador((actual) => ({ ...actual, activo })) }} />
               <span>Libro activo</span>
             </label>
-            <label className="panel-admin__opcion-cuerpo">
-              <input type="checkbox" checked={borrador.verificado} onChange={(evento) => { const verificado = evento.target.checked; setBorrador((actual) => ({ ...actual, verificado })) }} />
-              <span>Confirmo que el ejemplar está en la biblioteca y que revisé su enlace institucional</span>
-            </label>
-            <p className="panel-admin__ayuda">Para aparecer en una ficha, el libro debe estar activo, verificado y asociado al cuerpo celeste.</p>
+            <p className="panel-admin__ayuda">Los libros activos aparecen en las fichas de los cuerpos celestes relacionados.</p>
           </fieldset>
         </fieldset>
         {errorGuardado && <p className="panel-admin__error-campo" role="alert">{errorGuardado}</p>}

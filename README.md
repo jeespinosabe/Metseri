@@ -166,7 +166,7 @@ Los registros locales de satélite usan `tipo: 'satelite'`, `planetaId` y `plane
 
 ### Descubrir libros
 
-La sección consulta el catálogo público de Supabase y muestra hasta tres libros activos, verificados y asociados al cuerpo seleccionado, por orden de recomendación. En vista normal incluye la invitación del PDF y los enlaces institucionales. La pestaña **Libros** de VR muestra el título, la autoría, la editorial y el año de esos mismos registros.
+La sección consulta el catálogo público de Supabase y muestra hasta tres libros activos asociados al cuerpo seleccionado, por orden de recomendación. En vista normal incluye la invitación a descubrir libros. La pestaña **Libros** de VR muestra el título, la autoría, la editorial y el año de esos mismos registros.
 
 ### Comprobar las fichas
 
@@ -261,9 +261,9 @@ Para comprobar el flujo, inicia sesión con los valores configurados, prueba una
 
 1. En `/admin`, elige **Agregar libro**. Para guardar un borrador, indica el título y escribe un nombre por línea en **Autoría**. La fotografía del formulario sirve para la vista previa.
 2. Marca los planetas o satélites relacionados y elige el orden en cada ficha. Los números más bajos aparecen primero.
-3. Para mostrar el libro al público, déjalo activo, indica la editorial, el año y el enlace institucional, y confirma que comprobaste el ejemplar en la biblioteca. Pulsa **Guardar libro**.
+3. Para mostrar el libro en las fichas de los cuerpos elegidos, deja marcada la opción **Libro activo** y pulsa **Guardar libro**. La editorial y el año son opcionales.
 
-El listado permite buscar por título o autoría y filtrar por cuerpo celeste. **Editar** guarda cambios en el catálogo. Al cambiar metadatos de un libro verificado, se debe confirmar de nuevo la verificación. **Eliminar** pide confirmación y retira el libro de sus fichas. La API protege los libros que respaldan una ficha como fuente científica.
+El listado permite buscar por título o autoría y filtrar por cuerpo celeste. **Editar** guarda cambios en el catálogo. **Eliminar** pide confirmación y retira el libro de sus fichas. La API protege los libros que respaldan una ficha como fuente científica.
 
 `.env` está ignorado por Git. El ejemplo solo contiene marcadores; las variables no llevan prefijo `VITE_`. Los comandos cargan `.env` con Node y siguen funcionando si el archivo no existe: `/api/estado` está disponible y las rutas de contenido indican configuración pendiente. El proxy de Vite reutiliza `PORT` sin exportar credenciales al navegador. Reinicia Vite y la API después de cambiar ese puerto. No se añade CORS para otros orígenes.
 
@@ -274,7 +274,7 @@ El listado permite buscar por título o autoría y filtrar por cuerpo celeste. *
 | `GET /api/estado` | 200 con el estado actual del servidor; no comprueba la conexión a Supabase. |
 | `GET /api/cuerpos-celestes` | 200 con un arreglo de planetas y satélites publicados, ordenados por `orden` y `slug`. |
 | `GET /api/cuerpos-celestes/:slug` | 200 con la ficha completa del cuerpo publicado. |
-| `GET /api/cuerpos-celestes/:slug/libros` | 200 con sus libros verificados y activos, ordenados por `orden` y `libro_id`. |
+| `GET /api/cuerpos-celestes/:slug/libros` | 200 con sus libros activos, ordenados por `orden` y `libro_id`. |
 
 Ejemplos en PowerShell (sustituye `tierra` por un slug que ya esté publicado):
 
@@ -307,7 +307,7 @@ Cada consulta externa tiene un plazo de cinco segundos. La ruta de libros compru
 
 ### Recursos y permisos de Supabase
 
-La API reutiliza el esquema ya existente mediante GET a la Data API: listado en `v_cuerpos_exploracion`, ficha en `rpc/ficha_cuerpo?p_slug=…` y libros en `v_libros_por_cuerpo`, filtrados por `cuerpo_slug`. Sus vistas y función usan `security_invoker`; RLS permite únicamente cuerpos publicados y libros verificados y activos. No se ejecutan escrituras o migraciones ni se cambia la publicación o las políticas.
+La API consulta la Data API mediante GET. Lee el listado en `v_cuerpos_exploracion`, la ficha en `rpc/ficha_cuerpo?p_slug=…` y los libros en `v_libros_por_cuerpo`, filtrados por `cuerpo_slug`. La [migración de publicación](bd/publicarLibrosActivos.sql) limita esta vista a libros activos asociados a cuerpos publicados. Las políticas RLS se aplican al consultar directamente las tablas.
 
 La corrección de contenido del PDF ya publica los doce cuerpos y retira los dos libros provisionales; puede consultarse en `bd/README.md`. No vuelvas a ejecutar la semilla ni el SQL de corrección para comprobar o iniciar la API. Una ficha no inventa descripciones, curiosidades, libros o cifras faltantes. La función SQL no incorpora los créditos de imagen; el frontend conserva sus créditos locales. Para un catálogo que supere el límite de filas de la Data API será necesario ampliar el contrato con paginación.
 

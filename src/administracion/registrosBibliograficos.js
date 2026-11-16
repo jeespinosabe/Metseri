@@ -1,6 +1,6 @@
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 
-export const CAMPOS_LIBRO = Object.freeze(['titulo', 'autoria', 'editorial', 'anio', 'urlFicha'])
+export const CAMPOS_LIBRO = Object.freeze(['titulo', 'autoria', 'editorial', 'anio'])
 
 // Proporción ancho:alto del espacio de portada de las tarjetas (11:5).
 export const PROPORCION_PORTADA = 11 / 5
@@ -54,11 +54,9 @@ export function crearBorradorLibro(registro = null) {
     autoria: registro?.autores?.join('\n') ?? registro?.autoria ?? '',
     editorial: registro?.editorial ?? '',
     anio: Number.isInteger(registro?.anio) ? String(registro.anio) : '',
-    urlFicha: registro?.urlFicha ?? '',
     cuerposIds: [...(registro?.cuerposIds ?? [])],
     ordenPorCuerpo: { ...registro?.ordenPorCuerpo },
     activo: registro?.activo ?? true,
-    verificado: registro?.verificado ?? false,
     fotografia: copiarFotografia(registro?.fotografia),
   }
 }
@@ -72,7 +70,6 @@ export function crearRegistroVistaPrevia(borrador) {
     autoria: separarAutores(borrador.autoria).join(', ') || 'Autoría del libro',
     editorial: borrador.editorial.trim() || null,
     anio: /^[1-9]\d{0,3}$/.test(anio) ? Number(anio) : null,
-    urlFicha: borrador.urlFicha,
     cuerposIds: borrador.cuerposIds,
     fotografia: borrador.fotografia,
   }
@@ -120,20 +117,11 @@ export function alternarCuerpo(cuerposIds, cuerpoId) {
     : [...cuerposIds, cuerpoId]
 }
 
-function esUrlBibliograficaValida(valor) {
-  try {
-    const url = new URL(valor)
-    return /^https?:\/\//i.test(valor) && !url.username && !url.password
-  } catch {
-    return false
-  }
-}
-
 function separarAutores(texto) {
   return texto.split('\n').map((nombre) => nombre.trim()).filter(Boolean)
 }
 
-export function validarCampoLibro(campo, valor, verificado = false) {
+export function validarCampoLibro(campo, valor) {
   const texto = String(valor ?? '').trim()
   switch (campo) {
     case 'titulo':
@@ -148,21 +136,16 @@ export function validarCampoLibro(campo, valor, verificado = false) {
       return new Set(autores.map((nombre) => nombre.toLowerCase())).size !== autores.length ? 'Escribe cada nombre una sola vez.' : ''
     }
     case 'editorial':
-      if (!texto && verificado) return 'Indica la editorial para confirmar la verificación.'
       return texto.length > 500 ? 'La editorial admite hasta 500 caracteres.' : ''
-    case 'urlFicha':
-      if (!texto) return verificado ? 'Indica la URL institucional para confirmar la verificación.' : ''
-      return texto.length <= 2048 && esUrlBibliograficaValida(texto) ? '' : 'Escribe una dirección completa que comience con http:// o https://.'
     case 'anio':
-      if (!texto) return verificado ? 'Indica el año para confirmar la verificación.' : ''
-      return /^\d{4}$/.test(texto) && +texto >= 1000 && +texto <= 2100 ? '' : 'Escribe un año entre 1000 y 2100.'
+      return !texto || (/^\d{4}$/.test(texto) && +texto >= 1000 && +texto <= 2100) ? '' : 'Escribe un año entre 1000 y 2100.'
     default:
       return ''
   }
 }
 
 export function validarBorradorLibro(borrador) {
-  return Object.fromEntries(CAMPOS_LIBRO.map((campo) => [campo, validarCampoLibro(campo, borrador[campo], borrador.verificado)]))
+  return Object.fromEntries(CAMPOS_LIBRO.map((campo) => [campo, validarCampoLibro(campo, borrador[campo])]))
 }
 
 export function validarOrdenLibro(valor) {
@@ -177,8 +160,7 @@ export function presentarLibroAdministrativo(libro) {
   const autores = libro.autores.map(({ nombre }) => nombre)
   return {
     id: libro.id, titulo: libro.titulo, autores, autoria: autores.join(', '),
-    editorial: libro.editorial, anio: libro.anio, urlFicha: libro.url_ficha,
-    activo: libro.activo, verificado: libro.verificado,
+    editorial: libro.editorial, anio: libro.anio, activo: libro.activo,
     cuerposIds: libro.cuerpos.map(({ slug }) => slug),
     ordenPorCuerpo: Object.fromEntries(libro.cuerpos.map(({ slug, orden }) => [slug, orden])),
   }
@@ -190,26 +172,14 @@ function convertirBorrador(borrador) {
     autores: separarAutores(borrador.autoria),
     editorial: borrador.editorial.trim() || null,
     anio: Number(borrador.anio) || null,
-    url_ficha: normalizarUrlFicha(borrador.urlFicha),
     cuerpos: [...borrador.cuerposIds].sort().map((slug) => ({ slug, orden: Number(borrador.ordenPorCuerpo[slug] ?? 1) })),
     activo: borrador.activo,
-    verificado: borrador.verificado,
   }
-}
-
-function normalizarUrlFicha(valor) {
-  const url = valor.trim()
-  if (!url) return null
-  return esUrlBibliograficaValida(url) ? new URL(url).href : url
 }
 
 export function prepararDatosLibro(borrador, registro = null) {
   const datos = convertirBorrador(borrador)
   if (!registro) return datos
   const anteriores = convertirBorrador(crearBorradorLibro(registro))
-  const cambios = Object.fromEntries(Object.entries(datos).filter(([campo, valor]) => JSON.stringify(valor) !== JSON.stringify(anteriores[campo])))
-  if (datos.verificado && ['titulo', 'autores', 'editorial', 'anio', 'url_ficha'].some((campo) => Object.hasOwn(cambios, campo))) {
-    cambios.verificado = true
-  }
-  return cambios
+  return Object.fromEntries(Object.entries(datos).filter(([campo, valor]) => JSON.stringify(valor) !== JSON.stringify(anteriores[campo])))
 }

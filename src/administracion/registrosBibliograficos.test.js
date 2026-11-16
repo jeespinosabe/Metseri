@@ -8,9 +8,9 @@ import {
 } from './registrosBibliograficos.js'
 
 const REGISTROS = Object.freeze([
-  Object.freeze({ id: 'a', titulo: 'Órbitas de la Luna', autoria: 'Autoría Ñandú', editorial: 'Muestra', anio: 2020, urlFicha: 'https://example.org/a', cuerposIds: Object.freeze(['tierra', 'luna']) }),
-  Object.freeze({ id: 'b', titulo: 'Manual de Júpiter', autoria: 'Equipo Ejemplo', editorial: null, anio: null, urlFicha: 'https://example.org/b', cuerposIds: Object.freeze(['jupiter', 'europa']) }),
-  Object.freeze({ id: 'c', titulo: 'Cuaderno general', autoria: 'Persona de muestra', editorial: '', anio: 1999, urlFicha: 'https://example.org/c', cuerposIds: Object.freeze([]) }),
+  Object.freeze({ id: 'a', titulo: 'Órbitas de la Luna', autoria: 'Autoría Ñandú', editorial: 'Muestra', anio: 2020, cuerposIds: Object.freeze(['tierra', 'luna']) }),
+  Object.freeze({ id: 'b', titulo: 'Manual de Júpiter', autoria: 'Equipo Ejemplo', editorial: null, anio: null, cuerposIds: Object.freeze(['jupiter', 'europa']) }),
+  Object.freeze({ id: 'c', titulo: 'Cuaderno general', autoria: 'Persona de muestra', editorial: '', anio: 1999, cuerposIds: Object.freeze([]) }),
 ])
 const ids = (registros) => registros.map((registro) => registro.id)
 
@@ -76,16 +76,16 @@ describe('presentación de registros', () => {
 
 describe('borradores y relaciones temporales', () => {
   it('el alta empieza vacía y la edición copia valores y relaciones sin compartir referencias', () => {
-    const valoresIniciales = { ordenPorCuerpo: {}, activo: true, verificado: false, fotografia: null }
-    assert.deepEqual(crearBorradorLibro(), { ...valoresIniciales, titulo: '', autoria: '', editorial: '', anio: '', urlFicha: '', cuerposIds: [] })
+    const valoresIniciales = { ordenPorCuerpo: {}, activo: true, fotografia: null }
+    assert.deepEqual(crearBorradorLibro(), { ...valoresIniciales, titulo: '', autoria: '', editorial: '', anio: '', cuerposIds: [] })
     const borrador = crearBorradorLibro(REGISTROS[0])
-    assert.deepEqual(borrador, { ...valoresIniciales, titulo: 'Órbitas de la Luna', autoria: 'Autoría Ñandú', editorial: 'Muestra', anio: '2020', urlFicha: 'https://example.org/a', cuerposIds: ['tierra', 'luna'] })
+    assert.deepEqual(borrador, { ...valoresIniciales, titulo: 'Órbitas de la Luna', autoria: 'Autoría Ñandú', editorial: 'Muestra', anio: '2020', cuerposIds: ['tierra', 'luna'] })
     assert.notEqual(borrador.cuerposIds, REGISTROS[0].cuerposIds)
     borrador.cuerposIds.push('marte')
     borrador.titulo = 'Cambio temporal'
     assert.deepEqual(REGISTROS[0].cuerposIds, ['tierra', 'luna'])
     assert.equal(REGISTROS[0].titulo, 'Órbitas de la Luna')
-    assert.deepEqual(crearBorradorLibro(REGISTROS[1]), { ...valoresIniciales, titulo: 'Manual de Júpiter', autoria: 'Equipo Ejemplo', editorial: '', anio: '', urlFicha: 'https://example.org/b', cuerposIds: ['jupiter', 'europa'] })
+    assert.deepEqual(crearBorradorLibro(REGISTROS[1]), { ...valoresIniciales, titulo: 'Manual de Júpiter', autoria: 'Equipo Ejemplo', editorial: '', anio: '', cuerposIds: ['jupiter', 'europa'] })
   })
 
   it('selecciona y retira cuerpos sin duplicados ni modificar el arreglo recibido', () => {
@@ -108,16 +108,6 @@ describe('validación visual de los campos', () => {
     }
   })
 
-  it('la URL es opcional en borradores y debe ser HTTP o HTTPS sin credenciales', () => {
-    for (const invalida of ['example.org/ficha', '/fichas/1', 'ftp://example.org/ficha', 'javascript:alert(1)', 'mailto:persona@example.org', 'https://', 'http//example.org', 'https://a:b@example.org']) {
-      assert.ok(validarCampoLibro('urlFicha', invalida), invalida)
-    }
-    for (const valida of ['', '   ', 'https://example.org/ficha', 'http://example.org', '  https://example.org/ficha?id=1  ']) {
-      assert.equal(validarCampoLibro('urlFicha', valida), '', valida)
-    }
-    assert.match(validarCampoLibro('urlFicha', 'example.org'), /http:\/\/ o https:\/\//)
-  })
-
   it('el año es opcional en borradores y admite enteros de 1000 a 2100', () => {
     for (const valido of ['', '   ', '1000', '2024', '2100', ' 2020 ']) assert.equal(validarCampoLibro('anio', valido), '', valido)
     for (const invalido of ['0', '-5', '999', '2101', '2020.5', '20,5', '10000', '0123', 'dos mil', '1e3', '+20']) assert.ok(validarCampoLibro('anio', invalido), invalido)
@@ -125,12 +115,11 @@ describe('validación visual de los campos', () => {
 
   it('editorial es opcional y un borrador completo no presenta errores', () => {
     assert.equal(validarCampoLibro('editorial', ''), '')
-    assert.deepEqual(validarBorradorLibro(crearBorradorLibro(REGISTROS[1])), { titulo: '', autoria: '', editorial: '', anio: '', urlFicha: '' })
+    assert.deepEqual(validarBorradorLibro(crearBorradorLibro(REGISTROS[1])), { titulo: '', autoria: '', editorial: '', anio: '' })
     const errores = validarBorradorLibro(crearBorradorLibro())
     assert.ok(errores.titulo && errores.autoria)
     assert.equal(errores.editorial, '')
     assert.equal(errores.anio, '')
-    assert.equal(errores.urlFicha, '')
   })
 })
 
@@ -146,21 +135,19 @@ describe('datos bibliográficos para la API', () => {
     assert.equal(borrador.autoria, 'López, Ana\nMaría Sol')
     assert.deepEqual(prepararDatosLibro(borrador, registro), {})
     assert.deepEqual(prepararDatosLibro({ ...borrador, activo: false }, registro), { activo: false })
-    assert.deepEqual(prepararDatosLibro({ ...borrador, titulo: 'Otro atlas', verificado: false }, registro), { titulo: 'Otro atlas', verificado: false })
-    assert.deepEqual(prepararDatosLibro({ ...borrador, titulo: 'Otro atlas' }, registro), { titulo: 'Otro atlas', verificado: true })
+    assert.deepEqual(prepararDatosLibro({ ...borrador, titulo: 'Otro atlas' }, registro), { titulo: 'Otro atlas' })
     assert.deepEqual(prepararDatosLibro({ ...borrador, cuerposIds: ['luna', 'marte'] }, registro), {
       cuerpos: [{ slug: 'luna', orden: 8 }, { slug: 'marte', orden: 1 }],
     })
   })
 
-  it('guarda borradores incompletos y exige datos para declarar la verificación', () => {
+  it('permite el alta de un libro activo sin enlace ni verificación', () => {
     const borrador = { ...crearBorradorLibro(), titulo: 'Atlas lunar', autoria: ' Ana \n\n Beto ', cuerposIds: ['luna'] }
     assert.deepEqual(prepararDatosLibro(borrador), {
-      titulo: 'Atlas lunar', autores: ['Ana', 'Beto'], editorial: null, anio: null, url_ficha: null,
-      activo: true, verificado: false, cuerpos: [{ slug: 'luna', orden: 1 }],
+      titulo: 'Atlas lunar', autores: ['Ana', 'Beto'], editorial: null, anio: null,
+      activo: true, cuerpos: [{ slug: 'luna', orden: 1 }],
     })
-    const errores = validarBorradorLibro({ ...borrador, verificado: true })
-    assert.ok(errores.editorial && errores.anio && errores.urlFicha)
+    assert.deepEqual(validarBorradorLibro(borrador), { titulo: '', autoria: '', editorial: '', anio: '' })
     assert.ok(validarCampoLibro('autoria', 'Ana\nana'))
     assert.ok(validarOrdenLibro('32768'))
     assert.equal(validarOrdenLibro('32767'), '')

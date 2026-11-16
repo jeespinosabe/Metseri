@@ -6,11 +6,8 @@ export function seleccionarLibrosPublicos(registros, cuerpoId, explicaciones = r
   const vistos = new Set()
   return registros.filter((libro) => {
     if (!libro || typeof libro.libro_id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(libro.libro_id)
-      || typeof libro.titulo !== 'string' || !libro.titulo.trim() || libro.activo === false || libro.verificado === false) return false
-    try {
-      const url = new URL(libro.url_ficha)
-      return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password
-    } catch { return false }
+      || typeof libro.titulo !== 'string' || !libro.titulo.trim() || libro.activo === false) return false
+    return true
   }).sort((primero, segundo) => (primero.orden ?? 32767) - (segundo.orden ?? 32767)
     || primero.libro_id.localeCompare(segundo.libro_id)).filter((libro) => {
     const titulo = libro.titulo.trim().toLocaleLowerCase('es-MX')
@@ -19,7 +16,7 @@ export function seleccionarLibrosPublicos(registros, cuerpoId, explicaciones = r
     vistos.add(titulo)
     return true
   }).slice(0, 3).map((libro) => ({
-    id: libro.libro_id, titulo: libro.titulo.trim(), url: libro.url_ficha,
+    id: libro.libro_id, titulo: libro.titulo.trim(),
     autor: typeof libro.autor === 'string' ? libro.autor : '',
     editorial: typeof libro.editorial === 'string' ? libro.editorial : '',
     anio: Number.isInteger(libro.anio) ? libro.anio : null,

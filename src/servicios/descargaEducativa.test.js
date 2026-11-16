@@ -12,7 +12,9 @@ const cuerpo = CUERPOS_CELESTES[0]
 const libro = {
   libro_id: 'ecDC008b-4283-46ae-8d41-97bb6fc5dc57',
   titulo: 'Astronomía de prueba',
-  url_ficha: 'https://example.com/libro',
+  url_ficha: null,
+  activo: true,
+  verificado: false,
 }
 
 function responder(ruta) {

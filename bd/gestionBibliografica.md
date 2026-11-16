@@ -5,9 +5,10 @@ Implementación para el módulo 01 existente, con el login propio de Metseri. No
 ## Preparación en Supabase y el servidor
 
 1. Revisar y ejecutar completo `bd/agregarGestionBibliografica.sql` en el SQL Editor de Supabase con el rol postgres. Es transaccional y repetible; añade cuatro funciones administrativas, concede acceso a service_role y excluye su ejecución pública. No cambia las políticas de lectura ni las fichas astronómicas.
-2. En el archivo local `.env`, conservar la URL y la clave pública existentes y completar `SUPABASE_SECRET_KEY` con una clave **Secret** del mismo proyecto (formato `sb_secret_…`). Se obtiene en Project Settings → API Keys. No usar la clave Publishable para escribir. La implementación usa la clave Secret en el encabezado apikey, según la documentación oficial de Supabase.
-3. Completar `ADMIN_USUARIO` y `ADMIN_CONTRASENA` (mínimo 12 caracteres). No subir `.env` ni poner la clave secreta en el frontend, Postman o capturas. Reiniciar el servidor después de cambiar el entorno.
-4. Iniciar `npm run dev` o `npm run start:api`. El puerto por defecto es 3000. Ajustar la variable urlBase de Postman al puerto efectivo.
+2. Ejecutar completo [`publicarLibrosActivos.sql`](publicarLibrosActivos.sql) en el SQL Editor. La migración actualiza la vista pública que usan las fichas y su listado de libros. Un libro activo asociado a un cuerpo publicado queda disponible en ambos recursos.
+3. En el archivo local `.env`, conservar la URL y la clave pública existentes y completar `SUPABASE_SECRET_KEY` con una clave **Secret** del mismo proyecto (formato `sb_secret_…`). Se obtiene en Project Settings → API Keys. No usar la clave Publishable para escribir. La implementación usa la clave Secret en el encabezado apikey, según la documentación oficial de Supabase.
+4. Completar `ADMIN_USUARIO` y `ADMIN_CONTRASENA` (mínimo 12 caracteres). No subir `.env` ni poner la clave secreta en el frontend, Postman o capturas. Reiniciar el servidor después de cambiar el entorno.
+5. Iniciar `npm run dev` o `npm run start:api`. El puerto por defecto es 3000. Ajustar la variable urlBase de Postman al puerto efectivo.
 
 Documentación del proveedor: [API keys](https://supabase.com/docs/guides/getting-started/api-keys), [funciones y permisos](https://supabase.com/docs/guides/database/functions).
 
@@ -31,28 +32,26 @@ Ejemplo de alta:
   "autores": ["Nombre del primer autor", "Nombre de la segunda autora"],
   "editorial": "Editorial",
   "anio": 2020,
-  "url_ficha": null,
-  "verificado": false,
   "activo": true,
   "cuerpos": [{ "slug": "tierra", "orden": 1 }]
 }
 ```
 
-En POST se requieren titulo y al menos un autor. editorial, anio y url_ficha pueden quedar en null. activo vale true por defecto; verificado vale false. En PATCH los campos omitidos se conservan. autores reemplaza la autoría completa y conserva su orden; no admite lista vacía ni nombres duplicados tras normalizar. cuerpos reemplaza las relaciones; `[]` las retira salvo referencias protegidas. Cada relación necesita slug existente y orden de 1 a 32767.
+En POST se requieren `titulo` y al menos un autor. `editorial` y `anio` pueden quedar en null. `activo` vale true por defecto. En PATCH se conservan los campos omitidos. `autores` reemplaza la autoría completa y conserva su orden. Cada autor puede aparecer una vez por libro y vincularse a varios libros. `cuerpos` reemplaza las relaciones. El valor `[]` las retira salvo referencias protegidas. Cada relación necesita un slug existente y un orden de 1 a 32767.
 
 La respuesta incluye las columnas de libros y arreglos autores (id, nombre, orden) y cuerpos (id, slug, nombre, orden, es_fuente_de_ficha). No se admite escribir IDs internos, fechas de verificación, verificado_por o es_fuente_de_ficha desde este CRUD. No se eliminan autores automáticamente: pueden estar compartidos.
 
-**Verificación:** solo enviar verificado=true cuando una persona haya comprobado existencia física y enlace al registro institucional. Requiere editorial, año, URL y autoría; la fecha se genera en la base. El login actual no corresponde a un perfil Supabase, por lo que verificado_por queda null. Cambiar título, editorial, año, URL o autores invalida una verificación previa salvo confirmación explícita de verificado=true en esa operación. Desactivar un libro no borra su información.
+**Visibilidad.** Activa el libro y asócialo a un cuerpo publicado para incluirlo en su ficha. Desactivarlo lo retira de las consultas públicas. `url_ficha` y `verificado` siguen disponibles en la API por compatibilidad con clientes anteriores. El panel usa `activo` y las asociaciones.
 
 Errores JSON: `{ "error": { "codigo": "...", "mensaje": "..." } }`. Se distinguen 400 (entrada inválida), 401 (sin sesión), 404 (inexistente), 409 (duplicidad/dependencia), 413 (JSON mayor de 64 KB), 405 (método no admitido) y 503 (configuración/proveedor). Los detalles internos y las claves no se devuelven.
 
 ### Recomendaciones en vista única y VR
 
-Las recomendaciones se consultan por separado en `/api/cuerpos-celestes/:slug/libros`, para que su error no bloquee la información astronómica. Se filtran destinos inválidos, se eliminan duplicados y se muestran como máximo tres títulos, en orden. No hay categorías, botones ni filtros de edad o nivel. Los estados de carga, error y cobertura parcial son distintos.
+Las recomendaciones se consultan por separado en `/api/cuerpos-celestes/:slug/libros`, para que su error no bloquee la información astronómica. Se descartan duplicados y se muestran como máximo tres títulos, en orden. Los estados de carga, error y cobertura parcial son distintos.
 
 `src/datos/recomendacionesCuradas.json` contiene únicamente explicaciones temáticas públicas por UUID: `{ "uuid-del-libro": { "tierra": "Explicación revisada" } }`. Después de cada alta, usar los UUID devueltos por la API y las justificaciones revisadas para actualizar ese mapa; comprobarlos contra la consulta pública. Ya contiene los cuatro UUID cargados y nunca concede visibilidad a un libro: solo enriquece un UUID recibido de la API pública. No copiar el archivo de investigación completo al frontend.
 
-La vista normal conserva invitación, explicación, enlaces, colores y desplazamiento propios. Según el ajuste solicitado el 10 de noviembre, VR muestra de cada libro solo el título en negrita al tamaño anterior, el autor regular y editorial · año en tono tenue, con número a la izquierda. Cada libro comienza una página y continúa si el texto no cabe; no incluye explicación, invitación ni enlace. La lectura HTML accesible de VR refleja esos mismos campos. Las pruebas de presentación no acreditan disponibilidad en la biblioteca.
+La vista normal muestra la invitación y los datos bibliográficos. Si hay una explicación temática, la muestra debajo de los datos. En VR se muestran el título, el autor y los datos de edición disponibles, con número a la izquierda. Cada libro comienza una página y continúa si el texto no cabe. La lectura HTML accesible de VR refleja esos mismos campos.
 
 ### Revertir el acceso administrativo bibliográfico
 

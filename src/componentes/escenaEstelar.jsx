@@ -11,7 +11,6 @@ import { ConfiguracionVisor } from './configuracionVisor.jsx'
 import { guardarDiagonalPantalla, leerDiagonalPantalla } from '../escena/perfilVisor.js'
 import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
-import { abrirFichaBibliografica } from '../datos/librosCuerposCelestes.js'
 import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
 import { iniciarConsultaContenido } from '../servicios/consultaContenido.js'
 import { iniciarConsultaLibros } from '../servicios/consultaLibros.js'
@@ -113,7 +112,6 @@ export function EscenaEstelar() {
       campo = crearCampoEstelar(superficieRef.current, {
         alCambiarFicha: setLectura,
         alCambiarInstruccionVr: setInstruccionVrVisible,
-        alSolicitarLibro: (libro) => abrirFichaBibliografica(libro, { salirVr: salirModoVr }),
         alPerderContexto: () => {
           setLectura({ cuerpoId: null, pagina: 0, total: 0 })
           setModo('normal')
@@ -262,7 +260,6 @@ export function EscenaEstelar() {
             alAccionar={(accion) => campoRef.current?.ejecutarAccionFicha(accion)}
             alEntrar={() => campoRef.current?.limpiarApuntado()}
             alCerrar={cerrarFicha}
-            alAbrirLibro={(libro) => abrirFichaBibliografica(libro, { salirVr: modo === 'vr' ? salirModoVr : undefined })}
           />}
           {modo === 'vr' && cuerpo && <div className="ficha-vr-indicaciones" aria-hidden="true">
             <span>Mira izquierda/derecha y toca · Al final, avanzar cierra · Doble tap recentra</span>

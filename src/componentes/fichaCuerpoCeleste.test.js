@@ -58,6 +58,19 @@ it('los estados de espera/error conservan estructura, imagen y cierre', () => {
   }
 })
 
+it('muestra recomendaciones sin enlace en la ficha web y la lectura VR', () => {
+  const ficha = FICHAS_PRUEBA[0]
+  for (const modo of ['normal', 'vr']) {
+    const html = representar(ficha, { modo, contenido: {
+      fase: 'disponible', ficha: adaptarContenido(obtenerCuerpoCeleste(ficha.slug), ficha),
+      bibliografia: { fase: 'disponible', libros: [{ id: 'atlas', titulo: 'Atlas lunar', autor: 'Autora de prueba' }] },
+    } })
+    assert.match(html, /<h3>Atlas lunar<\/h3>/)
+    assert.ok(html.includes('Autora de prueba'))
+    assert.doesNotMatch(html, /Ver ficha en la biblioteca|href="undefined"/)
+  }
+})
+
 it('la lectura accesible VR comparte el contenido publicado y conserva los controles existentes', () => {
   const ficha = FICHAS_PRUEBA.find((registro) => registro.slug === 'europa')
   const html = representar(ficha, { modo: 'vr' })

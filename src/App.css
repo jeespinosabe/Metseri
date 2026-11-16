@@ -391,8 +391,6 @@
 .ficha-cuerpo .recomendaciones-libros p { margin: 6px 0; font-size: 1rem; line-height: 1.6; }
 .recomendaciones-libros__autor { color: #d8e1e6; }
 .recomendaciones-libros__edicion, .recomendaciones-libros__pendientes { color: #a6b4c0; }
-.ficha-cuerpo .recomendaciones-libros a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #c7e69d; font-size: 1rem; text-underline-offset: 4px; }
-.recomendaciones-libros a:hover { color: #edf2f5; }
 
 .ficha-cuerpo {
   position: absolute;

@@ -32,7 +32,7 @@ const REGISTROS_PRUEBA = [
   ['Anillos de muestra', ['saturno']], ['Guía de muestra', []],
 ].map(([titulo, cuerposIds], indice) => ({
   id: `libro-${indice}`, titulo, cuerposIds, autoria: 'Ana de Prueba', editorial: 'Editorial de muestra', anio: 2014,
-  urlFicha: `https://example.org/libro-${indice}`, fotografia: { url: `/pruebas/portada-${indice}.webp`, encuadre: { x: 50, y: 50 } },
+  fotografia: { url: `/pruebas/portada-${indice}.webp`, encuadre: { x: 50, y: 50 } },
 }))
 const [TIERRA_LUNA, , MARTE, PLANETAS, , SIN_CUERPOS] = REGISTROS_PRUEBA
 // Los libros reales tienen sus datos completos: los casos ausentes se derivan aquí.
@@ -185,16 +185,17 @@ describe('formulario de libro', () => {
     const html = representar('FormularioLibro', { modo: 'alta', alVolver: nada })
     assert.match(html, /<form [^>]*novalidate=""[^>]*aria-label="Agregar libro"/i)
     assert.equal(html.includes('Completa un borrador temporal'), false)
-    for (const campo of ['titulo', 'editorial', 'anio', 'urlFicha']) assert.match(html, new RegExp(`name="${campo}"[^>]*value=""`))
+    for (const campo of ['titulo', 'editorial', 'anio']) assert.match(html, new RegExp(`name="${campo}"[^>]*value=""`))
     assert.match(html, /<textarea[^>]*name="autoria"[^>]*><\/textarea>/)
     assert.equal(contar(html, '>Obligatorio</span>'), 2)
-    assert.equal(contar(html, '>Opcional</span>'), 4)
-    assert.ok(html.indexOf('Fotografía del libro') > html.indexOf('name="urlFicha"'))
+    assert.equal(contar(html, '>Opcional</span>'), 3)
+    assert.ok(html.indexOf('Fotografía del libro') > html.indexOf('name="anio"'))
     assert.ok(html.indexOf('Fotografía del libro') < html.indexOf('Cuerpos celestes relacionados'))
     assert.ok(html.includes('Elegir fotografía</button>') && html.includes(PORTADA_VACIA))
     assert.match(html, /type="text" inputMode="numeric"[^>]*name="anio"/)
-    assert.match(html, /type="url"[^>]*name="urlFicha"/)
-    assert.equal(contar(html, 'type="checkbox"'), 14)
+    assert.doesNotMatch(html, /name="urlFicha"|Confirmo que/)
+    assert.ok(html.includes('Libro activo'))
+    assert.equal(contar(html, 'type="checkbox"'), 13)
     assert.equal(contar(html, 'checked=""'), 1)
     assert.ok(html.includes('aria-live="polite">Sin asociar</p>'))
     assert.equal(html.includes('aria-invalid'), false)
@@ -207,13 +208,14 @@ describe('formulario de libro', () => {
     const html = representar('FormularioLibro', { modo: 'edicion', registro: TIERRA_LUNA, alVolver: nada })
     assert.match(html, /<form [^>]*aria-label="Editar libro"/)
     assert.equal(html.includes('Modificas un borrador temporal'), false)
-    for (const [campo, valor] of [['titulo', TIERRA_LUNA.titulo], ['editorial', TIERRA_LUNA.editorial], ['anio', String(TIERRA_LUNA.anio)], ['urlFicha', TIERRA_LUNA.urlFicha]]) {
+    for (const [campo, valor] of [['titulo', TIERRA_LUNA.titulo], ['editorial', TIERRA_LUNA.editorial], ['anio', String(TIERRA_LUNA.anio)]]) {
       assert.match(html, new RegExp(`name="${campo}"[^>]*value="${valor}"`))
     }
     assert.ok(html.includes('checked="" value="tierra"'))
     assert.ok(html.includes('checked="" value="luna"'))
     assert.match(html, /<textarea[^>]*name="autoria"[^>]*>Ana de Prueba<\/textarea>/)
     assert.equal(contar(html, 'checked=""'), 3)
+    assert.doesNotMatch(html, /name="urlFicha"|Confirmo que/)
     assert.ok(html.includes('Seleccionados: Tierra, Luna'))
     assert.ok(html.includes(`src="${TIERRA_LUNA.fotografia.url}" alt="Fotografía elegida del libro`))
     assert.ok(html.includes('Quitar foto</button>'))

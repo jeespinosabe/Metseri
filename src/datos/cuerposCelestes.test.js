@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { existsSync, statSync } from 'node:fs'
 import { CUERPOS_CELESTES, obtenerCuerpoCeleste, obtenerDatosPrincipales } from './cuerposCelestes.js'
-import { abrirFichaBibliografica, obtenerLibrosCuerpo } from './librosCuerposCelestes.js'
 
 it('los doce cuerpos conservan su identidad e imagen y dejan vacío el contenido editorial', () => {
   assert.equal(CUERPOS_CELESTES.length, 12)
@@ -18,7 +17,6 @@ it('los doce cuerpos conservan su identidad e imagen y dejan vacío el contenido
     assert.ok(statSync(ruta).size < 100000)
     assert.equal(obtenerDatosPrincipales(cuerpo).length, 4)
     assert.ok(obtenerDatosPrincipales(cuerpo).every((dato) => dato.valor === '' && dato.unidad))
-    assert.deepEqual(obtenerLibrosCuerpo(cuerpo.id), [])
   }
 })
 
@@ -51,17 +49,4 @@ it('formatea rotación retrógrada y admite valores de un satélite', () => {
   assert.equal(datos[1].unidad, 'km')
   assert.equal(datos[3].valor, '3')
   assert.equal(datos[3].unidad, 'días terrestres')
-})
-
-it('ofrece únicamente asociaciones utilizables y abre antes de salir de VR', () => {
-  const valido = { titulo: 'Ficha sintética de prueba', url: 'https://example.org/ficha' }
-  const asociaciones = { tierra: [valido, { titulo: 'Sin URL' }, { titulo: '', url: valido.url }, { titulo: 'Inseguro', url: 'javascript:alert(1)' }] }
-  assert.deepEqual(obtenerLibrosCuerpo('tierra', asociaciones), [valido])
-  const acciones = []
-  const pestana = { opener: 'anterior' }
-  assert.equal(abrirFichaBibliografica(valido, { abrir: (url) => { acciones.push(url); return pestana }, salirVr: () => acciones.push('salir') }), true)
-  assert.deepEqual(acciones, [valido.url, 'salir'])
-  assert.equal(pestana.opener, null)
-  assert.equal(abrirFichaBibliografica(valido, { abrir: () => null }), false)
-  assert.equal(abrirFichaBibliografica(asociaciones.tierra[3], { abrir: () => assert.fail('URL descartada') }), false)
 })

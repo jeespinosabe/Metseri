@@ -13,7 +13,7 @@ function IconoDestello() {
   return <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m11 3 2.4 7.6L21 13l-7.6 2.4L11 23l-2.4-7.6L1 13l7.6-2.4L11 3ZM23 2v7m-3.5-3.5h7M23 20v6m-3-3h6" strokeLinejoin="round" /></svg>
 }
 
-export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAccionar, alEntrar, alCerrar, alAbrirLibro }) {
+export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAccionar, alEntrar, alCerrar }) {
   const [imagenFallida, setImagenFallida] = useState(false)
   const panelRef = useRef(null)
   const bibliografia = contenido?.bibliografia
@@ -75,9 +75,8 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
         {libros.length > 0 && <ol className="recomendaciones-libros">{libros.map((libro) => <li key={libro.id}>
           <h3>{libro.titulo}</h3>
           {libro.autor && <p className="recomendaciones-libros__autor">{libro.autor}</p>}
-          <p className="recomendaciones-libros__edicion">{[libro.editorial, libro.anio].filter(Boolean).join(' · ')}</p>
+          {(libro.editorial || libro.anio) && <p className="recomendaciones-libros__edicion">{[libro.editorial, libro.anio].filter(Boolean).join(' · ')}</p>}
           {modo !== 'vr' && libro.explicacion && <p>{libro.explicacion}</p>}
-          {modo !== 'vr' && <a href={libro.url} target="_blank" rel="noopener noreferrer" aria-label={`Ver ficha de ${libro.titulo} en la biblioteca (abre otra pestaña)`} onClick={(evento) => { evento.preventDefault(); alAbrirLibro(libro) }}>Ver ficha en la biblioteca <span aria-hidden="true">↗</span></a>}
         </li>)}</ol>}
         {bibliografia?.fase === 'disponible' && libros.length < 3 && <p className="recomendaciones-libros__pendientes">
           {!libros.length && bibliografia.fechaDescarga != null ? 'La copia descargada no contiene recomendaciones.' : 'Estamos preparando más recomendaciones.'}
