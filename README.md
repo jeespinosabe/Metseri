@@ -206,6 +206,8 @@ api/
 
 El proyecto publica la interfaz Vite y la función Express en el mismo dominio. `vercel.json` reenvía `/api/(.*)?` a la función `/api` exportada por `api/index.js`. El grupo sin nombre conserva la consulta original, incluidos los parámetros de paginación del catálogo administrativo. Express atiende rutas como `/api/estado` y `/api/cuerpos-celestes/tierra/libros`. La regla se limita a la API. Consulta la [documentación de reescrituras de Vercel](https://vercel.com/docs/routing/rewrites).
 
+Al abrir o recargar `/admin` o `/admin/`, Vercel sirve `index.html` y conserva la ruta en el navegador. React comprueba la sesión mediante `/api/admin/sesion` y muestra el panel o el formulario de acceso.
+
 Para configurar el proyecto en Vercel:
 
 1. Usa la raíz del repositorio, donde están `package.json`, `vercel.json` y `api/`, y el framework **Vite**. El comando de compilación es `npm run build` y el directorio de salida es `dist`.

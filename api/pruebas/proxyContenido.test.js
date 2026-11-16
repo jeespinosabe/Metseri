@@ -7,6 +7,14 @@ import { join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { it } from 'node:test'
 import { createServer as crearServidorVite, resolveConfig } from 'vite'
+import configuracionVercel from '../../vercel.json' with { type: 'json' }
+
+it('Vercel sirve la interfaz al abrir o recargar el panel con ambas variantes de la ruta', () => {
+  for (const ruta of ['/admin', '/admin/']) {
+    const regla = configuracionVercel.rewrites.find(({ source }) => source === ruta)
+    assert.equal(regla?.destination, '/index.html', ruta)
+  }
+})
 
 it('proxy: PORT del archivo, precedencia del proceso y valor por defecto, sin exportar secretos', async (t) => {
   const carpeta = await mkdtemp(join(tmpdir(), 'metseri-proxy-'))
