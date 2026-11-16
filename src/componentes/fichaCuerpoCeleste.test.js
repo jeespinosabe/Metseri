@@ -6,6 +6,7 @@ import { createServer } from 'vite'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
+import { seleccionarLibrosPublicos } from '../servicios/consultaLibros.js'
 
 let vite
 let FichaCuerpoCeleste
@@ -69,6 +70,16 @@ it('muestra recomendaciones sin enlace en la ficha web y la lectura VR', () => {
     assert.ok(html.includes('Autora de prueba'))
     assert.doesNotMatch(html, /Ver ficha en la biblioteca|href="undefined"/)
   }
+})
+
+it('muestra la portada versionada y su encuadre en la ficha web', () => {
+  const ficha = FICHAS_PRUEBA[0]
+  const id = '7b1d605f-99fc-4156-aa14-49d75f89bb92'
+  const version = 'b99be919-f78b-47fb-adfe-8f97d0d6bf48'
+  const libros = seleccionarLibrosPublicos([{ libro_id: id, titulo: 'Atlas', portada: { version, x: 20, y: 60 } }], ficha.slug)
+  const html = representar(ficha, { contenido: { fase: 'disponible', bibliografia: { fase: 'disponible', libros } } })
+  assert.ok(html.includes(`src="/api/cuerpos-celestes/${ficha.slug}/libros/${id}/portada?v=${version}"`))
+  assert.ok(html.includes('style="object-position:20% 60%"'))
 })
 
 it('la lectura accesible VR comparte el contenido publicado y conserva los controles existentes', () => {

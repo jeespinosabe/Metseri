@@ -1,5 +1,6 @@
 import recomendacionesCuradas from '../datos/recomendacionesCuradas.json' with { type: 'json' }
 import { consultarJsonPublico, iniciarConsultaPublica } from './consultaPublica.js'
+import { presentarPortada } from './portadasLibros.js'
 
 export function seleccionarLibrosPublicos(registros, cuerpoId, explicaciones = recomendacionesCuradas) {
   if (!Array.isArray(registros)) throw new Error('Respuesta bibliográfica inválida.')
@@ -15,13 +16,17 @@ export function seleccionarLibrosPublicos(registros, cuerpoId, explicaciones = r
     vistos.add(libro.libro_id)
     vistos.add(titulo)
     return true
-  }).slice(0, 3).map((libro) => ({
-    id: libro.libro_id, titulo: libro.titulo.trim(),
-    autor: typeof libro.autor === 'string' ? libro.autor : '',
-    editorial: typeof libro.editorial === 'string' ? libro.editorial : '',
-    anio: Number.isInteger(libro.anio) ? libro.anio : null,
-    explicacion: typeof explicaciones[libro.libro_id]?.[cuerpoId] === 'string' ? explicaciones[libro.libro_id][cuerpoId] : '',
-  }))
+  }).slice(0, 3).map((libro) => {
+    const fotografia = presentarPortada(libro.portada, `/api/cuerpos-celestes/${encodeURIComponent(cuerpoId)}/libros/${libro.libro_id}/portada`)
+    return {
+      id: libro.libro_id, titulo: libro.titulo.trim(),
+      autor: typeof libro.autor === 'string' ? libro.autor : '',
+      editorial: typeof libro.editorial === 'string' ? libro.editorial : '',
+      anio: Number.isInteger(libro.anio) ? libro.anio : null,
+      explicacion: typeof explicaciones[libro.libro_id]?.[cuerpoId] === 'string' ? explicaciones[libro.libro_id][cuerpoId] : '',
+      ...(fotografia && { fotografia }),
+    }
+  })
 }
 
 export function consultarLibros(cuerpoId, opciones) {

@@ -1,4 +1,5 @@
 import { presentarLibroAdministrativo } from '../administracion/registrosBibliograficos.js'
+import { prepararPortadaEnvio } from './portadasLibros.js'
 
 const RUTA_LIBROS = '/api/admin/libros'
 
@@ -34,7 +35,8 @@ export async function listarLibrosAdministrativos(signal) {
 
 export async function guardarLibroAdministrativo(datos, id) {
   const ruta = id ? `${RUTA_LIBROS}/${encodeURIComponent(id)}` : RUTA_LIBROS
-  return presentarLibroAdministrativo(await solicitarLibros(ruta, { method: id ? 'PATCH' : 'POST', datos }))
+  const datosEnvio = datos.portada?.archivo ? { ...datos, portada: await prepararPortadaEnvio(datos.portada) } : datos
+  return presentarLibroAdministrativo(await solicitarLibros(ruta, { method: id ? 'PATCH' : 'POST', datos: datosEnvio }))
 }
 
 export function eliminarLibroAdministrativo(id) {

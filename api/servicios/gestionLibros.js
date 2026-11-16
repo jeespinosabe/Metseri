@@ -1,6 +1,7 @@
 import { esSlugValido } from './consultaSupabase.js'
+import { decodificarPortada } from './portadasLibros.js'
 
-const CAMPOS = ['titulo', 'editorial', 'anio', 'url_ficha', 'activo', 'verificado', 'autores', 'cuerpos']
+const CAMPOS = ['titulo', 'editorial', 'anio', 'url_ficha', 'activo', 'verificado', 'autores', 'cuerpos', 'portada']
 export const esIdLibroValido = (valor) => typeof valor === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valor)
 
 export class ErrorLibros extends Error {
@@ -11,11 +12,22 @@ export class ErrorLibros extends Error {
   }
 }
 
+function esPortadaValida(portada, parcial) {
+  if (portada === null) return true
+  if (!portada || typeof portada !== 'object' || Array.isArray(portada)
+    || [portada.x, portada.y].some((valor) => !Number.isInteger(valor) || valor < 0 || valor > 100)) return false
+  if (Object.hasOwn(portada, 'datos')) return Object.keys(portada).length === 3 && Boolean(decodificarPortada(portada.datos))
+  return parcial && Object.keys(portada).length === 3 && esIdLibroValido(portada.version)
+}
+
 export function validarLibro(datos, parcial = false) {
   const invalido = () => { throw new ErrorLibros(400, 'LIBRO_INVALIDO', 'Revisa los campos del libro, sus autores y cuerpos celestes.') }
   if (!datos || typeof datos !== 'object' || Array.isArray(datos)
     || !Object.keys(datos).length || Object.keys(datos).some((campo) => !CAMPOS.includes(campo))) invalido()
   const libro = { ...datos }
+  if (Object.hasOwn(libro, 'portada') && !esPortadaValida(libro.portada, parcial)) {
+    throw new ErrorLibros(400, 'PORTADA_INVALIDA', 'La portada no es válida. Selecciona la fotografía de nuevo.')
+  }
   for (const campo of ['titulo', 'editorial']) {
     if (!Object.hasOwn(libro, campo)) continue
     if (campo === 'editorial' && libro[campo] === null) continue
@@ -85,12 +97,15 @@ export function crearGestionLibros({ entorno = process.env, solicitar = fetch } 
           '23514': [400, 'LIBRO_INVALIDO', 'Revisa los campos obligatorios y las relaciones del libro.'],
           '22023': [400, 'LIBRO_INVALIDO', 'Los datos bibliográficos no son válidos.'],
           P0001: [409, 'LIBRO_ES_FUENTE', 'El libro respalda una ficha astronómica. Revisa esa referencia antes de retirarlo.'],
+          '40001': [409, 'PORTADA_MODIFICADA', 'La portada cambió durante la edición. Vuelve a abrir el libro y repite el cambio.'],
         }
         throw new ErrorLibros(...(errores[contenido?.code] ?? []))
       }
       const valido = funcion === 'listarLibrosAdministrativos'
         ? Array.isArray(contenido) && contenido.every((libro) => esIdLibroValido(libro?.id))
-        : funcion === 'eliminarLibroAdministrativo' ? contenido === true : esIdLibroValido(contenido?.id)
+        : funcion === 'eliminarLibroAdministrativo' ? contenido === true
+          : funcion === 'obtenerPortadaAdministrativa' ? contenido === null || typeof contenido === 'string'
+            : esIdLibroValido(contenido?.id)
       if (!valido) throw new ErrorLibros()
       return contenido
     } catch (error) {
@@ -101,7 +116,8 @@ export function crearGestionLibros({ entorno = process.env, solicitar = fetch } 
   return {
     listar: (limite, desplazamiento) => ejecutar('listarLibrosAdministrativos', { p_limite: limite, p_desplazamiento: desplazamiento }),
     obtener: (id) => ejecutar('obtenerLibroAdministrativo', { p_id: id }),
-    guardar: (id, datos) => ejecutar('guardarLibroAdministrativo', { p_id: id, p_datos: datos }),
+    obtenerPortada: (id) => ejecutar('obtenerPortadaAdministrativa', { p_id: id }),
+    guardar: (id, datos) => ejecutar(Object.hasOwn(datos, 'portada') ? 'guardarLibroConPortada' : 'guardarLibroAdministrativo', { p_id: id, p_datos: datos }),
     eliminar: (id) => ejecutar('eliminarLibroAdministrativo', { p_id: id }),
   }
 }

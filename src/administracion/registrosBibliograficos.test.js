@@ -155,6 +155,22 @@ describe('datos bibliográficos para la API', () => {
 })
 
 describe('fotografía del libro', () => {
+  it('envía altas, reemplazos, encuadres y retiros sin reenviar la portada si queda igual', () => {
+    const version = 'b99be919-f78b-47fb-adfe-8f97d0d6bf48'
+    const registro = presentarLibroAdministrativo({ id: 'a', titulo: 'Libro con portada', autores: [{ nombre: 'Autora' }], cuerpos: [], portada: { version, x: 30, y: 80 } })
+    const borrador = crearBorradorLibro(registro)
+    const archivo = new File(['imagen'], 'portada.png', { type: 'image/png' })
+    assert.equal(registro.fotografia.url, `/api/admin/libros/a/portada?v=${version}`)
+    assert.deepEqual(prepararDatosLibro(borrador, registro), {})
+    assert.deepEqual(prepararDatosLibro({ ...borrador, fotografia: null }, registro), { portada: null })
+    borrador.fotografia.encuadre.y = 65
+    assert.deepEqual(prepararDatosLibro(borrador, registro), { portada: { version, x: 30, y: 65 } })
+    borrador.fotografia = { archivo, url: 'blob:portada', encuadre: { x: 50, y: 50 } }
+    const portadaNueva = { archivo, x: 50, y: 50 }
+    assert.deepEqual(prepararDatosLibro(borrador, registro), { portada: portadaNueva })
+    assert.deepEqual(prepararDatosLibro(borrador).portada, portadaNueva)
+  })
+
   const CON_FOTOGRAFIA = Object.freeze({ ...REGISTROS[0], fotografia: Object.freeze({ url: '/foto-prueba.webp', encuadre: Object.freeze({ x: 50, y: 53 }) }) })
 
   it('la edición copia la fotografía y su encuadre sin compartir referencias', () => {

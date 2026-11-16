@@ -159,7 +159,8 @@ describe('tarjeta de libro', () => {
 describe('campo de fotografía', () => {
   it('sin fotografía ofrece elegirla o arrastrarla, con formatos y vista previa con portada vacía', () => {
     const html = representar('CampoFotografiaLibro', { fotografia: null, alCambiar: nada, registroVistaPrevia: crearRegistroVistaPrevia(crearBorradorLibro()) })
-    assert.ok(html.includes('<legend>Fotografía del libro <span class="panel-admin__marca-campo">Vista previa</span></legend>'))
+    assert.ok(html.includes('<legend>Fotografía del libro <span class="panel-admin__marca-campo">Opcional</span></legend>'))
+    assert.ok(html.includes('La portada se guarda junto con el libro.'))
     assert.match(html, /<input type="file" accept="image\/jpeg,image\/png,image\/webp" hidden=""/)
     assert.match(html, /aria-describedby="[^"]+-formatos"[^>]*>Elegir fotografía<\/button>/)
     assert.ok(html.includes('JPG, PNG o WebP · hasta 5 MB'))
@@ -188,7 +189,7 @@ describe('formulario de libro', () => {
     for (const campo of ['titulo', 'editorial', 'anio']) assert.match(html, new RegExp(`name="${campo}"[^>]*value=""`))
     assert.match(html, /<textarea[^>]*name="autoria"[^>]*><\/textarea>/)
     assert.equal(contar(html, '>Obligatorio</span>'), 2)
-    assert.equal(contar(html, '>Opcional</span>'), 3)
+    assert.equal(contar(html, '>Opcional</span>'), 4)
     assert.ok(html.indexOf('Fotografía del libro') > html.indexOf('name="anio"'))
     assert.ok(html.indexOf('Fotografía del libro') < html.indexOf('Cuerpos celestes relacionados'))
     assert.ok(html.includes('Elegir fotografía</button>') && html.includes(PORTADA_VACIA))

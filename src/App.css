@@ -386,6 +386,7 @@
 .recomendaciones-libros { margin: 24px 0 0; padding: 0; list-style: none; counter-reset: recomendacion; }
 .recomendaciones-libros > li { position: relative; counter-increment: recomendacion; padding: 22px 0 22px 34px; border-top: 1px solid #2b3942; overflow-wrap: anywhere; }
 .recomendaciones-libros > li::before { content: counter(recomendacion, decimal-leading-zero); position: absolute; top: 24px; left: 0; color: #c7e69d; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.recomendaciones-libros__portada:not([hidden]) { display: block; width: 100%; max-width: 360px; aspect-ratio: 11 / 5; margin-bottom: 12px; border-radius: 8px; object-fit: cover; }
 .recomendaciones-libros h3 { margin: 0 0 8px; color: #edf2f5; font-size: 1.125rem; font-weight: 500; line-height: 1.4; }
 .ficha-cuerpo--accesible .recomendaciones-libros h3 { font-weight: 700; }
 .ficha-cuerpo .recomendaciones-libros p { margin: 6px 0; font-size: 1rem; line-height: 1.6; }

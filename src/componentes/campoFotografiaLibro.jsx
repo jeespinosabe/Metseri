@@ -7,9 +7,6 @@ import { TarjetaLibro } from './tarjetaLibro.jsx'
 const FORMATOS_ACEPTADOS = 'image/jpeg,image/png,image/webp'
 const EXTREMOS_EJE = { y: ['Arriba', 'Abajo', 'desde arriba'], x: ['Izquierda', 'Derecha', 'desde la izquierda'] }
 
-// La fotografía solo existe en el borrador: se muestra con una URL de objeto
-// local, nunca se envía ni se guarda, y sus URL se revocan al sustituirla,
-// quitarla o cerrar el formulario.
 export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevia }) {
   const id = useId()
   const entrada = useRef(null)
@@ -51,7 +48,7 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
     const url = URL.createObjectURL(archivo)
     urlsCreadas.current.add(url)
     liberarUrl(fotografia?.url)
-    alCambiar({ url, encuadre: { ...ENCUADRE_INICIAL } })
+    alCambiar({ url, archivo, encuadre: { ...ENCUADRE_INICIAL } })
   }
 
   function quitarFotografia() {
@@ -79,8 +76,8 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
 
   return (
     <fieldset className={`panel-admin__fotografia${arrastrando ? ' panel-admin__fotografia--arrastrando' : ''}`} {...eventosArrastre}>
-      <legend>Fotografía del libro <span className="panel-admin__marca-campo">Vista previa</span></legend>
-      <p className="panel-admin__ayuda">La fotografía elegida solo se muestra en este formulario.</p>
+      <legend>Fotografía del libro <span className="panel-admin__marca-campo">Opcional</span></legend>
+      <p className="panel-admin__ayuda">La portada se guarda junto con el libro.</p>
       <input
         ref={entrada}
         type="file"

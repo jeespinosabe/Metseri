@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { ErrorConsulta, esSlugValido } from '../servicios/consultaSupabase.js';
+import { esIdLibroValido } from '../servicios/gestionLibros.js';
+import { responderPortada } from '../servicios/portadasLibros.js';
 
 function responderError(respuesta, estado, codigo, mensaje) {
     return respuesta.status(estado).json({ error: { codigo, mensaje } });
@@ -42,6 +44,11 @@ export function crearRutasContenido(consulta) {
     rutasContenido.get('/:slug/libros', async (peticion, respuesta) => {
         const ficha = await obtenerFichaVisible(peticion.params.slug, respuesta);
         if (ficha !== null) respuesta.json(await consulta.listarLibros(peticion.params.slug));
+    });
+
+    rutasContenido.get('/:slug/libros/:id/portada', async (peticion, respuesta) => {
+        if (!esIdLibroValido(peticion.params.id)) return respuesta.sendStatus(404);
+        responderPortada(respuesta, await consulta.obtenerPortada(peticion.params.slug, peticion.params.id));
     });
 
     rutasContenido.use((error, peticion, respuesta, siguiente) => {

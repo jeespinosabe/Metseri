@@ -79,7 +79,7 @@ it('consulta solo los tres recursos permitidos con clave pública, GET, proyecci
   assert.equal(solicitudes[1].url.searchParams.get('p_slug'), 'luna')
   assert.equal(solicitudes[2].url.searchParams.get('cuerpo_slug'), 'eq.tierra')
   assert.equal(solicitudes[2].url.searchParams.get('order'), 'orden.asc,libro_id.asc')
-  assert.deepEqual(solicitudes[2].url.searchParams.get('select').split(','), Object.keys(librosPrueba[0]))
+  assert.deepEqual(solicitudes[2].url.searchParams.get('select').split(','), [...Object.keys(librosPrueba[0]), 'portada'])
 })
 
 it('rechaza configuración ausente o inválida y claves privilegiadas antes de hacer solicitudes', async () => {

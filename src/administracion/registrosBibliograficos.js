@@ -1,4 +1,5 @@
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
+import { presentarPortada } from '../servicios/portadasLibros.js'
 
 export const CAMPOS_LIBRO = Object.freeze(['titulo', 'autoria', 'editorial', 'anio'])
 
@@ -45,7 +46,7 @@ export function formatearAnio(anio) {
 }
 
 function copiarFotografia(fotografia) {
-  return fotografia ? { url: fotografia.url, encuadre: { ...ENCUADRE_INICIAL, ...fotografia.encuadre } } : null
+  return fotografia ? { ...fotografia, encuadre: { ...ENCUADRE_INICIAL, ...fotografia.encuadre } } : null
 }
 
 export function crearBorradorLibro(registro = null) {
@@ -158,11 +159,13 @@ export function presentarLibroAdministrativo(libro) {
     throw new Error('La API devolvió un registro bibliográfico inválido.')
   }
   const autores = libro.autores.map(({ nombre }) => nombre)
+  const fotografia = presentarPortada(libro.portada, `/api/admin/libros/${encodeURIComponent(libro.id)}/portada`)
   return {
     id: libro.id, titulo: libro.titulo, autores, autoria: autores.join(', '),
     editorial: libro.editorial, anio: libro.anio, activo: libro.activo,
     cuerposIds: libro.cuerpos.map(({ slug }) => slug),
     ordenPorCuerpo: Object.fromEntries(libro.cuerpos.map(({ slug, orden }) => [slug, orden])),
+    ...(fotografia && { fotografia }),
   }
 }
 
@@ -179,7 +182,14 @@ function convertirBorrador(borrador) {
 
 export function prepararDatosLibro(borrador, registro = null) {
   const datos = convertirBorrador(borrador)
-  if (!registro) return datos
-  const anteriores = convertirBorrador(crearBorradorLibro(registro))
-  return Object.fromEntries(Object.entries(datos).filter(([campo, valor]) => JSON.stringify(valor) !== JSON.stringify(anteriores[campo])))
+  const anteriores = registro && convertirBorrador(crearBorradorLibro(registro))
+  const cambios = anteriores ? Object.fromEntries(Object.entries(datos).filter(([campo, valor]) => JSON.stringify(valor) !== JSON.stringify(anteriores[campo]))) : datos
+  const foto = borrador.fotografia
+  const fotoAnterior = registro?.fotografia
+  if (foto?.archivo) cambios.portada = { archivo: foto.archivo, ...foto.encuadre }
+  else if (!foto && fotoAnterior) cambios.portada = null
+  else if (fotoAnterior?.version && (foto.encuadre.x !== fotoAnterior.encuadre.x || foto.encuadre.y !== fotoAnterior.encuadre.y)) {
+    cambios.portada = { version: fotoAnterior.version, ...foto.encuadre }
+  }
+  return cambios
 }

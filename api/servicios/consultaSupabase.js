@@ -89,9 +89,14 @@ export function crearConsultaSupabase({ entorno = process.env, solicitar = fetch
 
     listarLibros(slug) {
       return consultar('v_libros_por_cuerpo', {
-        select: CAMPOS_LIBRO.join(','), cuerpo_slug: `eq.${slug}`, order: 'orden.asc,libro_id.asc',
+        select: [...CAMPOS_LIBRO, 'portada'].join(','), cuerpo_slug: `eq.${slug}`, order: 'orden.asc,libro_id.asc',
       }, (contenido) => Array.isArray(contenido)
         && contenido.every((libro) => contieneCampos(libro, CAMPOS_LIBRO)))
+    },
+
+    obtenerPortada(slug, id) {
+      return consultar('rpc/obtenerPortadaPublica', { p_slug: slug, p_id: id },
+        (contenido) => contenido === null || typeof contenido === 'string')
     },
   }
 }

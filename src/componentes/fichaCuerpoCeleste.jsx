@@ -73,6 +73,16 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
         {bibliografia?.fase === 'cargando' && <p role="status">Cargando recomendaciones...</p>}
         {bibliografia?.fase === 'error' && <p role="status">No se pudieron cargar los libros. Cierra la ficha y vuelve a abrirla para intentarlo de nuevo.</p>}
         {libros.length > 0 && <ol className="recomendaciones-libros">{libros.map((libro) => <li key={libro.id}>
+          {modo !== 'vr' && bibliografia.fechaDescarga == null && libro.fotografia && <img
+            key={libro.fotografia.url}
+            className="recomendaciones-libros__portada"
+            src={libro.fotografia.url}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            style={{ objectPosition: `${libro.fotografia.encuadre.x}% ${libro.fotografia.encuadre.y}%` }}
+            onError={(evento) => { evento.currentTarget.hidden = true }}
+          />}
           <h3>{libro.titulo}</h3>
           {libro.autor && <p className="recomendaciones-libros__autor">{libro.autor}</p>}
           {(libro.editorial || libro.anio) && <p className="recomendaciones-libros__edicion">{[libro.editorial, libro.anio].filter(Boolean).join(' · ')}</p>}

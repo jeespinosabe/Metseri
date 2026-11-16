@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { ErrorLibros, esIdLibroValido, validarLibro } from '../servicios/gestionLibros.js'
+import { responderPortada } from '../servicios/portadasLibros.js'
 
 export function crearRutasLibros(gestion, exigirAdministrador) {
   const rutas = Router()
@@ -18,6 +19,7 @@ export function crearRutasLibros(gestion, exigirAdministrador) {
     respuesta.json(await gestion.listar(+limite, +desplazamiento))
   })
   rutas.get('/:id', async (peticion, respuesta) => respuesta.json(await gestion.obtener(peticion.params.id)))
+  rutas.get('/:id/portada', async (peticion, respuesta) => responderPortada(respuesta, await gestion.obtenerPortada(peticion.params.id)))
   rutas.post('/', async (peticion, respuesta) => {
     const libro = await gestion.guardar(null, validarLibro(peticion.body))
     respuesta.location(`/api/admin/libros/${libro.id}`).status(201).json(libro)
