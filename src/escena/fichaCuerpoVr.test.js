@@ -24,6 +24,34 @@ function preparar(t) {
   return { ficha, cambios, imagenes, lienzo, textos, obtenerDibujos: () => dibujos }
 }
 
+it('recrea la textura al cambiar dimensiones para no conservar otra ficha en la GPU', (t) => {
+  const { ficha, cambios } = preparar(t)
+  ficha.ajustar(1440, 900)
+  ficha.establecerCuerpo(CUERPOS_CELESTES.find((cuerpo) => cuerpo.id === 'tierra'))
+  ficha.establecerModo('vr')
+  ficha.mostrarSeccion(1)
+  const anterior = ficha.malla.material.map
+  let liberaciones = 0
+  anterior.addEventListener('dispose', () => { liberaciones += 1 })
+  ficha.ajustar(686, 421)
+  const actual = ficha.malla.material.map
+  assert.notEqual(actual, anterior)
+  assert.notEqual(actual.source, anterior.source)
+  assert.equal(liberaciones, 1)
+  assert.equal(actual.image.width, 617)
+  assert.equal(actual.image.height, 440)
+  assert.equal(actual.colorSpace, anterior.colorSpace)
+  assert.equal(cambios.at(-1).seccion, 'datos')
+  ficha.ajustar(686, 421)
+  assert.equal(ficha.malla.material.map, actual, 'el mismo tamaño reutiliza la textura')
+  assert.equal(liberaciones, 1)
+  let actualLiberada = 0
+  actual.addEventListener('dispose', () => { actualLiberada += 1 })
+  ficha.destruir()
+  ficha.destruir()
+  assert.equal(actualLiberada, 1)
+})
+
 it('rellena el Canvas, conserva Libros al llegar la API y navega continuaciones con las mismas pestañas', (t) => {
   const { ficha, cambios, textos, obtenerDibujos } = preparar(t)
   const cuerpo = CUERPOS_CELESTES.find((registro) => registro.id === 'luna')

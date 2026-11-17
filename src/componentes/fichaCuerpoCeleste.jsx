@@ -36,7 +36,13 @@ export function FichaCuerpoCeleste({ cuerpo, modo, lectura, contenido, alAcciona
       onPointerEnter={alEntrar}
       tabIndex={0}
     >
-      <button className="ficha-cuerpo__cerrar" type="button" onClick={alCerrar} aria-label={`Cerrar ficha de ${cuerpo.nombre}`}>×</button>
+      <div className="ficha-cuerpo__cierre">
+        <button className="ficha-cuerpo__cerrar" type="button" onClick={alCerrar} aria-label={`Cerrar ficha de ${cuerpo.nombre}`}>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true" focusable="false">
+            <path d="m6 6 12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
       <header className="ficha-cuerpo__cabecera">
         <figure className="ficha-cuerpo__imagen">
           {imagenFallida ? <div className="ficha-cuerpo__imagen-alternativa" role="img" aria-label={cuerpo.imagenAlternativa} />

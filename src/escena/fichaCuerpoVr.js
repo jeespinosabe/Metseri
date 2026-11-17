@@ -8,7 +8,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   lienzo.width = 800
   lienzo.height = 720
   const contexto = lienzo.getContext('2d')
-  const textura = new CanvasTexture(lienzo)
+  let textura = new CanvasTexture(lienzo)
   textura.colorSpace = SRGBColorSpace
   const geometria = new PlaneGeometry(1, 1)
   const material = new MeshBasicMaterial({ map: textura, toneMapped: false })
@@ -48,8 +48,6 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.font = `${Math.max(30, Math.min(56, ancho / 12))}px system-ui, sans-serif`
     contexto.fillStyle = '#eef2f4'
     contexto.fillText(cuerpo.nombre, 30, 44)
-    contexto.fillStyle = '#26343e'
-    contexto.fillRect(32, 102, Math.min(170, ancho * .28), 7)
     if (imagen?.complete && imagen.naturalWidth > 0) {
       const anchoImagen = Math.min(130, ancho * .22)
       const escala = Math.min(anchoImagen / imagen.naturalWidth, 84 / imagen.naturalHeight)
@@ -138,9 +136,19 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     },
     ajustar(ancho, alto) {
       if (destruido) return
-      lienzo.width = Math.max(320, Math.min(900, Math.round(ancho * .9)))
+      const anchoLienzo = Math.max(320, Math.min(900, Math.round(ancho * .9)))
       const altoReferencia = Math.max(440, Math.min(1000, Math.round(alto * 1.6)))
-      lienzo.height = Math.max(440, Math.round(altoReferencia * .55))
+      const altoLienzo = Math.max(440, Math.round(altoReferencia * .55))
+      if (lienzo.width !== anchoLienzo || lienzo.height !== altoLienzo) {
+        lienzo.width = anchoLienzo
+        lienzo.height = altoLienzo
+        // WebGL reserva las dimensiones de la textura al subirla por primera vez.
+        // Una actualización parcial tras reducir el Canvas deja restos de la ficha anterior.
+        textura.dispose()
+        textura = new CanvasTexture(lienzo)
+        textura.colorSpace = SRGBColorSpace
+        material.map = textura
+      }
       const altoMundo = 2 * DISTANCIA_FICHA * Math.tan(35 * Math.PI / 180) * .82
       const anchoMundo = altoMundo * (ancho / 2 / alto)
       // Mantener el ancho y la escala del texto al acortar el área de lectura.

@@ -28,10 +28,10 @@ import { crearApuntadoMouse } from './apuntadoMouse.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { consumirToqueFicha, resolverAccionFicha } from './contenidoFicha.js'
 import { crearInstruccionesVr } from './instruccionesVr.js'
+import { calcularDensidadRenderizado } from './rendimientoEscena.js'
 
 const COLOR_FONDO = 0x080b12
 const RADIO_CIELO = 100
-const LIMITE_PIXEL_RATIO = 1.5
 const CAMPO_VISION_VERTICAL = 70
 const SEMILLA_CIELO = 20241018
 
@@ -165,7 +165,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   camara.focus = RADIO_PLANETAS
   const proyeccion = crearProyeccionVista(escena)
   const etiquetas = crearEtiquetasPlanetas(contenedor, planetas.etiquetas)
-  const etiquetasVisor = crearEtiquetasVisor(escena, planetas.etiquetas)
+  let etiquetasVisor = null
 
   let efectoEstereo = null
   let diagonalPantalla = DIAGONAL_PREDETERMINADA
@@ -193,7 +193,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     alCambiar: (estado) => {
       planetas.actualizarAspecto(estado)
       etiquetas.actualizarAspecto(estado)
-      etiquetasVisor.actualizarAspecto(estado)
+      etiquetasVisor?.actualizarAspecto(estado)
       if (estado.planetaSeleccionado !== seleccionadoAnterior) {
         seleccionadoAnterior = estado.planetaSeleccionado
         ficha.establecerCuerpo(obtenerCuerpoCeleste(seleccionadoAnterior))
@@ -222,7 +222,12 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     const ancho = Math.max(1, contenedor.clientWidth)
     const alto = Math.max(1, contenedor.clientHeight)
     renderizador.setPixelRatio(
-      Math.min(window.devicePixelRatio || 1, LIMITE_PIXEL_RATIO),
+      calcularDensidadRenderizado({
+        ancho, alto,
+        densidad: window.devicePixelRatio,
+        modo,
+        tactil: window.matchMedia?.('(pointer: coarse)').matches ?? false,
+      }),
     )
     renderizador.setSize(ancho, alto, false)
     restaurarAreaDibujo()
@@ -253,7 +258,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     if (modo === 'vr') efectoEstereo.establecerAccionPuntero(instrucciones.esVisible() ? null : ficha.detectar(camara)?.accion)
     necesitaDibujo = false
     etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight, ficha.malla)
-    etiquetasVisor.actualizar(camara, modo)
+    etiquetasVisor?.actualizar(camara, modo)
     if (modo === 'vr') efectoEstereo.render(escena, camara)
     else renderizador.render(escena, camara)
   }
@@ -297,8 +302,8 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       camara.quaternion.copy(cuaternion)
       instrucciones.actualizar(camara)
       luz.position.copy(direccionLuz).applyQuaternion(cuaternion)
-      seleccion.actualizarMirada()
       if (modo === 'normal') apuntado.recalcular()
+      else seleccion.actualizarMirada()
       necesitaDibujo = true
     },
 
@@ -313,7 +318,11 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     establecerModo(nuevoModo) {
       if (destruido || contextoPerdido) return
       if (nuevoModo === modo) return
-      if (nuevoModo === 'vr') efectoEstereo ??= crearEfectoVisor(renderizador)
+      if (nuevoModo === 'vr') {
+        efectoEstereo ??= crearEfectoVisor(renderizador)
+        etiquetasVisor ??= crearEtiquetasVisor(escena, planetas.etiquetas)
+        etiquetasVisor.actualizarAspecto(seleccion.obtenerEstado())
+      }
       modo = nuevoModo
       apuntado.limpiar()
       ficha.establecerModo(modo)
@@ -379,7 +388,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       ficha.destruir()
       instrucciones.destruir()
       etiquetas.destruir()
-      etiquetasVisor.destruir()
+      etiquetasVisor?.destruir()
       efectoEstereo?.destruir()
       detenerCiclo()
       observador.disconnect()

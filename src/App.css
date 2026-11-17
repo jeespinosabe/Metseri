@@ -318,6 +318,7 @@
   max-height: calc(100dvh - 32px);
   box-sizing: border-box;
   overflow: auto;
+  overscroll-behavior: contain;
   padding: 24px;
   border: 1px solid #41515b;
   border-radius: 18px;
@@ -398,8 +399,8 @@
   z-index: 20;
   top: max(22px, env(safe-area-inset-top));
   right: max(22px, env(safe-area-inset-right));
-  bottom: 84px;
-  width: min(540px, calc(100% - 44px));
+  max-height: min(720px, calc(100% - 106px));
+  width: min(480px, calc(100% - 44px));
   overflow: auto;
   overflow-wrap: anywhere;
   overscroll-behavior: contain;
@@ -417,17 +418,18 @@
   line-height: 1.7;
 }
 
-.ficha-cuerpo__cabecera { position: relative; min-height: 174px; padding-top: 12px; }
+.ficha-cuerpo__cabecera { position: relative; min-height: 150px; padding-top: 12px; }
 .ficha-cuerpo__categoria { width: calc(100% - 140px); margin: 0 0 24px; color: #c7e69d; font-size: .74rem; font-weight: 500; line-height: 1.6; letter-spacing: .14em; text-transform: uppercase; }
-.ficha-cuerpo h1 { position: relative; max-width: calc(100% - 126px); margin: 0; color: #edf2f5; font-size: 3.7rem; font-weight: 400; line-height: 1.04; letter-spacing: -.045em; }
+.ficha-cuerpo h1 { position: relative; max-width: calc(100% - 126px); margin: 0; color: #edf2f5; font-size: 3.2rem; font-weight: 400; line-height: 1.08; letter-spacing: -.035em; }
 .ficha-cuerpo__subtitulo { margin: 20px 0 0; color: #8b9fae; font-size: 1rem; }
 .ficha-cuerpo__cabecera > .espacio-contenido { width: 48%; margin-top: 24px; }
 .ficha-cuerpo h2 { margin: 0 0 25px; color: #c7e69d; font-size: .72rem; font-weight: 600; line-height: 1.7; letter-spacing: .1em; text-transform: uppercase; }
 .ficha-cuerpo button { font: inherit; cursor: pointer; }
-.ficha-cuerpo__cerrar { position: absolute; z-index: 2; top: 9px; right: 10px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: transparent; color: #8da1ae; font-size: 1.7rem !important; line-height: 1; }
+.ficha-cuerpo__cierre { position: sticky; z-index: 2; top: 20px; height: 0; display: flex; justify-content: flex-end; pointer-events: none; }
+.ficha-cuerpo__cerrar { position: relative; top: -20px; right: -16px; display: grid; place-items: center; padding: 0; flex: 0 0 44px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid #34424b; background: #111b24; color: #b7c8d1; line-height: 1; pointer-events: auto; }
 .ficha-cuerpo__cerrar:hover { background: #24343d; color: #e7f1f5; }
 .ficha-cuerpo :focus-visible { outline: 2px solid #d1eca8; outline-offset: 4px; }
-.ficha-cuerpo__imagen { position: absolute; top: 26px; right: -5px; width: 154px; height: 120px; margin: 0; }
+.ficha-cuerpo__imagen { position: absolute; top: 28px; right: -5px; width: 132px; height: 110px; margin: 0; }
 .ficha-cuerpo__imagen img { display: block; width: 100%; height: 100%; object-fit: contain; mix-blend-mode: screen; }
 .ficha-cuerpo__imagen-alternativa { width: 90px; height: 90px; margin: 15px auto; border-radius: 50%; background: #263640; }
 .ficha-cuerpo__descripcion { min-height: 126px; margin: 12px 0 28px; }
@@ -461,16 +463,35 @@
 .ficha-vr-indicaciones span { width: 50%; box-sizing: border-box; padding: 0 12px; color: #b9cbac; font-size: .65rem; text-align: center; text-shadow: 0 1px 6px #000; }
 
 @media (max-width: 600px) {
-  .ficha-cuerpo { top: auto; left: 12px; right: 12px; bottom: max(76px, calc(64px + env(safe-area-inset-bottom))); width: auto; max-height: calc(100% - 104px); padding: 26px 22px; border-radius: 18px; }
-  .ficha-cuerpo__cabecera { min-height: 157px; }
-  .ficha-cuerpo h1 { font-size: 2.8rem; max-width: calc(100% - 102px); }
-  .ficha-cuerpo__categoria { width: calc(100% - 110px); font-size: .65rem; margin-bottom: 20px; }
-  .ficha-cuerpo__imagen { width: 116px; height: 104px; top: 23px; right: -8px; }
-  .ficha-cuerpo__descripcion { min-height: 116px; margin-top: 8px; }
-  .ficha-cuerpo__datos { gap: 32px 24px; }
+  .escena-estelar--normal + .acciones-aplicacion { top: max(16px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); bottom: auto; }
+  .escena-estelar--normal + .acciones-aplicacion .descarga-sin-conexion__estado { top: calc(100% + 4px); bottom: auto; }
+  .ficha-cuerpo { top: auto; left: max(12px, env(safe-area-inset-left)); right: max(12px, env(safe-area-inset-right)); bottom: max(76px, calc(64px + env(safe-area-inset-bottom))); width: auto; max-height: min(60%, 520px); padding: 20px; border-radius: 18px; }
+  .ficha-cuerpo__cabecera { min-height: 118px; padding-top: 4px; }
+  .ficha-cuerpo h1 { font-size: 2.4rem; max-width: calc(100% - 92px); }
+  .ficha-cuerpo__categoria { width: calc(100% - 92px); font-size: .65rem; margin-bottom: 14px; letter-spacing: .09em; }
+  .ficha-cuerpo__cierre { top: 12px; }
+  .ficha-cuerpo__cerrar { top: -12px; right: -12px; }
+  .ficha-cuerpo__imagen { width: 94px; height: 82px; top: 24px; right: -4px; }
+  .ficha-cuerpo__cabecera > .espacio-contenido { margin-top: 16px; }
+  .ficha-cuerpo__descripcion { min-height: 0; margin: 8px 0 22px; }
+  .ficha-cuerpo__descripcion p { font-size: 1rem; line-height: 1.65; }
+  .ficha-cuerpo__datos-seccion { padding: 22px 0; }
+  .ficha-cuerpo__datos { gap: 24px 18px; }
+  .ficha-cuerpo dd { margin-top: 10px; font-size: 1.65rem; }
+  .ficha-cuerpo__unidad { margin-top: 10px; }
 }
 
 @media (max-width: 360px) {
-  .ficha-cuerpo h1 { font-size: 2.4rem; max-width: calc(100% - 90px); }
-  .ficha-cuerpo__imagen { width: 100px; height: 90px; right: -4px; }
+  .ficha-cuerpo h1 { font-size: 2.1rem; }
+  .escena-estelar--normal .escena-estelar__controles { left: 16px; justify-content: center; }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .ficha-cuerpo { top: max(12px, env(safe-area-inset-top)); left: auto; right: max(12px, env(safe-area-inset-right)); bottom: auto; width: min(390px, 48%); max-height: calc(100% - 88px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 20px; }
+  .ficha-cuerpo__cabecera { min-height: 112px; }
+  .ficha-cuerpo h1 { font-size: 2.2rem; max-width: calc(100% - 90px); }
+  .ficha-cuerpo__categoria { width: calc(100% - 90px); margin-bottom: 12px; }
+  .ficha-cuerpo__imagen { width: 92px; height: 80px; top: 24px; right: 0; }
+  .ficha-cuerpo__cierre { top: 12px; }
+  .ficha-cuerpo__cerrar { top: -12px; right: -12px; }
 }

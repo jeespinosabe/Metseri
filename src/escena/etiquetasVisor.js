@@ -27,13 +27,18 @@ export function crearEtiquetasVisor(escena, planetas) {
       textura.needsUpdate = true
     }
     dibujar(false)
-    return { planeta, sprite, textura, material, dibujar }
+    return { planeta, sprite, textura, material, dibujar, activa: false }
   })
   const punto = new Vector3()
   const vertice = new Vector3()
   return {
     actualizarAspecto({ planetaApuntado, planetaSeleccionado }) {
-      etiquetas.forEach(({ planeta, dibujar }) => dibujar(planeta.id === planetaApuntado || planeta.id === planetaSeleccionado))
+      etiquetas.forEach((etiqueta) => {
+        const activa = etiqueta.planeta.id === planetaApuntado || etiqueta.planeta.id === planetaSeleccionado
+        if (activa === etiqueta.activa) return
+        etiqueta.activa = activa
+        etiqueta.dibujar(activa)
+      })
     },
     actualizar(camara, modo) {
       raiz.visible = modo === 'vr'

@@ -6,7 +6,6 @@ import {
 } from '../escena/controlesVista.js'
 import { crearSensorOrientacion } from '../escena/orientacionDispositivo.js'
 import { crearPantallaInmersiva } from '../escena/pantallaInmersiva.js'
-import { PunteroCruz } from './punteroCruz.jsx'
 import { ConfiguracionVisor } from './configuracionVisor.jsx'
 import { guardarDiagonalPantalla, leerDiagonalPantalla } from '../escena/perfilVisor.js'
 import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
@@ -249,7 +248,6 @@ export function EscenaEstelar() {
         </div>
       ) : (
         <>
-          {modo === 'normal' && <PunteroCruz modo={modo} />}
           <span className="solo-lectores" role="status">{cuerpo ? `Ficha de ${cuerpo.nombre} abierta.` : 'Sin ficha abierta.'}</span>
           {cuerpo && <FichaConContenido
             key={cuerpo.id}
