@@ -7,13 +7,14 @@ import { obtenerZonasNavegacion } from './contenidoFicha.js'
 import { etiquetaCubiertaPorFicha } from './etiquetasPlanetas.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
+import { calcularConfiguracionVisor } from './rendimientoEscena.js'
 
 function preparar(t) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
   const imagenes = []
   let dibujos = 0
   const textos = []
-  const contexto = { font: '', fillRect() { dibujos += 1 }, strokeRect() {}, fillText(texto) { textos.push(texto) }, drawImage() {}, measureText(texto) { return { width: texto.length * parseFloat(this.font) * .5 } } }
+  const contexto = { font: '', fillRect() { dibujos += 1 }, strokeRect() {}, fillText(texto) { textos.push(texto) }, drawImage() {}, measureText(texto) { return { width: texto.length * Number(this.font.match(/([\d.]+)px/)[1]) * .5 } } }
   const lienzo = { width: 0, height: 0, getContext: () => contexto }
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: () => lienzo } })
   Object.defineProperty(globalThis, 'Image', { configurable: true, value: class ImagenSimulada { constructor() { imagenes.push(this) } } })
@@ -50,6 +51,39 @@ it('recrea la textura al cambiar dimensiones para no conservar otra ficha en la 
   ficha.destruir()
   ficha.destruir()
   assert.equal(actualLiberada, 1)
+})
+
+it('la rasterización física conserva páginas, orientación y acciones lógicas sin recomponer la lectura', t => {
+  const { ficha } = preparar(t)
+  const c = calcularConfiguracionVisor({ ancho: 844, alto: 390, diagonal: 8, densidad: 3 })
+  ficha.ajustar(844, 390, c)
+  const cuerpo = CUERPOS_CELESTES.find(c => c.id === 'saturno')
+  ficha.establecerCuerpo(cuerpo)
+  ficha.establecerContenido({ fase: 'disponible', ficha: adaptarContenido(cuerpo, FICHAS_PRUEBA.find(f => f.slug === cuerpo.id)) })
+  ficha.establecerModo('vr')
+  ficha.mostrarSeccion(1)
+  const camara = new PerspectiveCamera(70, 2, .1, 1000)
+  ficha.reubicar(camara)
+  const estado = ficha.obtenerLectura(), revision = ficha.obtenerRevisionLectura(), posicion = ficha.malla.position.clone()
+  const original = ficha.malla.material.map
+  let liberaciones = 0
+  original.addEventListener('dispose', () => { liberaciones += 1 })
+  ficha.ajustar(844, 390, { ...c, factorTextura: 1 })
+  assert.equal(liberaciones, 1)
+  assert.deepEqual(ficha.obtenerLectura(), estado)
+  assert.equal(ficha.obtenerRevisionLectura(), revision)
+  assert.deepEqual(ficha.malla.position, posicion)
+  assert.equal(ficha.malla.material.map.image.width, 900)
+  const p = ficha.obtenerPresentacion()
+  for (const zona of obtenerZonasNavegacion(p.ancho, p.alto, estado.pagina, estado.total, null, p)) {
+    const punto = ficha.malla.localToWorld(new Vector3((zona.x + zona.ancho / 2) / p.ancho - .5, .5 - (zona.y + zona.alto / 2) / p.alto, 0))
+    camara.lookAt(punto)
+    assert.equal(ficha.detectar(camara)?.accion, zona.accion)
+  }
+  ficha.ajustar(844, 390, c)
+  assert.equal(ficha.malla.material.map.image.width, 1800)
+  assert.equal(ficha.obtenerRevisionLectura(), revision)
+  assert.equal(ficha.malla.material.map.generateMipmaps, false)
 })
 
 it('rellena el Canvas, conserva Libros al llegar la API y navega continuaciones con las mismas pestañas', (t) => {

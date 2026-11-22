@@ -1,0 +1,186 @@
+import assert from 'node:assert/strict'
+import { it } from 'node:test'
+import { Euler, Quaternion, Vector3 } from 'three'
+import { calcularConfiguracionVisor, limitarRasterizacion } from './rendimientoEscena.js'
+import { calcularPresentacionFicha } from './lecturaVisor.js'
+import { proyectarPuntoVisor, proyectarRectanguloVisor, medirFuenteVisor, rectangulosSeCruzan } from './proyeccionVisor.js'
+import { crearPaginasFicha } from './contenidoFicha.js'
+import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
+import { adaptarContenido } from '../servicios/consultaContenido.js'
+import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
+import { prepararEntornoEscena } from '../pruebas/entornoEscena.js'
+
+const ventanas = [[844, 390], [1045, 552], [1381, 645]]
+const contexto = { font: '', measureText(texto) { return { width: texto.length * Number(this.font.match(/([\d.]+)px/)[1]) * .55 } } }
+
+it('la medición de pantalla invierte la distorsión utilizada por el shader de lentes', () => {
+  for (const diagonal of [6.9, 7, 8]) {
+    const c = calcularConfiguracionVisor({ ancho: 844, alto: 390, diagonal, densidad: 3 })
+    for (const indice of [0, 1]) for (const punto of [{ x: 0, y: 0, z: -32 }, { x: 8, y: -4, z: -60 }, { x: -12, y: 12, z: -60 }]) {
+      const p = proyectarPuntoVisor(punto, c, indice), ojo = c.optica.ojos[indice]
+      const x = (p.x * c.optica.milimetrosPorPixel - ojo.centroX) / 40
+      const y = ((c.alto - p.y) * c.optica.milimetrosPorPixel - ojo.centroY) / 40
+      const r2 = x * x + y * y
+      const factor = 1 + .34 * r2 + .1 * r2 * r2
+      assert.ok(Math.abs(x * factor - (punto.x - ojo.desplazamiento) / -punto.z) < 1e-8)
+      assert.ok(Math.abs(y * factor - punto.y / -punto.z) < 1e-8)
+    }
+  }
+})
+
+it('la calidad automática no decrece con pulgadas y respeta DPR, presupuesto y GPU', () => {
+  for (const [ancho, alto] of ventanas) for (const densidad of [1, 2, 3]) {
+    let anterior = 0
+    for (const diagonal of [6.9, 7, 8]) {
+      const c = calcularConfiguracionVisor({ ancho, alto, diagonal, densidad })
+      assert.ok(c.proporcion >= anterior && c.proporcion <= densidad && c.proporcion <= 1.75)
+      assert.ok(ancho * alto * c.proporcion ** 2 <= 2_000_000 + .001)
+      anterior = c.proporcion
+    }
+    const limitada = calcularConfiguracionVisor({ ancho, alto, densidad, diagonal: 8, maxTextura: 512, maxRenderbuffer: 256 })
+    assert.ok(Math.max(ancho, alto) * limitada.proporcion <= 256)
+  }
+  assert.deepEqual(limitarRasterizacion(900, 800), { ancho: 1800, alto: 1600, factor: 2 })
+  const limitada = limitarRasterizacion(900, 800, { maxTextura: 512 })
+  assert.equal(limitada.ancho, 512)
+  assert.ok(limitada.alto <= 512)
+})
+
+it('las doce fichas mantienen contenido completo, sin recorte y con letra proyectada legible', () => {
+  for (const [ancho, alto] of ventanas) for (const diagonal of [6.9, 7, 8]) {
+    const c = calcularConfiguracionVisor({ ancho, alto, diagonal, densidad: 3 })
+    const p = calcularPresentacionFicha(c)
+    for (const x of [32, 225, 450, 675, 868]) for (const y of [p.inicio, 500, 680]) {
+      for (const [tamano, minimo] of [[p.tipografia.parrafo, 16], [p.tipografia.unidad, 14]]) {
+        const medidas = medirFuenteVisor({ x: (x - 450) * p.escala, y: p.desplazamientoY + (400 - y) * p.escala, z: -32, tamano: tamano * p.escala }, c)
+        assert.ok(medidas.every(valor => valor >= minimo - .08))
+      }
+    }
+    for (const fuente of FICHAS_PRUEBA) for (const copia of [false, true]) {
+      const cuerpo = obtenerCuerpoCeleste(fuente.slug)
+      const ficha = adaptarContenido(cuerpo, fuente)
+      const libros = [{ titulo: 'Un título largo que debe conservar todas sus palabras al continuar la lectura', autor: 'Autor de prueba', editorial: 'Editorial de prueba', anio: 2026 }]
+      const paginas = crearPaginasFicha(cuerpo, contexto, { ancho: p.ancho, alto: p.alto, presentacion: p,
+        contenido: { fase: 'disponible', ficha, bibliografia: { fase: 'disponible', libros }, ...(copia ? { fechaDescarga: 1_794_952_800_000 } : {}) } })
+      for (const pagina of paginas) for (const e of pagina.elementos) {
+        if (e.tipo !== 'texto') continue
+        assert.ok(e.y + e.tamano * 1.2 <= p.alto - p.pie + .1, `${ancho}/${diagonal}/${cuerpo.id}: ${e.texto}`)
+        contexto.font = `${e.negrita ? '700 ' : ''}${e.tamano}px system-ui`
+        assert.ok(e.x + contexto.measureText(e.texto).width <= p.ancho - p.margen + .1)
+      }
+      const datos = paginas.filter(pagina => pagina.id === 'datos').flatMap(pagina => pagina.elementos).map(e => e.texto ?? '').join(' ').replace(/\s+/g, ' ')
+      for (const dato of ficha.datos.filter(Boolean)) for (const texto of [dato.etiqueta, dato.valor, dato.unidad]) assert.ok(datos.includes(texto), texto)
+      const reconstruir = id => paginas.filter(pagina => pagina.id === id).flatMap(pagina => pagina.elementos)
+        .filter(e => e.tipo === 'texto' && e.tamano === p.tipografia.parrafo && !e.acento).map(e => e.texto).join(' ')
+      assert.equal(reconstruir('resumen'), ficha.descripcion)
+      assert.equal(reconstruir('curiosidades'), ficha.curiosidades.join(' '))
+      const titulos = paginas.filter(pagina => pagina.id === 'libros').flatMap(pagina => pagina.elementos).filter(e => e.negrita).map(e => e.texto).join(' ')
+      assert.equal(titulos, libros[0].titulo)
+      const metadatos = reconstruir('libros')
+      assert.ok(metadatos.includes(libros[0].autor))
+      assert.ok(metadatos.includes(`${libros[0].editorial} · ${libros[0].anio}`))
+    }
+  }
+})
+
+it('los nombres centrados se pueden leer sin seleccionar y no quedan debajo de los botones', t => {
+  const entorno = prepararEntornoEscena(t)
+  entorno.campo.establecerModo('vr')
+  entorno.campo.ocultarInstruccionVr()
+  for (const [ancho, alto] of ventanas) for (const diagonal of [6.9, 7, 8]) {
+    entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+    entorno.campo.establecerDiagonalPantalla(diagonal)
+    for (const cuerpo of FICHAS_PRUEBA) {
+      entorno.apuntarCuerpo(cuerpo.slug)
+      entorno.dibujar()
+      let etiqueta
+      const visibles = []
+      entorno.escena().traverse(o => {
+        if (o.isSprite && o.userData.cuerpoId) {
+          if (o.userData.cuerpoId === cuerpo.slug) etiqueta = o
+          if (o.visible && o.userData.cajas) visibles.push(o.userData.cajas)
+        }
+      })
+      assert.ok(etiqueta?.visible, `etiqueta de ${cuerpo.slug}`)
+      const posicion = etiqueta.getWorldPosition(new Vector3()).applyQuaternion(entorno.campo.obtenerOrientacion().invert())
+      const c = calcularConfiguracionVisor({ ancho, alto, diagonal })
+      for (const [fuente, y, minimo] of [[52, 8, 14], [44, 82, 12]]) {
+        if (y === 82 && !cuerpo.planeta) continue
+        const medidas = medirFuenteVisor({ x: posicion.x, y: posicion.y + etiqueta.scale.y * (.5 - y / 160), z: posicion.z, tamano: etiqueta.scale.y * fuente / 160 }, c)
+        assert.ok(medidas.every(valor => valor >= minimo - .1), `${cuerpo.slug}: ${medidas}`)
+      }
+      for (const caja of etiqueta.userData.cajas) assert.ok(caja.y + caja.alto <= alto - 80)
+      for (let i = 0; i < visibles.length; i += 1) for (let j = i + 1; j < visibles.length; j += 1) {
+        assert.ok(visibles[i].every((caja, ojo) => !rectangulosSeCruzan(caja, visibles[j][ojo])))
+      }
+    }
+  }
+})
+
+it('cambiar pulgadas conserva estrellas, cuerpos y texturas y reutiliza entradas idénticas', t => {
+  const entorno = prepararEntornoEscena(t)
+  entorno.redimensionar(844, 390, { rotarPantalla: true })
+  entorno.dibujar()
+  const estrellas = []
+  entorno.escena().traverse(o => { if (o.isPoints) estrellas.push({ objeto: o, posicion: o.geometry.attributes.position, color: o.geometry.attributes.color, textura: o.material.map }) })
+  assert.equal(estrellas.reduce((total, e) => total + e.posicion.count, 0), 6000)
+  entorno.campo.establecerModo('vr')
+  entorno.campo.establecerDiagonalPantalla(8)
+  entorno.apuntarCuerpo('tierra')
+  entorno.campo.activar({})
+  entorno.dibujar()
+  const textura = entorno.tarjeta().material.map, version = textura.version
+  entorno.campo.establecerDiagonalPantalla(8)
+  entorno.dibujar()
+  assert.equal(entorno.tarjeta().material.map, textura)
+  assert.equal(textura.version, version)
+  for (const diagonal of [6.9, 7, 8]) {
+    entorno.campo.establecerDiagonalPantalla(diagonal)
+    entorno.dibujar()
+    for (const e of estrellas) {
+      assert.equal(e.objeto.geometry.attributes.position, e.posicion)
+      assert.equal(e.objeto.geometry.attributes.color, e.color)
+      assert.equal(e.objeto.material.map, e.textura)
+    }
+  }
+})
+
+it('las parejas de referencia conservan nombres y relaciones separados de la barra y la ficha', t => {
+  const entorno = prepararEntornoEscena(t)
+  entorno.redimensionar(1381, 645, { rotarPantalla: true })
+  entorno.campo.establecerDiagonalPantalla(8)
+  entorno.campo.establecerModo('vr')
+  entorno.campo.ocultarInstruccionVr()
+  const etiquetas = []
+  entorno.dibujar()
+  entorno.escena().traverse(o => { if (o.isSprite && o.userData.cuerpoId) etiquetas.push(o) })
+  for (const [ancho, alto] of ventanas) for (const diagonal of [6.9, 7, 8]) for (const movimiento of [-.02, 0, .02]) {
+    entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+    entorno.campo.establecerDiagonalPantalla(diagonal)
+    const orientacion = new Quaternion().setFromEuler(new Euler(10 * Math.PI / 180, 175 * Math.PI / 180 + movimiento, 0, 'YXZ'))
+    entorno.campo.establecerOrientacion(orientacion)
+    entorno.dibujar()
+    const c = calcularConfiguracionVisor({ ancho, alto, diagonal })
+    for (const id of ['saturno', 'titan', 'neptuno', 'triton']) {
+      const cuerpo = entorno.escena().getObjectByName(id), posicion = cuerpo.position.clone().applyQuaternion(orientacion.clone().invert())
+      const radio = cuerpo.children.find(o => o.isMesh).scale.x
+      const cajas = proyectarRectanguloVisor({ ...posicion, ancho: radio * 2, alto: radio * 2 }, c)
+      const anillo = cuerpo.children.find(o => o.geometry?.type === 'RingGeometry')
+      const posiciones = anillo?.geometry.attributes.position
+      let anillosVisibles = true
+      for (let i = 0; posiciones && i < posiciones.count; i += 1) {
+        const punto = anillo.localToWorld(new Vector3().fromBufferAttribute(posiciones, i)).applyQuaternion(orientacion.clone().invert())
+        anillosVisibles &&= [0, 1].every(ojo => proyectarPuntoVisor(punto, c, ojo)?.visible)
+      }
+      if (anillosVisibles && cajas.every(caja => caja?.visible)) assert.equal(etiquetas.find(e => e.userData.cuerpoId === id)?.visible, true, `${ancho}/${diagonal}/${movimiento}/${id}`)
+    }
+    const visibles = etiquetas.filter(e => e.visible)
+    for (let i = 0; i < visibles.length; i += 1) for (let j = i + 1; j < visibles.length; j += 1) {
+      assert.ok(visibles[i].userData.cajas.every((c, ojo) => !rectangulosSeCruzan(c, visibles[j].userData.cajas[ojo])))
+    }
+  }
+  entorno.apuntarCuerpo('saturno')
+  entorno.campo.activar({})
+  entorno.dibujar()
+  assert.equal(etiquetas.find(e => e.userData.cuerpoId === 'saturno').visible, false, 'la ficha oculta el nombre cubierto')
+})

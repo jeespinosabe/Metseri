@@ -28,13 +28,17 @@ export function dividirLineas(texto, medir, ancho) {
   return lineas
 }
 
-function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
+function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido, presentacion) {
   const paginas = []
-  const margen = 32
-  const inicio = 194
-  const limite = alto - 108
+  const margen = presentacion?.margen ?? 32
+  const fuentes = presentacion?.tipografia
+  const tieneCopia = contenido.fechaDescarga != null || contenido.bibliografia?.fechaDescarga != null
+  const inicio = (presentacion?.inicio ?? 194) + (presentacion && tieneCopia ? fuentes.nota * 1.2 + 4 : 0)
+  const limite = alto - (presentacion?.pie ?? 108)
   const anchoContenido = ancho - margen * 2
-  const tamano = Math.min(24, Math.max(16, ancho / 32))
+  const tamano = fuentes?.parrafo ?? Math.min(24, Math.max(16, ancho / 32))
+  const tamanoSeccion = fuentes?.seccion ?? Math.min(32, Math.max(22, ancho / 24))
+  const espacioTitulo = fuentes ? tamanoSeccion * 1.3 + 12 : 52
   function lineas(texto, fuente, espacio = anchoContenido, negrita = false) {
     contexto.font = `${negrita ? '700 ' : ''}${fuente}px system-ui, sans-serif`
     return dividirLineas(texto, (valor) => contexto.measureText(valor).width, espacio)
@@ -44,19 +48,20 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
     paginas.push(pagina)
     const fechaDescarga = seccion.id === 'libros' ? contenido.bibliografia?.fechaDescarga : contenido.fechaDescarga
     if (fechaDescarga != null) {
-      pagina.elementos.push({ tipo: 'texto', texto: etiquetaCopiaDescargada(fechaDescarga), x: margen, y: 173, tamano: 16, tenue: true })
+      pagina.elementos.push({ tipo: 'texto', texto: etiquetaCopiaDescargada(fechaDescarga), x: margen,
+        y: presentacion?.inicio ?? 173, tamano: fuentes?.nota ?? 16, tenue: true })
     }
-    if (titulo) pagina.elementos.push({ tipo: 'texto', texto: seccion.titulo, x: margen, y: inicio, tamano: Math.min(32, Math.max(22, ancho / 24)), acento: true })
+    if (titulo) pagina.elementos.push({ tipo: 'texto', texto: seccion.titulo, x: margen, y: inicio, tamano: tamanoSeccion, acento: true })
     return pagina
   }
   function parrafos(seccion, textos, titulo = false) {
     let pagina = nuevaPagina(seccion, titulo)
-    let y = inicio + (titulo ? 52 : 6)
+    let y = inicio + (titulo ? espacioTitulo : 6)
     for (const texto of textos) {
       for (const linea of lineas(texto, tamano)) {
         if (y + tamano * 1.2 > limite) {
           pagina = nuevaPagina(seccion, titulo)
-          y = inicio + (titulo ? 52 : 6)
+          y = inicio + (titulo ? espacioTitulo : 6)
         }
         pagina.elementos.push({ tipo: 'texto', texto: linea, x: margen, y, tamano })
         y += tamano * 1.4
@@ -118,9 +123,9 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
   const ficha = contenido.ficha
   parrafos(SECCIONES_FICHA[0], [ficha.descripcion || 'Información no disponible.'])
   const columna = (anchoContenido - 24) / 2
-  const fuenteEtiqueta = Math.min(18, Math.max(16, ancho / 40))
-  const fuenteValor = Math.min(28, Math.max(22, ancho / 28))
-  const fuenteUnidad = Math.min(16, Math.max(13, ancho / 48))
+  const fuenteEtiqueta = fuentes?.etiqueta ?? Math.min(18, Math.max(16, ancho / 40))
+  const fuenteValor = fuentes?.valor ?? Math.min(28, Math.max(22, ancho / 28))
+  const fuenteUnidad = fuentes?.unidad ?? Math.min(16, Math.max(13, ancho / 48))
   const datos = obtenerDatosPrincipales(cuerpo).map((dato, indice) => ficha.datos[indice] ?? dato)
   let pagina = nuevaPagina(SECCIONES_FICHA[1])
   let y = inicio
@@ -146,13 +151,21 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
       const anchoValor = contexto.measureText(dato.valor).width
       contexto.font = `${fuenteUnidad}px system-ui, sans-serif`
       const anchoUnidad = contexto.measureText(dato.unidad).width
+      const palabrasUnidad = dato.unidad.trim().split(/\s+/u)
+      let prefijoUnidad = ''
+      if (presentacion && dato.valor && dato.unidad) {
+        while (palabrasUnidad.length && anchoValor + 8 + contexto.measureText([prefijoUnidad, palabrasUnidad[0]].filter(Boolean).join(' ')).width <= columna) {
+          prefijoUnidad = [prefijoUnidad, palabrasUnidad.shift()].filter(Boolean).join(' ')
+        }
+      }
       // Compartir la línea deja espacio para las duraciones en la segunda fila.
-      if (dato.valor && dato.unidad && anchoValor + 8 + anchoUnidad <= columna) {
+      if (dato.valor && dato.unidad && (anchoValor + 8 + anchoUnidad <= columna || prefijoUnidad)) {
         elementos.push(
           { tipo: 'texto', texto: dato.valor, x, y: posicion, tamano: fuenteValor },
-          { tipo: 'texto', texto: dato.unidad, x: x + anchoValor + 8, y: posicion + fuenteValor - fuenteUnidad, tamano: fuenteUnidad, tenue: true },
+          { tipo: 'texto', texto: prefijoUnidad || dato.unidad, x: x + anchoValor + 8, y: posicion + fuenteValor - fuenteUnidad, tamano: fuenteUnidad, tenue: true },
         )
         posicion += fuenteValor * 1.2
+        if (prefijoUnidad && palabrasUnidad.length) agregarTexto(palabrasUnidad.join(' '), fuenteUnidad, true)
       } else {
         agregarTexto(dato.valor, fuenteValor, false)
         posicion += 4
@@ -175,8 +188,9 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido) {
   return paginas
 }
 
-export function crearPaginasFicha(cuerpo, contexto, { ancho = 800, alto = 720, contenido = null } = {}) {
-  if (contenido) return crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido)
+export function crearPaginasFicha(cuerpo, contexto, { ancho = 800, alto = 720, contenido = null, presentacion = null } = {}) {
+  if (contenido) return crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido, presentacion)
+  if (presentacion) return crearPaginasPublicadas(cuerpo, contexto, ancho, alto, { fase: 'cargando' }, presentacion)
   const margen = 32
   const inicio = 194
   const limite = alto - 108
@@ -233,14 +247,16 @@ export function crearEstadoLectura(alCambiar = () => {}) {
   return { obtenerEstado, actualizar, irA, mover: (desplazamiento) => irA(pagina + desplazamiento) }
 }
 
-export function obtenerZonasNavegacion(ancho, alto, pagina, total, paginas = null) {
+export function obtenerZonasNavegacion(ancho, alto, pagina, total, paginas = null, presentacion = null) {
   const anchoPestana = (ancho - 64 - 24) / SECCIONES_FICHA.length
-  const anchoBoton = Math.min(148, (ancho - 96) / 2)
+  const anchoBoton = Math.min(presentacion ? 300 : 148, (ancho - 96) / 2)
+  const altoControl = presentacion?.altoControl ?? 54
+  const pieY = presentacion ? alto - altoControl - 20 : alto - 80
   return [
-    { accion: 'cerrar', texto: '×', x: ancho - 62, y: 14, ancho: 46, alto: 46 },
-    ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: 122, ancho: anchoPestana, alto: 44, actual: paginas ? paginas[pagina]?.id === seccion.id : pagina === seccion.pagina })),
-    ...(pagina > 0 ? [{ accion: 'anterior', texto: '← Anterior', x: 32, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
-    ...(total > 0 ? [{ accion: 'siguiente', texto: pagina === total - 1 ? 'Cerrar →' : 'Siguiente →', x: ancho - 32 - anchoBoton, y: alto - 80, ancho: anchoBoton, alto: 54 }] : []),
+    { accion: 'cerrar', texto: '×', x: ancho - (presentacion ? 80 : 62), y: 14, ancho: presentacion ? 64 : 46, alto: presentacion ? 64 : 46 },
+    ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: presentacion?.pestanasY ?? 122, ancho: anchoPestana, alto: presentacion?.altoPestana ?? 44, actual: paginas ? paginas[pagina]?.id === seccion.id : pagina === seccion.pagina })),
+    ...(pagina > 0 ? [{ accion: 'anterior', texto: '← Anterior', x: 32, y: pieY, ancho: anchoBoton, alto: altoControl }] : []),
+    ...(total > 0 ? [{ accion: 'siguiente', texto: pagina === total - 1 ? 'Cerrar →' : 'Siguiente →', x: ancho - 32 - anchoBoton, y: pieY, ancho: anchoBoton, alto: altoControl }] : []),
   ]
 }
 

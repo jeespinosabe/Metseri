@@ -13,7 +13,7 @@ export function prepararEntornoEscena(t) {
     closePath: noHacerNada, fill: noHacerNada, ellipse: noHacerNada, stroke: noHacerNada,
     scale: noHacerNada, arc: noHacerNada, fillText: noHacerNada, drawImage: noHacerNada,
     createRadialGradient: () => ({ addColorStop: noHacerNada }),
-    measureText(texto) { return { width: texto.length * parseFloat(this.font) * .55 } },
+    measureText(texto) { return { width: texto.length * Number(this.font.match(/([\d.]+)px/)[1]) * .55 } },
   }
   function crearElemento() {
     return Object.assign(new EventTarget(), {
@@ -75,7 +75,7 @@ export function prepararEntornoEscena(t) {
   const lecturas = []
   campo = crearCampoEstelar(contenedor, { crearRenderizador: () => renderizador, alCambiarFicha: (lectura) => lecturas.push(lectura) })
   return {
-    campo, punteros, dibujar: () => ciclo?.(), lectura: () => lecturas.at(-1),
+    campo, punteros, dibujar: () => ciclo?.(), lectura: () => lecturas.at(-1), escena: () => escenaPrincipal,
     rectangulo: () => contenedor.getBoundingClientRect(),
     tarjeta: () => escenaPrincipal.children.find((nodo) => nodo.isMesh && nodo.geometry.type === 'PlaneGeometry' && !nodo.material.transparent),
     apuntarCuerpo(cuerpoId) {

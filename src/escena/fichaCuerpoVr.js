@@ -1,5 +1,7 @@
-import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2 } from 'three'
+import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2, Vector3 } from 'three'
 import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion, resolverAccionFicha, SECCIONES_FICHA } from './contenidoFicha.js'
+import { calcularPresentacionFicha, configurarTexturaLectura } from './lecturaVisor.js'
+import { limitarRasterizacion } from './rendimientoEscena.js'
 
 const DISTANCIA_FICHA = 32
 
@@ -28,13 +30,19 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   let destruido = false
   let versionImagen = 0
   let revisionLectura = 0
+  let presentacion = null
+  let factorTextura = 1
+  let anchoLogico = lienzo.width
+  let altoLogico = lienzo.height
 
   function dibujar() {
     if (!cuerpo || destruido) return
     const { pagina, total } = lectura.obtenerEstado()
     const contenido = paginas[pagina]
-    const ancho = lienzo.width
-    const alto = lienzo.height
+    const ancho = anchoLogico
+    const alto = altoLogico
+    const fuentes = presentacion?.tipografia
+    contexto.setTransform?.(factorTextura, 0, 0, factorTextura, 0, 0)
     contexto.fillStyle = '#111b24'
     contexto.fillRect(0, 0, ancho, alto)
     contexto.strokeStyle = '#35434d'
@@ -43,16 +51,16 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.textBaseline = 'top'
     contexto.textAlign = 'left'
     contexto.fillStyle = '#c5e49b'
-    contexto.font = `${Math.max(13, Math.min(20, ancho / 32))}px system-ui, sans-serif`
+    contexto.font = `${fuentes?.categoria ?? Math.max(13, Math.min(20, ancho / 32))}px system-ui, sans-serif`
     contexto.fillText(cuerpo.clasificacion.split('·').at(-1).trim().toUpperCase(), 32, 20)
-    contexto.font = `${Math.max(30, Math.min(56, ancho / 12))}px system-ui, sans-serif`
+    contexto.font = `${fuentes?.titulo ?? Math.max(30, Math.min(56, ancho / 12))}px system-ui, sans-serif`
     contexto.fillStyle = '#eef2f4'
-    contexto.fillText(cuerpo.nombre, 30, 44)
+    contexto.fillText(cuerpo.nombre, 30, presentacion?.tituloY ?? 44)
     if (imagen?.complete && imagen.naturalWidth > 0) {
       const anchoImagen = Math.min(130, ancho * .22)
       const escala = Math.min(anchoImagen / imagen.naturalWidth, 84 / imagen.naturalHeight)
       contexto.globalCompositeOperation = 'screen'
-      contexto.drawImage(imagen, ancho - 76 - anchoImagen, 25, imagen.naturalWidth * escala, imagen.naturalHeight * escala)
+      contexto.drawImage(imagen, ancho - (presentacion ? 90 : 76) - anchoImagen, presentacion ? 72 : 25, imagen.naturalWidth * escala, imagen.naturalHeight * escala)
       contexto.globalCompositeOperation = 'source-over'
     }
     zonas = []
@@ -67,19 +75,21 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
         if (elemento.accion) zonas.push({ accion: elemento.accion, x: elemento.x, y: elemento.y, ancho: contexto.measureText(elemento.texto).width, alto: elemento.tamano * 1.35 })
       }
     }
-    contexto.font = `${ancho < 400 ? 16 : 22}px system-ui, sans-serif`
+    contexto.font = `${fuentes?.nota ?? (ancho < 400 ? 16 : 22)}px system-ui, sans-serif`
     contexto.fillStyle = '#9aadb8'
     contexto.textAlign = 'center'
     contexto.fillText(`${pagina + 1} / ${total}`, ancho / 2, alto - 63)
-    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, paginas)) {
+    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, paginas, presentacion)) {
       zonas.push(zona)
       const activa = accionApuntada !== null && resolverAccionFicha(zona.accion, { pagina, total }) === accionApuntada
       contexto.fillStyle = activa ? '#cce89f' : zona.actual ? '#354832' : '#1c2b36'
       contexto.fillRect(zona.x, zona.y, zona.ancho, zona.alto)
       contexto.fillStyle = activa ? '#101a17' : zona.actual ? '#d5edb6' : '#d4dfe5'
-      contexto.font = `${zona.accion === 'cerrar' ? 30 : ancho < 400 ? 16 : 24}px system-ui, sans-serif`
+      const tamano = fuentes ? (zona.accion.startsWith('seccion:') ? fuentes.pestana : fuentes.navegacion)
+        : zona.accion === 'cerrar' ? 30 : ancho < 400 ? 16 : 24
+      contexto.font = `${tamano}px system-ui, sans-serif`
       contexto.textAlign = 'center'
-      contexto.fillText(zona.texto, zona.x + zona.ancho / 2, zona.y + 14)
+      contexto.fillText(zona.texto, zona.x + zona.ancho / 2, zona.y + (zona.accion === 'cerrar' && fuentes ? 8 : 14))
     }
     contexto.textAlign = 'left'
     textura.needsUpdate = true
@@ -91,7 +101,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     const anterior = lectura.obtenerEstado().pagina
     const seccion = paginas[anterior]?.id
     const continuacion = anterior - paginas.findIndex((pagina) => pagina.id === seccion)
-    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: lienzo.width, alto: lienzo.height, contenido }) : []
+    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: anchoLogico, alto: altoLogico, contenido, presentacion }) : []
     recomponiendo = true
     lectura.actualizar(cuerpo?.id ?? null, paginas.length, reiniciar)
     if (!reiniciar && seccion) {
@@ -106,6 +116,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
 
   return {
     malla,
+    obtenerPresentacion: () => presentacion,
     obtenerLectura: lectura.obtenerEstado,
     obtenerRevisionLectura: () => revisionLectura,
     establecerCuerpo(nuevoCuerpo) {
@@ -134,14 +145,22 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
       malla.visible = enVr && Boolean(cuerpo)
       componer(true)
     },
-    ajustar(ancho, alto) {
+    ajustar(ancho, alto, configuracion = null) {
       if (destruido) return
-      const anchoLienzo = Math.max(320, Math.min(900, Math.round(ancho * .9)))
+      const anterior = JSON.stringify(presentacion)
+      const desplazamientoAnterior = presentacion?.desplazamientoY ?? 0
+      presentacion = configuracion && ancho > alto ? calcularPresentacionFicha(configuracion) : null
+      const anchoAnterior = anchoLogico
+      const altoAnterior = altoLogico
+      anchoLogico = presentacion?.ancho ?? Math.max(320, Math.min(900, Math.round(ancho * .9)))
       const altoReferencia = Math.max(440, Math.min(1000, Math.round(alto * 1.6)))
-      const altoLienzo = Math.max(440, Math.round(altoReferencia * .55))
-      if (lienzo.width !== anchoLienzo || lienzo.height !== altoLienzo) {
-        lienzo.width = anchoLienzo
-        lienzo.height = altoLienzo
+      altoLogico = presentacion?.alto ?? Math.max(440, Math.round(altoReferencia * .55))
+      const raster = presentacion ? limitarRasterizacion(anchoLogico, altoLogico, configuracion)
+        : { ancho: anchoLogico, alto: altoLogico, factor: 1 }
+      factorTextura = raster.factor
+      if (lienzo.width !== raster.ancho || lienzo.height !== raster.alto) {
+        lienzo.width = raster.ancho
+        lienzo.height = raster.alto
         // WebGL reserva las dimensiones de la textura al subirla por primera vez.
         // Una actualización parcial tras reducir el Canvas deja restos de la ficha anterior.
         textura.dispose()
@@ -149,18 +168,21 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
         textura.colorSpace = SRGBColorSpace
         material.map = textura
       }
+      if (presentacion) configurarTexturaLectura(textura)
       const altoMundo = 2 * DISTANCIA_FICHA * Math.tan(35 * Math.PI / 180) * .82
       const anchoMundo = altoMundo * (ancho / 2 / alto)
       // Mantener el ancho y la escala del texto al acortar el área de lectura.
-      const escala = Math.min(anchoMundo / lienzo.width, altoMundo / altoReferencia)
-      malla.scale.set(lienzo.width * escala, lienzo.height * escala, 1)
-      componer()
+      const escala = presentacion?.escala ?? Math.min(anchoMundo / anchoLogico, altoMundo / altoReferencia)
+      malla.scale.set(anchoLogico * escala, altoLogico * escala, 1)
+      malla.position.add(new Vector3(0, (presentacion?.desplazamientoY ?? 0) - desplazamientoAnterior, 0).applyQuaternion(malla.quaternion))
+      if (anchoAnterior !== anchoLogico || altoAnterior !== altoLogico || anterior !== JSON.stringify(presentacion)) componer()
+      else dibujar()
     },
     reubicar(camara) {
       if (!cuerpo || destruido) return
-      malla.position.set(0, 0, -DISTANCIA_FICHA).applyQuaternion(camara.quaternion)
+      malla.position.set(0, presentacion?.desplazamientoY ?? 0, -DISTANCIA_FICHA).applyQuaternion(camara.quaternion)
       malla.up.set(0, 1, 0).applyQuaternion(camara.quaternion)
-      malla.lookAt(camara.position)
+      malla.quaternion.copy(camara.quaternion)
       malla.updateWorldMatrix(true, false)
       alInvalidar?.()
     },
@@ -170,7 +192,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
       malla.updateWorldMatrix(true, false)
       rayo.setFromCamera(new Vector2(0, 0), camara)
       const impacto = rayo.intersectObject(malla, false)[0]
-      const accion = impacto ? detectarAccionFicha(impacto.uv, lienzo.width, lienzo.height, zonas, lectura.obtenerEstado()) : null
+      const accion = impacto ? detectarAccionFicha(impacto.uv, anchoLogico, altoLogico, zonas, lectura.obtenerEstado()) : null
       if (accion !== accionApuntada) { accionApuntada = accion; dibujar() }
       return impacto ? { accion, distancia: impacto.distance } : null
     },

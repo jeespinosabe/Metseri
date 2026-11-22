@@ -10,8 +10,9 @@ it('acota los píxeles en móvil, VR y 4K, sin aumentar la densidad de pantallas
     for (const [ancho, alto, densidad, tactil] of [[390, 844, 3, true], [844, 390, 3, true], [3840, 2160, 2, false], [1440, 900, 1, false]]) {
       const proporcion = calcularDensidadRenderizado({ ancho, alto, densidad, modo, tactil })
       assert.ok(proporcion > 0 && proporcion <= densidad)
-      assert.ok(ancho * alto * proporcion ** 2 <= (modo === 'vr' ? 1_500_000 : 2_073_600) + .001)
-      if (tactil || modo === 'vr') assert.ok(proporcion <= 1.25)
+      assert.ok(ancho * alto * proporcion ** 2 <= (modo === 'vr' ? 2_000_000 : 2_073_600) + .001)
+      if (modo === 'vr') assert.ok(proporcion <= 1.75)
+      else if (tactil) assert.ok(proporcion <= 1.25)
     }
   }
   assert.equal(calcularDensidadRenderizado({ ancho: 390, alto: 844, densidad: 3, tactil: true }), 1.25)

@@ -33,6 +33,29 @@ function prepararLienzos(t) {
 }
 
 describe('cuerpos planetarios y recursos', () => {
+  it('mejora únicamente el muestreo oblicuo de anillos y restaura la calidad normal sin regenerarlos', t => {
+    prepararLienzos(t)
+    const planetas = crearPlanetas()
+    t.after(() => planetas.destruir())
+    const anillos = planetas.raiz.getObjectByName('saturno').children.find(o => o.geometry?.type === 'RingGeometry')
+    const textura = anillos.material.map
+    const posiciones = planetas.raiz.children.map(o => o.position.toArray())
+    const superficies = planetas.seleccionables.filter(o => o.geometry.type === 'SphereGeometry').map(o => o.material.map)
+    const versiones = superficies.map(t => t.version)
+    const geometria = anillos.geometry
+    planetas.ajustarCalidadVisor(16)
+    assert.equal(textura.anisotropy, 4)
+    const version = textura.version
+    planetas.ajustarCalidadVisor(16)
+    assert.equal(textura.version, version)
+    assert.equal(textura.generateMipmaps, true)
+    assert.equal(anillos.material.transparent, true)
+    assert.equal(anillos.geometry, geometria)
+    assert.deepEqual(superficies.map(t => t.version), versiones)
+    assert.deepEqual(planetas.raiz.children.map(o => o.position.toArray()), posiciones)
+    planetas.ajustarCalidadVisor(1)
+    assert.equal(textura.anisotropy, 1)
+  })
   it('los doce coinciden con el catálogo y son apuntables individualmente alrededor del observador', (t) => {
     prepararLienzos(t)
     const planetas = crearPlanetas()

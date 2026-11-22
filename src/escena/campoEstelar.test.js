@@ -7,6 +7,9 @@ import { obtenerZonasNavegacion } from './contenidoFicha.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
+import { calcularConfiguracionVisor } from './rendimientoEscena.js'
+import { calcularPresentacionFicha } from './lecturaVisor.js'
+import { DIAGONAL_PREDETERMINADA } from './perfilVisor.js'
 
 function abrirFicha(t) {
   const entorno = prepararEntornoEscena(t)
@@ -139,6 +142,7 @@ for (const cuerpoId of ['tierra', 'luna']) {
     it(`recorrido completo de ${cuerpoId} con contenido ${fase}, continuaciones y rotación sin navegador`, (t) => {
       t.mock.timers.enable({ apis: ['setTimeout'] })
       const { campo, dibujar, lectura, tarjeta, punteros, apuntarCuerpo, redimensionar, rectangulo } = prepararEntornoEscena(t)
+      let diagonal = DIAGONAL_PREDETERMINADA
       const gestos = crearGestosVr({ prepararActivacion: () => campo.prepararActivacion(), alRecentrar: () => campo.recentrarFicha() })
       const cuerpo = obtenerCuerpoCeleste(cuerpoId)
       const contenido = fase === 'disponible'
@@ -156,8 +160,13 @@ for (const cuerpoId of ['tierra', 'luna']) {
         dibujar()
       }
       const apuntarZona = (accion) => {
-        const { width: ancho, height: alto } = tarjeta().material.map.image
-        const zona = obtenerZonasNavegacion(ancho, alto, lectura().pagina, lectura().total).find((zona) => zona.accion === accion)
+        const rect = rectangulo()
+        const presentacion = rect.width > rect.height ? calcularPresentacionFicha(calcularConfiguracionVisor({
+          ancho: rect.width, alto: rect.height, diagonal, anchoPantalla: window.screen.width, altoPantalla: window.screen.height,
+        })) : null
+        const ancho = presentacion?.ancho ?? tarjeta().material.map.image.width
+        const alto = presentacion?.alto ?? tarjeta().material.map.image.height
+        const zona = obtenerZonasNavegacion(ancho, alto, lectura().pagina, lectura().total, null, presentacion).find((zona) => zona.accion === accion)
         apuntar((zona.x + zona.ancho / 2) / ancho, (zona.y + zona.alto / 2) / alto)
       }
 
@@ -212,6 +221,7 @@ for (const cuerpoId of ['tierra', 'luna']) {
         const antesDeRotar = { ...lectura() }
         redimensionar(alto, ancho, { rotarPantalla: true })
         campo.establecerDiagonalPantalla(6.5)
+        diagonal = 6.5
         dibujar()
         assert.equal(lectura().seccion, antesDeRotar.seccion)
         assert.equal(lectura().cuerpoId, cuerpoId)

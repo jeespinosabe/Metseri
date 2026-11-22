@@ -28,7 +28,7 @@ import { crearApuntadoMouse } from './apuntadoMouse.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { consumirToqueFicha, resolverAccionFicha } from './contenidoFicha.js'
 import { crearInstruccionesVr } from './instruccionesVr.js'
-import { calcularDensidadRenderizado } from './rendimientoEscena.js'
+import { calcularConfiguracionVisor, calcularDensidadRenderizado } from './rendimientoEscena.js'
 
 const COLOR_FONDO = 0x080b12
 const RADIO_CIELO = 100
@@ -173,6 +173,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   let destruido = false
   let contextoPerdido = false
   let necesitaDibujo = true
+  let parametrosAnteriores = null
   let seleccionadoAnterior = null
   const ficha = crearFichaCuerpoVr({
     alInvalidar: () => { necesitaDibujo = true },
@@ -221,25 +222,37 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   function ajustarTamano() {
     const ancho = Math.max(1, contenedor.clientWidth)
     const alto = Math.max(1, contenedor.clientHeight)
-    renderizador.setPixelRatio(
-      calcularDensidadRenderizado({
-        ancho, alto,
-        densidad: window.devicePixelRatio,
-        modo,
-        tactil: window.matchMedia?.('(pointer: coarse)').matches ?? false,
-      }),
-    )
-    renderizador.setSize(ancho, alto, false)
-    restaurarAreaDibujo()
-    proyeccion.ajustar(camara, ancho, alto, modo)
+    const controles = contenedor.parentElement?.querySelector('.escena-estelar__controles')?.getBoundingClientRect()
     const parametrosVisor = {
       ancho, alto,
       anchoPantalla: window.screen.width,
       altoPantalla: window.screen.height,
       diagonal: diagonalPantalla,
+      densidad: window.devicePixelRatio,
+      maxTextura: renderizador.capabilities?.maxTextureSize ?? 4096,
+      maxRenderbuffer: renderizador.getContext?.()?.getParameter(renderizador.getContext().MAX_RENDERBUFFER_SIZE) ?? 4096,
+      margenInferior: controles ? Math.max(80, alto - (controles.top - contenedor.getBoundingClientRect().top) + 12) : 80,
     }
+    const tactil = window.matchMedia?.('(pointer: coarse)').matches ?? false
+    const clave = JSON.stringify({ modo, tactil, ...parametrosVisor })
+    if (parametrosAnteriores === clave) return
+    parametrosAnteriores = clave
+    const configuracionVisor = calcularConfiguracionVisor(parametrosVisor)
+    renderizador.setPixelRatio(
+      modo === 'vr' ? configuracionVisor.proporcion : calcularDensidadRenderizado({
+        ancho, alto,
+        densidad: window.devicePixelRatio,
+        modo,
+        tactil,
+      }),
+    )
+    renderizador.setSize(ancho, alto, false)
+    restaurarAreaDibujo()
+    proyeccion.ajustar(camara, ancho, alto, modo)
     efectoEstereo?.ajustar(parametrosVisor)
-    ficha.ajustar(ancho, alto)
+    ficha.ajustar(ancho, alto, modo === 'vr' ? configuracionVisor : null)
+    if (modo === 'vr') etiquetasVisor?.ajustar(configuracionVisor)
+    planetas.ajustarCalidadVisor(modo === 'vr' ? renderizador.capabilities?.getMaxAnisotropy?.() ?? 1 : 1)
     instrucciones.ajustar(parametrosVisor)
     apuntado.recalcular()
     seleccion.actualizarMirada()
@@ -258,7 +271,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     if (modo === 'vr') efectoEstereo.establecerAccionPuntero(instrucciones.esVisible() ? null : ficha.detectar(camara)?.accion)
     necesitaDibujo = false
     etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight, ficha.malla)
-    etiquetasVisor?.actualizar(camara, modo)
+    etiquetasVisor?.actualizar(camara, modo, ficha.malla)
     if (modo === 'vr') efectoEstereo.render(escena, camara)
     else renderizador.render(escena, camara)
   }

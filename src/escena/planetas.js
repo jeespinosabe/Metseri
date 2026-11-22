@@ -238,6 +238,7 @@ export function crearPlanetas() {
   const geometrias = new Set()
   const materiales = new Set()
   const texturas = new Set()
+  let texturaAnillosVisor = null
   let destruido = false
 
   function destruir() {
@@ -293,6 +294,7 @@ export function crearPlanetas() {
         const geometriaAnillos = new RingGeometry(1.24, 2.35, 160, 1)
         geometrias.add(geometriaAnillos)
         const texturaAnillos = crearTexturaAnillos()
+        texturaAnillosVisor = texturaAnillos
         texturas.add(texturaAnillos)
         const materialAnillos = new MeshStandardMaterial({
           map: texturaAnillos, roughness: 1, side: DoubleSide,
@@ -348,6 +350,13 @@ export function crearPlanetas() {
     raiz,
     seleccionables,
     etiquetas,
+    ajustarCalidadVisor(maxAnisotropia) {
+      if (destruido || !texturaAnillosVisor) return
+      const anisotropia = Math.max(1, Math.min(4, maxAnisotropia))
+      if (texturaAnillosVisor.anisotropy === anisotropia) return
+      texturaAnillosVisor.anisotropy = anisotropia
+      texturaAnillosVisor.needsUpdate = true
+    },
     actualizarAspecto({ planetaApuntado, planetaSeleccionado }) {
       if (destruido) return
       cuerpos.forEach((cuerpo, id) => {
