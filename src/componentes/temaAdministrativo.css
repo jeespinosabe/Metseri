@@ -145,10 +145,11 @@
 .admin-acceso__tarjeta input:focus { border-color: var(--admin-tinto); }
 
 .admin-acceso__tarjeta button {
+  position: relative;
   display: flex;
   min-height: 48px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 13px;
   padding: 0 17px;
   border: 1px solid var(--admin-tinto);
@@ -161,6 +162,7 @@
   cursor: pointer;
 }
 
+.admin-acceso__tarjeta button span { position: absolute; inset-inline-end: 17px; }
 .admin-acceso__tarjeta button:not(:disabled):hover { background: var(--admin-texto-secundario); }
 .admin-acceso__tarjeta button:disabled { opacity: .65; cursor: wait; }
 .admin-acceso__error { margin: 4px 0 0; font-size: .83rem; font-weight: 600; line-height: 1.5; }

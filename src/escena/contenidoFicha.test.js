@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
-import { consumirToqueFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, dividirLineas, obtenerZonasNavegacion, resolverAccionFicha } from './contenidoFicha.js'
+import { calcularEncabezadoFicha, consumirToqueFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, dividirLineas, obtenerTextoCategoria, obtenerZonasNavegacion, resolverAccionFicha } from './contenidoFicha.js'
+import { calcularPresentacionFicha, zonaCerrarVr } from './lecturaVisor.js'
+import { calcularConfiguracionVisor } from './rendimientoEscena.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 
@@ -92,6 +94,56 @@ for (const [ancho, alto] of [[320, 440], [750, 624], [900, 1000]]) {
     }
   })
 }
+
+const medirMayusculas = (texto, tamano) => texto.length * tamano * .65
+const cruzan = (a, b) => a && b && a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto && a.y + a.alto > b.y
+
+it('el encabezado separa categoría, nombre, imagen, cierre y pestañas sin reducir las fuentes', () => {
+  for (const [ancho, alto, diagonal] of [[740, 360, 5.5], [844, 390, 6.9], [932, 430, 7], [1381, 645, 6.1], [1920, 900, 5.5]]) {
+    const base = calcularPresentacionFicha(calcularConfiguracionVisor({ ancho, alto, diagonal, densidad: 3 }))
+    const cerrar = zonaCerrarVr(base.ancho)
+    for (const cuerpo of CUERPOS_CELESTES) {
+      const mensaje = `${ancho}×${alto} ${diagonal}" ${cuerpo.id}`
+      const encabezado = calcularEncabezadoFicha(base, { categoria: obtenerTextoCategoria(cuerpo), nombre: cuerpo.nombre }, medirMayusculas)
+      const presentacion = { ...base, ...encabezado }
+      const f = base.tipografia
+      const zonas = obtenerZonasNavegacion(base.ancho, base.alto, 0, 4, null, presentacion)
+        .filter((zona) => zona.accion === 'cerrar' || zona.accion.startsWith('seccion:'))
+      const textos = [
+        ...encabezado.lineasCategoria.map((linea, indice) => ({ x: 32, y: 20 + indice * f.categoria * 1.05, ancho: medirMayusculas(linea, f.categoria), alto: f.categoria })),
+        { x: 30, y: encabezado.tituloY, ancho: medirMayusculas(cuerpo.nombre, f.titulo), alto: f.titulo },
+      ]
+      assert.ok(encabezado.pestanasY >= cerrar.y + cerrar.alto, `${mensaje}: las pestañas quedan debajo del botón de cierre`)
+      assert.ok(encabezado.cajaImagen, `${mensaje}: la imagen conserva su espacio`)
+      for (const zona of zonas) {
+        assert.ok(!cruzan(encabezado.cajaImagen, zona), `${mensaje}: la imagen no toca ${zona.accion}`)
+        for (const texto of textos) assert.ok(!cruzan(texto, zona), `${mensaje}: el texto no toca ${zona.accion}`)
+      }
+      for (const texto of textos) {
+        assert.ok(!cruzan(texto, encabezado.cajaImagen), `${mensaje}: el texto no toca la imagen`)
+        assert.ok(texto.x + texto.ancho <= cerrar.x, `${mensaje}: el texto no llega al botón de cierre`)
+      }
+      assert.ok(encabezado.cajaImagen.y + encabezado.cajaImagen.alto <= encabezado.inicio, `${mensaje}: la imagen no invade el contenido`)
+      assert.equal(encabezado.inicio, Math.ceil(encabezado.pestanasY + base.altoPestana + 8))
+    }
+  }
+})
+
+it('una categoría larga pasa a otra línea y, con fuentes enormes, se recorta antes de tapar la lectura', () => {
+  const base = calcularPresentacionFicha(calcularConfiguracionVisor({ ancho: 740, alto: 360, diagonal: 8, densidad: 3 }))
+  const categoria = 'SATÉLITE NATURAL DE LA TIERRA'
+  const unaLinea = calcularEncabezadoFicha(base, { categoria: 'LUNA', nombre: 'Luna' }, medirMayusculas)
+  const envuelta = calcularEncabezadoFicha(base, { categoria, nombre: 'Luna' }, medirMayusculas)
+  assert.equal(unaLinea.lineasCategoria.length, 1)
+  assert.ok(envuelta.lineasCategoria.length > 1)
+  assert.equal(envuelta.lineasCategoria.join(' '), categoria, 'no se pierde ninguna palabra')
+  assert.ok(envuelta.inicio > unaLinea.inicio)
+  const enorme = { ...base, tipografia: { ...base.tipografia, categoria: 140, titulo: 250 } }
+  const recortada = calcularEncabezadoFicha(enorme, { categoria, nombre: 'Luna' }, medirMayusculas)
+  assert.equal(recortada.lineasCategoria.length, 1)
+  assert.match(recortada.lineasCategoria[0], /…$/u)
+  assert.equal(recortada.inicio, calcularEncabezadoFicha(enorme, { categoria: 'LUNA', nombre: 'Luna' }, medirMayusculas).inicio)
+})
 
 it('parte palabras largas sin perder caracteres ni duplicar espacios', () => {
   assert.equal(dividirLineas('abcdefghijklmnop', (t) => t.length, 5).join(''), 'abcdefghijklmnop')

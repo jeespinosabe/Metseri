@@ -1,5 +1,6 @@
 import { obtenerDatosPrincipales } from '../datos/cuerposCelestes.js'
 import { etiquetaCopiaDescargada } from '../servicios/fechaDescarga.js'
+import { calcularFilasEncabezado, zonaCerrarVr } from './lecturaVisor.js'
 
 export const SECCIONES_FICHA = [
   { id: 'resumen', nombre: 'Ficha', titulo: 'Presentación', pagina: 0 },
@@ -188,6 +189,50 @@ function crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido, presen
   return paginas
 }
 
+// La categoría es el último tramo de la clasificación y se muestra en mayúsculas.
+export const obtenerTextoCategoria = (cuerpo) => cuerpo.clasificacion.split('·').at(-1).trim().toUpperCase()
+
+const HUECO_ENCABEZADO = 12
+const ANCHO_MINIMO_IMAGEN = 48
+const ANCHO_RESERVADO_IMAGEN = 72
+const ANCHO_MAXIMO_IMAGEN = 130
+const ALTO_MAXIMO_IMAGEN = 84
+const FRACCION_MAXIMA_ENCABEZADO = .45
+
+function recortarTexto(texto, medir, ancho) {
+  let recorte = texto
+  while (recorte.length > 1 && medir(`${recorte}…`) > ancho) recorte = recorte.slice(0, -1)
+  return `${recorte.trimEnd()}…`
+}
+
+// Reparte categoría, nombre, pestañas e imagen del encabezado sin que se superpongan.
+// Las fuentes no se reducen: si la categoría no cabe junto a la imagen, pasa a otra línea.
+// medir(texto, tamano) devuelve el ancho del texto en unidades lógicas de la ficha.
+export function calcularEncabezadoFicha(presentacion, { categoria, nombre }, medir) {
+  const { ancho, alto: altoFicha, tipografia, margen, altoPestana } = presentacion
+  const cerrar = zonaCerrarVr(ancho)
+  const derecha = cerrar.x - HUECO_ENCABEZADO
+  const medirCategoria = (texto) => medir(texto, tipografia.categoria)
+  const anchoLinea = derecha - margen - HUECO_ENCABEZADO - ANCHO_RESERVADO_IMAGEN
+  const lineas = dividirLineas(categoria, medirCategoria, anchoLinea)
+  let lineasCategoria = lineas.length ? lineas : ['']
+  let filas = calcularFilasEncabezado(ancho, tipografia, altoPestana, lineasCategoria.length)
+  const unaLinea = calcularFilasEncabezado(ancho, tipografia, altoPestana, 1)
+  if (lineasCategoria.length > 1 && filas.inicio > Math.max(altoFicha * FRACCION_MAXIMA_ENCABEZADO, unaLinea.inicio)) {
+    // Con fuentes muy grandes el encabezado dejaría sin espacio a la lectura: una sola línea recortada.
+    lineasCategoria = [recortarTexto(categoria, medirCategoria, anchoLinea)]
+    filas = unaLinea
+  }
+  const anchoTexto = Math.max(...lineasCategoria.map(medirCategoria), medir(nombre, tipografia.titulo))
+  const izquierda = Math.max(margen + anchoTexto + HUECO_ENCABEZADO, derecha - ANCHO_MAXIMO_IMAGEN)
+  // La imagen ocupa la franja libre entre el borde superior y las pestañas, a la izquierda del botón de cierre.
+  const franja = filas.pestanasY - HUECO_ENCABEZADO / 2 - cerrar.y
+  const alto = Math.min(ALTO_MAXIMO_IMAGEN, franja)
+  const cajaImagen = derecha - izquierda >= ANCHO_MINIMO_IMAGEN && alto >= ANCHO_MINIMO_IMAGEN
+    ? { x: izquierda, y: cerrar.y + (franja - alto) / 2, ancho: derecha - izquierda, alto } : null
+  return { lineasCategoria, ...filas, cajaImagen }
+}
+
 export function crearPaginasFicha(cuerpo, contexto, { ancho = 800, alto = 720, contenido = null, presentacion = null } = {}) {
   if (contenido) return crearPaginasPublicadas(cuerpo, contexto, ancho, alto, contenido, presentacion)
   if (presentacion) return crearPaginasPublicadas(cuerpo, contexto, ancho, alto, { fase: 'cargando' }, presentacion)
@@ -253,7 +298,7 @@ export function obtenerZonasNavegacion(ancho, alto, pagina, total, paginas = nul
   const altoControl = presentacion?.altoControl ?? 54
   const pieY = presentacion ? alto - altoControl - 20 : alto - 80
   return [
-    { accion: 'cerrar', texto: '×', x: ancho - (presentacion ? 80 : 62), y: 14, ancho: presentacion ? 64 : 46, alto: presentacion ? 64 : 46 },
+    { accion: 'cerrar', texto: '×', ...(presentacion ? zonaCerrarVr(ancho) : { x: ancho - 62, y: 14, ancho: 46, alto: 46 }) },
     ...SECCIONES_FICHA.map((seccion, indice) => ({ accion: `seccion:${seccion.pagina}`, texto: seccion.nombre, x: 32 + indice * (anchoPestana + 8), y: presentacion?.pestanasY ?? 122, ancho: anchoPestana, alto: presentacion?.altoPestana ?? 44, actual: paginas ? paginas[pagina]?.id === seccion.id : pagina === seccion.pagina })),
     ...(pagina > 0 ? [{ accion: 'anterior', texto: '← Anterior', x: 32, y: pieY, ancho: anchoBoton, alto: altoControl }] : []),
     ...(total > 0 ? [{ accion: 'siguiente', texto: pagina === total - 1 ? 'Cerrar →' : 'Siguiente →', x: ancho - 32 - anchoBoton, y: pieY, ancho: anchoBoton, alto: altoControl }] : []),

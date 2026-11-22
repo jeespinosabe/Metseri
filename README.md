@@ -46,7 +46,7 @@ La escena se completa con Luna junto a la Tierra, Europa junto a Júpiter, Titá
 
 La disposición es compositiva: posiciones, distancias y tamaños no están a escala astronómica. Los doce cuerpos permanecen quietos y conservan su distribución al recentrar, redimensionar o cambiar de modo.
 
-Cada cuerpo visible muestra su nombre; las lunas indican además «Satélite de …» y el nombre de su planeta. Las etiquetas acompañan la vista al girar y no bloquean el arrastre ni la selección; en VR aparece una copia por ojo. La vista única utiliza una proyección esférica que conserva los contornos circulares también en los extremos de una pantalla ancha.
+Cada cuerpo visible muestra únicamente su nombre, con la primera letra en mayúscula. Las etiquetas acompañan la vista al girar y no bloquean el arrastre ni la selección; en VR aparece una copia por ojo. La vista única utiliza una proyección esférica que conserva los contornos circulares también en los extremos de una pantalla ancha.
 
 Las etiquetas se presentan sin cápsula: un punto y una guía discreta acompañan al nombre y su clasificación. Al apuntar o seleccionar, el nombre cambia de color y el cuerpo recibe un resplandor de contorno. No aparece un recuadro con «Haz clic para explorar». Los planetas tienen mayor presencia y relieve, y Saturno muestra bandas concéntricas y una separación entre sus anillos.
 

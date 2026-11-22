@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { estaInstalada, solicitarInstalacion, suscribirseAInstalacion } from '../servicios/instalacionMetseri.js'
 import { DescargaSinConexion } from './descargaSinConexion.jsx'
 
 function GuiaInstalacion() {
@@ -43,30 +44,57 @@ function GuiaInstalacion() {
   return <p>En Chrome o Edge, busca la opción para instalar Metseri en la barra de direcciones o en el menú del navegador.</p>
 }
 
-export function DialogoAplicacionMetseri({ seccion, alCerrar }) {
+export function DialogoAplicacionMetseri({ abierto, alCerrar }) {
   const idTitulo = useId()
   const dialogoRef = useRef(null)
-  const muestraInstalacion = seccion === 'instalacion'
+  const [instalando, setInstalando] = useState(false)
+  const [muestraGuia, setMuestraGuia] = useState(false)
+  const instalada = useSyncExternalStore(suscribirseAInstalacion, estaInstalada)
+
+  if (!abierto && muestraGuia) setMuestraGuia(false)
 
   useEffect(() => {
     const dialogo = dialogoRef.current
-    if (seccion && !dialogo.open) dialogo.showModal()
-    if (!seccion && dialogo.open) dialogo.close()
-  }, [seccion])
+    if (abierto && !dialogo.open) dialogo.showModal()
+    if (!abierto && dialogo.open) dialogo.close()
+  }, [abierto])
+
+  async function instalar() {
+    if (instalando) return
+    setInstalando(true)
+    try {
+      if (await solicitarInstalacion()) alCerrar()
+      else setMuestraGuia(true)
+    } finally {
+      setInstalando(false)
+    }
+  }
 
   return (
     <dialog ref={dialogoRef} className="aplicacion-metseri"
       aria-labelledby={idTitulo} onClose={(evento) => { if (!evento.currentTarget.open) alCerrar() }}>
       <header className="aplicacion-metseri__cabecera">
-        <h2 id={idTitulo}>{muestraInstalacion ? 'Instalar Metseri' : 'Uso sin conexión'}</h2>
+        <h2 id={idTitulo}>Instalar o descargar</h2>
         <form method="dialog">
           <button className="aplicacion-metseri__cerrar" type="submit" aria-label="Cerrar">
             <span aria-hidden="true">×</span>
           </button>
         </form>
       </header>
-      {muestraInstalacion && <GuiaInstalacion />}
-      <section className="aplicacion-metseri__sin-conexion" hidden={muestraInstalacion}>
+      {!instalada && (
+        <section className="aplicacion-metseri__instalacion">
+          <button className="aplicacion-metseri__opcion" type="button" aria-disabled={instalando} onClick={instalar}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <rect x="3" y="4" width="18" height="16" rx="3" />
+              <path d="M12 8v8m-3-3 3 3 3-3" />
+            </svg>
+            Instalar Metseri
+          </button>
+          <div aria-live="polite">{muestraGuia && <GuiaInstalacion />}</div>
+        </section>
+      )}
+      <section className="aplicacion-metseri__sin-conexion">
         <DescargaSinConexion />
       </section>
     </dialog>

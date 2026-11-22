@@ -8,6 +8,19 @@ export function configurarTexturaLectura(textura) {
   textura.generateMipmaps = false
 }
 
+// Botón de cierre de la ficha en el visor: ocupa la esquina superior derecha del encabezado.
+export function zonaCerrarVr(ancho) {
+  return { x: ancho - 80, y: 14, ancho: 64, alto: 64 }
+}
+
+// Filas del encabezado: categoría, nombre y pestañas, siempre por debajo del botón de cierre.
+export function calcularFilasEncabezado(ancho, tipografia, altoPestana, lineasCategoria = 1) {
+  const cerrar = zonaCerrarVr(ancho)
+  const tituloY = 14 + lineasCategoria * tipografia.categoria * 1.05 + 2
+  const pestanasY = Math.max(tituloY + tipografia.titulo + 4, cerrar.y + cerrar.alto + 8)
+  return { tituloY, pestanasY, inicio: Math.ceil(pestanasY + altoPestana + 8) }
+}
+
 export function calcularPresentacionFicha(configuracion) {
   const ancho = 900
   const alto = 800
@@ -50,11 +63,9 @@ export function calcularPresentacionFicha(configuracion) {
   }
   const tipografia = { parrafo: fuente(16), etiqueta: fuente(14), unidad: fuente(14), valor: fuente(18),
     titulo: fuente(22), categoria: fuente(12), navegacion: fuente(14), pestana: fuente(12), seccion: fuente(18), nota: fuente(12) }
-  const tituloY = 14 + tipografia.categoria * 1.05 + 2
-  const pestanasY = tituloY + tipografia.titulo + 4
   const altoControl = Math.ceil(tipografia.navegacion * 1.35 + 12)
   const altoPestana = Math.ceil(tipografia.pestana * 1.35 + 10)
-  const inicio = Math.ceil(pestanasY + altoPestana + 8)
+  const { tituloY, pestanasY, inicio } = calcularFilasEncabezado(ancho, tipografia, altoPestana)
   const pie = altoControl + 28
   return { ancho, alto, escala, desplazamientoY, pixelesPorUnidad, tipografia, tituloY, pestanasY, altoControl, altoPestana, inicio, pie,
     margen: 32 }

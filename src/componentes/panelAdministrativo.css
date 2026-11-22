@@ -95,7 +95,6 @@
 .panel-admin__nombre-cuerpo, .panel-admin__detalle-cuerpo { display: block; }
 .panel-admin__detalle-cuerpo { color: var(--admin-texto-secundario); font-size: .74rem; }
 .panel-admin__resumen-seleccion { margin: 14px 0 0; color: var(--admin-tinto); font-size: .84rem; }
-.panel-admin__ordenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; margin-top: 10px; }
 .panel-admin__publicacion .panel-admin__opcion-cuerpo + * { margin-top: 8px; }
 .panel-admin__pie-formulario { display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--admin-borde); }
 

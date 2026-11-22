@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
   alternarCuerpo, calcularMarcoEncuadre, calcularTamanoVistaFotografia, crearBorradorLibro, crearRegistroVistaPrevia,
-  filtrarRegistros, formatearAnio, formatearEditorial, PROPORCION_PORTADA, TAMANO_MAXIMO_FOTOGRAFIA, validarArchivoFotografia,
+  etiquetaPestanaRegistros, filtrarRegistros, formatearAnio, formatearEditorial, PROPORCION_PORTADA, TAMANO_MAXIMO_FOTOGRAFIA, validarArchivoFotografia,
   hayCriteriosActivos, normalizarTexto, obtenerCuerposRelacionados, validarBorradorLibro, validarCampoLibro,
   prepararDatosLibro, presentarLibroAdministrativo, validarOrdenLibro,
 } from './registrosBibliograficos.js'
@@ -71,6 +71,12 @@ describe('presentación de registros', () => {
     assert.equal(formatearAnio(null), 'Año no indicado')
     assert.equal(formatearAnio(undefined), 'Año no indicado')
     assert.equal(formatearAnio(2020), '2020')
+  })
+
+  it('la pestaña de registros se llama Editar solo mientras se edita un libro', () => {
+    assert.equal(etiquetaPestanaRegistros('edicion'), 'Editar')
+    assert.equal(etiquetaPestanaRegistros('listado'), 'Registros bibliográficos')
+    assert.equal(etiquetaPestanaRegistros('alta'), 'Registros bibliográficos')
   })
 })
 

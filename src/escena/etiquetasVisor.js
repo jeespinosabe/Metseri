@@ -3,6 +3,9 @@ import { configurarTexturaLectura } from './lecturaVisor.js'
 import { limitarRasterizacion } from './rendimientoEscena.js'
 import { medirFuenteVisor, proyectarPuntoVisor, proyectarRectanguloVisor, rectangulosSeCruzan } from './proyeccionVisor.js'
 
+// Tamaño proyectado, en píxeles de pantalla, que tienen todos los nombres en el visor.
+const TAMANO_NOMBRE_VISOR = 14.2
+
 // En VR los nombres forman parte de la escena para atravesar la corrección de lentes.
 export function crearEtiquetasVisor(escena, planetas) {
   const raiz = new Group()
@@ -34,12 +37,7 @@ export function crearEtiquetasVisor(escena, planetas) {
       contexto.font = '500 52px system-ui, sans-serif'
       contexto.strokeText?.(planeta.nombre, 256, 8, 500)
       contexto.fillText(planeta.nombre, 256, 8, 500)
-      const anchoNombre = contexto.measureText(planeta.nombre).width
-      contexto.fillStyle = '#a3b3c0'
-      contexto.font = '44px system-ui, sans-serif'
-      contexto.strokeText?.(planeta.tipo.toUpperCase(), 256, 82, 500)
-      contexto.fillText(planeta.tipo.toUpperCase(), 256, 82, 500)
-      anchoContenido = Math.min(506, Math.max(anchoNombre, contexto.measureText(planeta.tipo.toUpperCase()).width) + 6)
+      anchoContenido = Math.min(506, contexto.measureText(planeta.nombre).width + 6)
       textura.needsUpdate = true
     }
     dibujar(false)
@@ -93,7 +91,7 @@ export function crearEtiquetasVisor(escena, planetas) {
           return { x, y, ancho: Math.max(...pantalla.map(p => p.x)) - x, alto: Math.max(...pantalla.map(p => p.y)) - y }
         })
       }
-      // Los satélites necesitan dos líneas; reservar su hueco antes de los nombres solos.
+      // Los satélites se ubican primero para reservar su hueco antes que los demás nombres.
       const ordenadas = [...etiquetas].sort((a, b) => {
         const distanciaCentro = etiqueta => {
           punto.copy(etiqueta.planeta.posicion).applyMatrix4(camara.matrixWorldInverse)
@@ -143,17 +141,17 @@ export function crearEtiquetasVisor(escena, planetas) {
           for (const ubicar of candidatos) {
             ancho = distancia * .4
             alto = ancho * 160 / 512
-            for (let paso = 0; paso < 4; paso += 1) {
+            // Todos los nombres convergen al mismo tamaño proyectado, sin importar su distancia o posición.
+            for (let paso = 0; paso < 6; paso += 1) {
               const candidato = ubicar(ancho, alto)
               const nombre = Math.min(...medirFuenteVisor({ x: candidato.x, y: candidato.y + alto * (.5 - 8 / 160), z: punto.z, tamano: alto * 52 / 160 }, configuracion))
-              const relacion = Math.min(...medirFuenteVisor({ x: candidato.x, y: candidato.y + alto * (.5 - 82 / 160), z: punto.z, tamano: alto * 44 / 160 }, configuracion))
-              const aumento = Math.max(1, 14.2 / Math.max(.1, nombre), planeta.tipo ? 12.2 / Math.max(.1, relacion) : 1)
-              if (aumento <= 1) break
-              ancho *= aumento
-              alto *= aumento
+              const ajuste = TAMANO_NOMBRE_VISOR / Math.max(.1, nombre)
+              if (Math.abs(ajuste - 1) < .005) break
+              ancho *= ajuste
+              alto *= ajuste
             }
             const candidato = ubicar(ancho, alto)
-            const altoContenido = planeta.tipo ? 132 : 64
+            const altoContenido = 64
             const propuesta = proyectarRectanguloVisor({ x: candidato.x,
               y: candidato.y + alto * (.5 - (5 + altoContenido / 2) / 160), z: punto.z,
               ancho: ancho * obtenerAncho() / 512, alto: alto * altoContenido / 160 }, configuracion)

@@ -23,7 +23,7 @@ it('acota los píxeles en móvil, VR y 4K, sin aumentar la densidad de pantallas
 it('las etiquetas VR solo actualizan las texturas cuyo resaltado cambió', (t) => {
   prepararEntornoEscena(t)
   const escena = new Scene()
-  const planetas = ['tierra', 'marte', 'luna'].map((id) => ({ id, nombre: id, tipo: '', posicion: new Vector3(0, 0, -60), radio: 4 }))
+  const planetas = ['tierra', 'marte', 'luna'].map((id) => ({ id, nombre: id, posicion: new Vector3(0, 0, -60), radio: 4 }))
   const etiquetas = crearEtiquetasVisor(escena, planetas)
   t.after(() => etiquetas.destruir())
   const texturas = escena.children[0].children.map((sprite) => sprite.material.map)

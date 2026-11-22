@@ -3,7 +3,7 @@ import { it } from 'node:test'
 import { PerspectiveCamera, Quaternion, Vector3 } from 'three'
 import { prepararEntornoEscena } from '../pruebas/entornoEscena.js'
 import { crearGestosVr, INTERVALO_DOBLE_TAP_MS } from './gestosVr.js'
-import { obtenerZonasNavegacion } from './contenidoFicha.js'
+import { calcularEncabezadoFicha, obtenerTextoCategoria, obtenerZonasNavegacion } from './contenidoFicha.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
@@ -161,9 +161,12 @@ for (const cuerpoId of ['tierra', 'luna']) {
       }
       const apuntarZona = (accion) => {
         const rect = rectangulo()
-        const presentacion = rect.width > rect.height ? calcularPresentacionFicha(calcularConfiguracionVisor({
+        const base = rect.width > rect.height ? calcularPresentacionFicha(calcularConfiguracionVisor({
           ancho: rect.width, alto: rect.height, diagonal, anchoPantalla: window.screen.width, altoPantalla: window.screen.height,
         })) : null
+        // El encabezado se reparte según la categoría del cuerpo, igual que en la tarjeta real.
+        const presentacion = base && { ...base, ...calcularEncabezadoFicha(base,
+          { categoria: obtenerTextoCategoria(cuerpo), nombre: cuerpo.nombre }, (texto, tamano) => texto.length * tamano * .55) }
         const ancho = presentacion?.ancho ?? tarjeta().material.map.image.width
         const alto = presentacion?.alto ?? tarjeta().material.map.image.height
         const zona = obtenerZonasNavegacion(ancho, alto, lectura().pagina, lectura().total, null, presentacion).find((zona) => zona.accion === accion)

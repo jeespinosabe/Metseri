@@ -70,8 +70,8 @@ describe('cuerpos planetarios y recursos', () => {
       const etiqueta = planetas.etiquetas.find((dato) => dato.id === cuerpo.id)
       assert.equal(etiqueta.nombre, cuerpo.nombre)
       assert.equal(etiqueta.planetaId, cuerpo.planetaId ?? null)
+      assert.equal(etiqueta.tipo, undefined, 'la etiqueta solo muestra el nombre')
       if (cuerpo.tipo === 'satelite') {
-        assert.ok(etiqueta.tipo.includes(cuerpo.planetaPrincipal))
         const planeta = planetas.etiquetas.find((dato) => dato.id === cuerpo.planetaId)
         assert.ok(etiqueta.radio < planeta.radio)
         assert.ok(etiqueta.posicion.angleTo(planeta.posicion) < Math.PI / 4, `${cuerpo.id} permanece cerca de su planeta`)

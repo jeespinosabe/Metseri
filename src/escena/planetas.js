@@ -19,18 +19,18 @@ const GRADOS = Math.PI / 180
 
 // Composición visual fija: no representa posiciones ni escalas astronómicas.
 const PLANETAS = [
-  { id: 'tierra', nombre: 'Tierra', tipo: 'Nuestro hogar', giro: 0, elevacion: 0, radio: 6.2, color: '#0b3c64' },
-  { id: 'marte', nombre: 'Marte', tipo: '', giro: 45, elevacion: 18, radio: 4.2, color: '#b85935' },
-  { id: 'jupiter', nombre: 'Júpiter', tipo: '', giro: 90, elevacion: -12, radio: 9.5, color: '#d1b18c' },
-  { id: 'saturno', nombre: 'Saturno', tipo: '', giro: 140, elevacion: 22, radio: 11.5, color: '#d8c298' },
-  { id: 'neptuno', nombre: 'Neptuno', tipo: '', giro: 180, elevacion: -18, radio: 5.2, color: '#2854b8' },
-  { id: 'urano', nombre: 'Urano', tipo: '', giro: 225, elevacion: 26, radio: 5.7, color: '#86cccf' },
-  { id: 'mercurio', nombre: 'Mercurio', tipo: '', giro: 270, elevacion: -20, radio: 3.5, color: '#93897e' },
-  { id: 'venus', nombre: 'Venus', tipo: '', giro: 315, elevacion: 14, radio: 5, color: '#dfb678' },
-  { id: 'luna', nombre: 'Luna', tipo: 'Satélite de la Tierra', planetaId: 'tierra', giro: 14, elevacion: -15, radio: 2.2, color: '#b8bab9' },
-  { id: 'europa', nombre: 'Europa', tipo: 'Satélite de Júpiter', planetaId: 'jupiter', giro: 72, elevacion: -28, radio: 2.2, color: '#ded6b9' },
-  { id: 'titan', nombre: 'Titán', tipo: 'Satélite de Saturno', planetaId: 'saturno', giro: 168, elevacion: 42, radio: 2.8, color: '#d4a254' },
-  { id: 'triton', nombre: 'Tritón', tipo: 'Satélite de Neptuno', planetaId: 'neptuno', giro: 198, elevacion: -32, radio: 2.1, color: '#bfcac8' },
+  { id: 'tierra', nombre: 'Tierra', giro: 0, elevacion: 0, radio: 6.2, color: '#0b3c64' },
+  { id: 'marte', nombre: 'Marte', giro: 45, elevacion: 18, radio: 4.2, color: '#b85935' },
+  { id: 'jupiter', nombre: 'Júpiter', giro: 90, elevacion: -12, radio: 9.5, color: '#d1b18c' },
+  { id: 'saturno', nombre: 'Saturno', giro: 140, elevacion: 22, radio: 11.5, color: '#d8c298' },
+  { id: 'neptuno', nombre: 'Neptuno', giro: 180, elevacion: -18, radio: 5.2, color: '#2854b8' },
+  { id: 'urano', nombre: 'Urano', giro: 225, elevacion: 26, radio: 5.7, color: '#86cccf' },
+  { id: 'mercurio', nombre: 'Mercurio', giro: 270, elevacion: -20, radio: 3.5, color: '#93897e' },
+  { id: 'venus', nombre: 'Venus', giro: 315, elevacion: 14, radio: 5, color: '#dfb678' },
+  { id: 'luna', nombre: 'Luna', planetaId: 'tierra', giro: 14, elevacion: -15, radio: 2.2, color: '#b8bab9' },
+  { id: 'europa', nombre: 'Europa', planetaId: 'jupiter', giro: 72, elevacion: -28, radio: 2.2, color: '#ded6b9' },
+  { id: 'titan', nombre: 'Titán', planetaId: 'saturno', giro: 168, elevacion: 42, radio: 2.8, color: '#d4a254' },
+  { id: 'triton', nombre: 'Tritón', planetaId: 'neptuno', giro: 198, elevacion: -32, radio: 2.1, color: '#bfcac8' },
 ]
 
 function crearAleatorio(semilla) {
@@ -339,7 +339,7 @@ export function crearPlanetas() {
       grupo.add(halo)
       cuerpos.set(planeta.id, { materiales: materialesCuerpo, halo, resplandor, esTierra, aspecto: 'normal' })
       raiz.add(grupo)
-      etiquetas.push({ id: planeta.id, nombre: planeta.nombre, tipo: planeta.tipo, planetaId: planeta.planetaId ?? null, posicion: grupo.position, radio: planeta.radio, contorno })
+      etiquetas.push({ id: planeta.id, nombre: planeta.nombre, planetaId: planeta.planetaId ?? null, posicion: grupo.position, radio: planeta.radio, contorno })
     })
   } catch (error) {
     destruir()

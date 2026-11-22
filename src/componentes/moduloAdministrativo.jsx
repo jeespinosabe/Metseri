@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
-import { filtrarRegistros, hayCriteriosActivos } from '../administracion/registrosBibliograficos.js'
+import { etiquetaPestanaRegistros, filtrarRegistros, hayCriteriosActivos } from '../administracion/registrosBibliograficos.js'
 import { eliminarLibroAdministrativo, guardarLibroAdministrativo, listarLibrosAdministrativos } from '../servicios/gestionBibliografica.js'
 import { ListadoBibliografico } from './listadoBibliografico.jsx'
 import { FormularioLibro } from './formularioLibro.jsx'
@@ -152,8 +152,8 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
       <div className="panel-admin__cuerpo">
         {errorSesion && <p className="panel-admin__error-campo" role="alert">{errorSesion}</p>}
         <nav className="panel-admin__navegacion" aria-label="Panel administrativo">
-          <button type="button" className="panel-admin__pestana" disabled={operando} aria-current={pantallaVisible !== 'alta' ? 'page' : undefined} onClick={() => { focoAlVolver.current = null; volverAlListado(); volverAConsultar() }}>
-            Registros bibliográficos
+          <button type="button" className="panel-admin__pestana" disabled={operando} aria-current={pantallaVisible !== 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible === 'edicion') return; focoAlVolver.current = null; volverAlListado(); volverAConsultar() }}>
+            {etiquetaPestanaRegistros(pantallaVisible)}
           </button>
           <button type="button" className="panel-admin__pestana" data-foco="agregar-navegacion" disabled={operando} aria-current={pantallaVisible === 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible !== 'alta') abrirAlta('agregar-navegacion') }}>
             Agregar libro

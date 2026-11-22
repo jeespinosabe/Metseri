@@ -1,10 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { alternarCuerpo, crearBorradorLibro, crearRegistroVistaPrevia, prepararDatosLibro, validarBorradorLibro, validarOrdenLibro } from '../administracion/registrosBibliograficos.js'
+import { alternarCuerpo, crearBorradorLibro, crearRegistroVistaPrevia, prepararDatosLibro, validarBorradorLibro } from '../administracion/registrosBibliograficos.js'
 import { CampoFotografiaLibro } from './campoFotografiaLibro.jsx'
 import { SelectorCuerposCelestes } from './selectorCuerposCelestes.jsx'
-import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
-
-const nombresCuerpos = new Map(CUERPOS_CELESTES.map(({ id, nombre }) => [id, nombre]))
 
 const CAMPOS_FORMULARIO = [
   { campo: 'titulo', etiqueta: 'Título', obligatorio: true, completo: true },
@@ -27,7 +24,6 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
   const edicion = modo === 'edicion'
   const nombreOperacion = edicion ? 'Editar libro' : 'Agregar libro'
   const errores = validarBorradorLibro(borrador)
-  const cuerpoConOrdenInvalido = borrador.cuerposIds.find((slug) => validarOrdenLibro(borrador.ordenPorCuerpo[slug] ?? 1))
 
   useEffect(() => { campoInicial.current?.focus() }, [])
 
@@ -41,8 +37,8 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
     setEnviado(true)
     setErrorGuardado('')
     const campoInvalido = Object.keys(errores).find((campo) => errores[campo])
-    if (campoInvalido || cuerpoConOrdenInvalido) {
-      evento.currentTarget.elements.namedItem(campoInvalido || `orden-${cuerpoConOrdenInvalido}`)?.focus()
+    if (campoInvalido) {
+      evento.currentTarget.elements.namedItem(campoInvalido)?.focus()
       return
     }
     const datos = prepararDatosLibro(borrador, registro)
@@ -102,31 +98,6 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
             seleccionados={borrador.cuerposIds}
             alAlternar={(cuerpoId) => setBorrador((actual) => ({ ...actual, cuerposIds: alternarCuerpo(actual.cuerposIds, cuerpoId) }))}
           />
-
-          {borrador.cuerposIds.length > 0 && (
-            <fieldset className="panel-admin__grupo-cuerpos">
-              <legend>Orden en las fichas</legend>
-              <p className="panel-admin__ayuda">Cada ficha muestra hasta tres libros. Los números más bajos aparecen primero.</p>
-              <div className="panel-admin__ordenes">
-                {borrador.cuerposIds.map((slug) => {
-                  const valor = borrador.ordenPorCuerpo[slug] ?? 1
-                  const error = enviado ? validarOrdenLibro(valor) : ''
-                  return (
-                    <div className="panel-admin__campo" key={slug}>
-                      <label htmlFor={`${id}-${slug}`}>{nombresCuerpos.get(slug) ?? slug}</label>
-                      <input id={`${id}-${slug}`} name={`orden-${slug}`} type="number" min="1" max="32767" step="1"
-                        value={valor} aria-invalid={error ? 'true' : undefined} aria-describedby={error ? `${id}-${slug}-error` : undefined}
-                        onChange={(evento) => {
-                          const orden = evento.target.value
-                          setBorrador((actual) => ({ ...actual, ordenPorCuerpo: { ...actual.ordenPorCuerpo, [slug]: orden } }))
-                        }} />
-                      {error && <p id={`${id}-${slug}-error`} className="panel-admin__error-campo">{error}</p>}
-                    </div>
-                  )
-                })}
-              </div>
-            </fieldset>
-          )}
 
           <fieldset className="panel-admin__grupo-cuerpos panel-admin__publicacion">
             <legend>Visibilidad en fichas</legend>

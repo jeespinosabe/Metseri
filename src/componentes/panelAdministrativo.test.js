@@ -218,6 +218,7 @@ describe('formulario de libro', () => {
     assert.equal(contar(html, 'checked=""'), 3)
     assert.doesNotMatch(html, /name="urlFicha"|Confirmo que/)
     assert.ok(html.includes('Seleccionados: Tierra, Luna'))
+    assert.doesNotMatch(html, /Orden en las fichas|name="orden-|panel-admin__ordenes/)
     assert.ok(html.includes(`src="${TIERRA_LUNA.fotografia.url}" alt="Fotografía elegida del libro`))
     assert.ok(html.includes('Quitar foto</button>'))
     botonGuardar(html, 'Guardar cambios')

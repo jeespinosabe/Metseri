@@ -1,8 +1,7 @@
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import logoBiblioteca from '../assets/instituciones/logoBiblioteca.png'
 import logoCecan from '../assets/instituciones/logoCecan.png'
 import escudoTecnologico from '../assets/instituciones/escudoTecnologico.png'
-import { estaInstalada, solicitarInstalacion, suscribirseAInstalacion } from '../servicios/instalacionMetseri.js'
 import { DialogoAplicacionMetseri } from './dialogoAplicacionMetseri.jsx'
 import './franjaInstitucional.css'
 
@@ -12,13 +11,11 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
   const botonRef = useRef(null)
   const enlaceRef = useRef(null)
   const [apertura, setApertura] = useState(null)
-  const [seccionAplicacion, setSeccionAplicacion] = useState(null)
-  const [instalando, setInstalando] = useState(false)
-  const instalada = useSyncExternalStore(suscribirseAInstalacion, estaInstalada)
+  const [dialogoAbierto, setDialogoAbierto] = useState(false)
   const abierta = activa && apertura !== null
 
   if (!activa && apertura !== null) setApertura(null)
-  if (!activa && seccionAplicacion !== null) setSeccionAplicacion(null)
+  if (!activa && dialogoAbierto) setDialogoAbierto(false)
 
   useEffect(() => {
     if (apertura === 'teclado') enlaceRef.current?.focus({ preventScroll: true })
@@ -50,7 +47,7 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
   }
 
   function cerrarAlSalir(evento) {
-    if (evento.pointerType === 'mouse' && apertura === 'raton' && !seccionAplicacion) setApertura(null)
+    if (evento.pointerType === 'mouse' && apertura === 'raton' && !dialogoAbierto) setApertura(null)
   }
 
   function abrirConBoton(evento) {
@@ -59,20 +56,7 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
   }
 
   function cerrarAlPerderFoco(evento) {
-    if (apertura === 'teclado' && !seccionAplicacion && !evento.currentTarget.contains(evento.relatedTarget)) setApertura(null)
-  }
-
-  async function instalar() {
-    if (instalando) return
-    setInstalando(true)
-    try {
-      if (!await solicitarInstalacion()) {
-        setApertura((actual) => actual ?? 'toque')
-        setSeccionAplicacion('instalacion')
-      }
-    } finally {
-      setInstalando(false)
-    }
+    if (apertura === 'teclado' && !dialogoAbierto && !evento.currentTarget.contains(evento.relatedTarget)) setApertura(null)
   }
 
   return (
@@ -100,29 +84,17 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
             <span className="franja-institucional__icono-administracion" aria-hidden="true" />
             <span className="franja-institucional__etiqueta-administracion">Administración</span>
           </a>
-          {!instalada && (
-            <button className="franja-institucional__accion" type="button" aria-label="Instalar Metseri"
-              title="Instalar Metseri" aria-disabled={instalando} onClick={instalar}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="4" width="18" height="16" rx="3" />
-                <path d="M12 8v8m-3-3 3 3 3-3" />
-              </svg>
-              <span className="franja-institucional__etiqueta-instalar">Instalar</span>
-            </button>
-          )}
-          <button className="franja-institucional__accion franja-institucional__opciones" type="button"
-            aria-label="Uso sin conexión" aria-haspopup="dialog" title="Uso sin conexión"
-            onClick={() => setSeccionAplicacion('sinConexion')}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="1.7" />
-              <circle cx="12" cy="12" r="1.7" />
-              <circle cx="19" cy="12" r="1.7" />
+          <button className="franja-institucional__accion franja-institucional__descarga" type="button"
+            aria-label="Instalar o descargar" aria-haspopup="dialog" title="Instalar o descargar"
+            onClick={() => setDialogoAbierto(true)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 3v12m-4-4 4 4 4-4M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" />
             </svg>
           </button>
         </div>
       </header>
-      <DialogoAplicacionMetseri seccion={seccionAplicacion} alCerrar={() => setSeccionAplicacion(null)} />
+      <DialogoAplicacionMetseri abierto={dialogoAbierto} alCerrar={() => setDialogoAbierto(false)} />
     </div>
   )
 }

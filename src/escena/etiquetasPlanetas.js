@@ -74,14 +74,10 @@ export function crearEtiquetasPlanetas(contenedor, planetas) {
     const etiquetas = planetas.map((planeta) => {
       const etiqueta = document.createElement('span')
       etiqueta.className = 'etiqueta-planeta'
-      if (planeta.id === 'tierra') etiqueta.classList.add('etiqueta-planeta--tierra')
       const nombre = document.createElement('span')
       nombre.className = 'etiqueta-planeta__nombre'
       nombre.textContent = planeta.nombre
-      const tipo = document.createElement('small')
-      tipo.className = 'etiqueta-planeta__tipo'
-      tipo.textContent = planeta.tipo
-      etiqueta.append(nombre, tipo)
+      etiqueta.append(nombre)
       etiqueta.hidden = true
       elemento.appendChild(etiqueta)
       return etiqueta

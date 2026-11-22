@@ -104,16 +104,37 @@ it('los nombres centrados se pueden leer sin seleccionar y no quedan debajo de l
       assert.ok(etiqueta?.visible, `etiqueta de ${cuerpo.slug}`)
       const posicion = etiqueta.getWorldPosition(new Vector3()).applyQuaternion(entorno.campo.obtenerOrientacion().invert())
       const c = calcularConfiguracionVisor({ ancho, alto, diagonal })
-      for (const [fuente, y, minimo] of [[52, 8, 14], [44, 82, 12]]) {
-        if (y === 82 && !cuerpo.planeta) continue
-        const medidas = medirFuenteVisor({ x: posicion.x, y: posicion.y + etiqueta.scale.y * (.5 - y / 160), z: posicion.z, tamano: etiqueta.scale.y * fuente / 160 }, c)
-        assert.ok(medidas.every(valor => valor >= minimo - .1), `${cuerpo.slug}: ${medidas}`)
-      }
+      const medidas = medirFuenteVisor({ x: posicion.x, y: posicion.y + etiqueta.scale.y * (.5 - 8 / 160), z: posicion.z, tamano: etiqueta.scale.y * 52 / 160 }, c)
+      assert.ok(medidas.every(valor => valor >= 14 - .1), `${cuerpo.slug}: ${medidas}`)
       for (const caja of etiqueta.userData.cajas) assert.ok(caja.y + caja.alto <= alto - 80)
       for (let i = 0; i < visibles.length; i += 1) for (let j = i + 1; j < visibles.length; j += 1) {
         assert.ok(visibles[i].every((caja, ojo) => !rectangulosSeCruzan(caja, visibles[j][ojo])))
       }
     }
+  }
+})
+
+it('todos los nombres visibles del visor tienen el mismo tamaño proyectado', t => {
+  const entorno = prepararEntornoEscena(t)
+  entorno.campo.establecerModo('vr')
+  entorno.campo.ocultarInstruccionVr()
+  for (const [ancho, alto] of ventanas) for (const diagonal of [6.9, 8]) {
+    entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+    entorno.campo.establecerDiagonalPantalla(diagonal)
+    const c = calcularConfiguracionVisor({ ancho, alto, diagonal })
+    const tamanos = []
+    for (const cuerpo of FICHAS_PRUEBA) {
+      entorno.apuntarCuerpo(cuerpo.slug)
+      entorno.dibujar()
+      const orientacionInversa = entorno.campo.obtenerOrientacion().invert()
+      entorno.escena().traverse(o => {
+        if (!o.isSprite || !o.userData.cuerpoId || !o.visible) return
+        const posicion = o.getWorldPosition(new Vector3()).applyQuaternion(orientacionInversa)
+        tamanos.push(Math.min(...medirFuenteVisor({ x: posicion.x, y: posicion.y + o.scale.y * (.5 - 8 / 160), z: posicion.z, tamano: o.scale.y * 52 / 160 }, c)))
+      })
+    }
+    assert.ok(tamanos.length >= FICHAS_PRUEBA.length, `${ancho}/${diagonal}: hay nombres visibles`)
+    assert.ok(Math.max(...tamanos) - Math.min(...tamanos) <= .3, `${ancho}/${diagonal}: ${Math.min(...tamanos)}–${Math.max(...tamanos)}`)
   }
 })
 

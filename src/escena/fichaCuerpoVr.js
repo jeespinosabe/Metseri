@@ -1,5 +1,5 @@
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2, Vector3 } from 'three'
-import { crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerZonasNavegacion, resolverAccionFicha, SECCIONES_FICHA } from './contenidoFicha.js'
+import { calcularEncabezadoFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerTextoCategoria, obtenerZonasNavegacion, resolverAccionFicha, SECCIONES_FICHA } from './contenidoFicha.js'
 import { calcularPresentacionFicha, configurarTexturaLectura } from './lecturaVisor.js'
 import { limitarRasterizacion } from './rendimientoEscena.js'
 
@@ -31,6 +31,8 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   let versionImagen = 0
   let revisionLectura = 0
   let presentacion = null
+  // Presentación del visor con el encabezado ya repartido para el cuerpo actual.
+  let diseno = null
   let factorTextura = 1
   let anchoLogico = lienzo.width
   let altoLogico = lienzo.height
@@ -51,16 +53,21 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.textBaseline = 'top'
     contexto.textAlign = 'left'
     contexto.fillStyle = '#c5e49b'
-    contexto.font = `${fuentes?.categoria ?? Math.max(13, Math.min(20, ancho / 32))}px system-ui, sans-serif`
-    contexto.fillText(cuerpo.clasificacion.split('·').at(-1).trim().toUpperCase(), 32, 20)
+    const tamanoCategoria = fuentes?.categoria ?? Math.max(13, Math.min(20, ancho / 32))
+    contexto.font = `${tamanoCategoria}px system-ui, sans-serif`
+    const lineasCategoria = diseno?.lineasCategoria ?? [obtenerTextoCategoria(cuerpo)]
+    lineasCategoria.forEach((linea, indice) => contexto.fillText(linea, 32, 20 + indice * tamanoCategoria * 1.05))
     contexto.font = `${fuentes?.titulo ?? Math.max(30, Math.min(56, ancho / 12))}px system-ui, sans-serif`
     contexto.fillStyle = '#eef2f4'
-    contexto.fillText(cuerpo.nombre, 30, presentacion?.tituloY ?? 44)
-    if (imagen?.complete && imagen.naturalWidth > 0) {
-      const anchoImagen = Math.min(130, ancho * .22)
-      const escala = Math.min(anchoImagen / imagen.naturalWidth, 84 / imagen.naturalHeight)
+    contexto.fillText(cuerpo.nombre, 30, diseno?.tituloY ?? 44)
+    if (imagen?.complete && imagen.naturalWidth > 0 && (!diseno || diseno.cajaImagen)) {
+      // En el visor la imagen se ajusta a su propia franja del encabezado; fuera de ella conserva la posición original.
+      const caja = diseno?.cajaImagen ?? { x: ancho - 76 - Math.min(130, ancho * .22), y: 25, ancho: Math.min(130, ancho * .22), alto: 84 }
+      const escala = Math.min(caja.ancho / imagen.naturalWidth, caja.alto / imagen.naturalHeight)
+      const anchoImagen = imagen.naturalWidth * escala
+      const altoImagen = imagen.naturalHeight * escala
       contexto.globalCompositeOperation = 'screen'
-      contexto.drawImage(imagen, ancho - (presentacion ? 90 : 76) - anchoImagen, presentacion ? 72 : 25, imagen.naturalWidth * escala, imagen.naturalHeight * escala)
+      contexto.drawImage(imagen, diseno ? caja.x + (caja.ancho - anchoImagen) / 2 : caja.x, diseno ? caja.y + (caja.alto - altoImagen) / 2 : caja.y, anchoImagen, altoImagen)
       contexto.globalCompositeOperation = 'source-over'
     }
     zonas = []
@@ -79,7 +86,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     contexto.fillStyle = '#9aadb8'
     contexto.textAlign = 'center'
     contexto.fillText(`${pagina + 1} / ${total}`, ancho / 2, alto - 63)
-    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, paginas, presentacion)) {
+    for (const zona of obtenerZonasNavegacion(ancho, alto, pagina, total, paginas, diseno)) {
       zonas.push(zona)
       const activa = accionApuntada !== null && resolverAccionFicha(zona.accion, { pagina, total }) === accionApuntada
       contexto.fillStyle = activa ? '#cce89f' : zona.actual ? '#354832' : '#1c2b36'
@@ -101,7 +108,14 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     const anterior = lectura.obtenerEstado().pagina
     const seccion = paginas[anterior]?.id
     const continuacion = anterior - paginas.findIndex((pagina) => pagina.id === seccion)
-    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: anchoLogico, alto: altoLogico, contenido, presentacion }) : []
+    diseno = presentacion && cuerpo ? {
+      ...presentacion,
+      ...calcularEncabezadoFicha(presentacion, { categoria: obtenerTextoCategoria(cuerpo), nombre: cuerpo.nombre }, (texto, tamano) => {
+        contexto.font = `${tamano}px system-ui, sans-serif`
+        return contexto.measureText(texto).width
+      }),
+    } : presentacion
+    paginas = cuerpo ? crearPaginasFicha(cuerpo, contexto, { ancho: anchoLogico, alto: altoLogico, contenido, presentacion: diseno }) : []
     recomponiendo = true
     lectura.actualizar(cuerpo?.id ?? null, paginas.length, reiniciar)
     if (!reiniciar && seccion) {
@@ -116,7 +130,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
 
   return {
     malla,
-    obtenerPresentacion: () => presentacion,
+    obtenerPresentacion: () => diseno,
     obtenerLectura: lectura.obtenerEstado,
     obtenerRevisionLectura: () => revisionLectura,
     establecerCuerpo(nuevoCuerpo) {

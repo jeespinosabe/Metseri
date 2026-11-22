@@ -33,6 +33,10 @@ export function describirCantidadRegistros(visibles, total, filtrado) {
   return filtrado ? `${visibles} de ${total} ${sustantivo}` : `${total} ${sustantivo}`
 }
 
+export function etiquetaPestanaRegistros(pantalla) {
+  return pantalla === 'edicion' ? 'Editar' : 'Registros bibliográficos'
+}
+
 export function obtenerCuerposRelacionados(cuerposIds = []) {
   return CUERPOS_CELESTES.filter((cuerpo) => cuerposIds.includes(cuerpo.id))
 }

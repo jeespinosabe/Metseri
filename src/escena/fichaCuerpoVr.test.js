@@ -9,12 +9,15 @@ import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 import { calcularConfiguracionVisor } from './rendimientoEscena.js'
 
-function preparar(t) {
+function preparar(t, anchoLetra = .5) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
   const imagenes = []
   let dibujos = 0
   const textos = []
-  const contexto = { font: '', fillRect() { dibujos += 1 }, strokeRect() {}, fillText(texto) { textos.push(texto) }, drawImage() {}, measureText(texto) { return { width: texto.length * Number(this.font.match(/([\d.]+)px/)[1]) * .5 } } }
+  const dibujosImagen = []
+  const contexto = { font: '', fillRect() { dibujos += 1 }, strokeRect() {}, fillText(texto) { textos.push(texto) },
+    drawImage(_imagen, x, y, ancho, alto) { dibujosImagen.push({ x, y, ancho, alto }) },
+    measureText(texto) { return { width: texto.length * Number(this.font.match(/([\d.]+)px/)[1]) * anchoLetra } } }
   const lienzo = { width: 0, height: 0, getContext: () => contexto }
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { createElement: () => lienzo } })
   Object.defineProperty(globalThis, 'Image', { configurable: true, value: class ImagenSimulada { constructor() { imagenes.push(this) } } })
@@ -22,7 +25,7 @@ function preparar(t) {
   const cambios = []
   const ficha = crearFichaCuerpoVr({ alCambiarLectura: (estado) => cambios.push(estado) })
   t.after(() => ficha.destruir())
-  return { ficha, cambios, imagenes, lienzo, textos, obtenerDibujos: () => dibujos }
+  return { ficha, cambios, imagenes, lienzo, textos, dibujosImagen, obtenerDibujos: () => dibujos }
 }
 
 it('recrea la textura al cambiar dimensiones para no conservar otra ficha en la GPU', (t) => {
@@ -121,6 +124,29 @@ it('rellena el Canvas, conserva Libros al llegar la API y navega continuaciones 
   const ultimo = obtenerDibujos()
   ficha.establecerContenido(contenido)
   assert.equal(obtenerDibujos(), ultimo)
+})
+
+it('la imagen dibujada ocupa su franja del encabezado y no se cruza con pestañas, cierre ni lectura', (t) => {
+  const { ficha, imagenes, dibujosImagen } = preparar(t, .65)
+  const cruzan = (a, b) => a.x < b.x + b.ancho && a.x + a.ancho > b.x && a.y < b.y + b.alto && a.y + a.alto > b.y
+  ficha.establecerModo('vr')
+  for (const [ancho, alto, diagonal] of [[740, 360, 5.5], [844, 390, 6.9], [1381, 645, 6.1], [1381, 645, 8]]) {
+    ficha.ajustar(ancho, alto, calcularConfiguracionVisor({ ancho, alto, diagonal, densidad: 3 }))
+    for (const cuerpo of CUERPOS_CELESTES) {
+      const mensaje = `${ancho}×${alto} ${diagonal}" ${cuerpo.id}`
+      ficha.establecerCuerpo(cuerpo)
+      Object.assign(imagenes.at(-1), { complete: true, naturalWidth: 900, naturalHeight: 506 })
+      dibujosImagen.length = 0
+      imagenes.at(-1).onload()
+      assert.equal(dibujosImagen.length, 1, mensaje)
+      const dibujo = dibujosImagen[0]
+      const p = ficha.obtenerPresentacion()
+      for (const zona of obtenerZonasNavegacion(p.ancho, p.alto, 0, 4, null, p)) assert.ok(!cruzan(dibujo, zona), `${mensaje}: la imagen toca ${zona.accion}`)
+      assert.ok(dibujo.y + dibujo.alto <= p.inicio, `${mensaje}: la imagen invade el contenido`)
+      assert.ok(dibujo.x >= p.cajaImagen.x - .01 && dibujo.x + dibujo.ancho <= p.cajaImagen.x + p.cajaImagen.ancho + .01
+        && dibujo.y >= p.cajaImagen.y - .01 && dibujo.y + dibujo.alto <= p.cajaImagen.y + p.cajaImagen.alto + .01, `${mensaje}: la imagen sale de su franja`)
+    }
+  }
 })
 
 it('carga y error aparecen dentro del visor y no impiden cerrar o cambiar seccion', (t) => {
