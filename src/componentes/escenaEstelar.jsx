@@ -9,6 +9,7 @@ import { crearPantallaInmersiva } from '../escena/pantallaInmersiva.js'
 import { ConfiguracionVisor } from './configuracionVisor.jsx'
 import { guardarDiagonalPantalla, leerDiagonalPantalla } from '../escena/perfilVisor.js'
 import { FichaCuerpoCeleste } from './fichaCuerpoCeleste.jsx'
+import { FranjaInstitucional } from './franjaInstitucional.jsx'
 import { obtenerCuerpoCeleste } from '../datos/cuerposCelestes.js'
 import { INSTRUCCION_VR } from '../escena/instruccionesVr.js'
 import { iniciarConsultaContenido } from '../servicios/consultaContenido.js'
@@ -68,7 +69,7 @@ function FichaConContenido({ cuerpo, modo, alCambiarContenido, ...propiedades })
   return <FichaCuerpoCeleste {...propiedades} cuerpo={cuerpo} modo={modo} contenido={contenido} />
 }
 
-export function EscenaEstelar() {
+export function EscenaEstelar({ alAbrirAdministracion }) {
   const raizRef = useRef(null)
   const superficieRef = useRef(null)
   const campoRef = useRef(null)
@@ -230,6 +231,7 @@ export function EscenaEstelar() {
 
   return (
     <div className={`escena-estelar escena-estelar--${modo}`} ref={raizRef}>
+      <FranjaInstitucional activa={modo === 'normal'} alAbrirAdministracion={alAbrirAdministracion} />
       <div
         className="escena-estelar__superficie"
         ref={superficieRef}

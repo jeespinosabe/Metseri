@@ -5,6 +5,7 @@ import { eliminarLibroAdministrativo, guardarLibroAdministrativo, listarLibrosAd
 import { ListadoBibliografico } from './listadoBibliografico.jsx'
 import { FormularioLibro } from './formularioLibro.jsx'
 import { ConfirmacionEliminarLibro } from './confirmacionEliminarLibro.jsx'
+import { PieInstitucional } from './pieInstitucional.jsx'
 import './panelAdministrativo.css'
 
 const PLANETAS = CUERPOS_CELESTES.filter((cuerpo) => cuerpo.tipo === 'planeta')
@@ -208,6 +209,8 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
           </section>
         )}
       </div>
+
+      <PieInstitucional />
 
       {pantallaVisible === 'listado' && registroEliminar && (
         <ConfirmacionEliminarLibro key={registroEliminar.id} registro={registroEliminar} eliminando={operando}

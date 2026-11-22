@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { EscenaEstelar } from './componentes/escenaEstelar.jsx'
 import { AccesoAdministrativo } from './componentes/accesoAdministrativo.jsx'
 import { ModuloAdministrativo } from './componentes/moduloAdministrativo.jsx'
-import { DescargaSinConexion } from './componentes/descargaSinConexion.jsx'
+import '@fontsource-variable/noto-sans'
+import './componentes/temaAdministrativo.css'
 import './App.css'
 
 function App() {
@@ -25,9 +26,11 @@ function App() {
     return () => { vigente = false }
   }, [ruta])
 
-  function navegar(destino) {
-    window.history.pushState({}, '', destino)
-    setRuta(destino)
+  function abrirAdministracion(evento) {
+    if (evento.button !== 0 || evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey) return
+    evento.preventDefault()
+    window.history.pushState({}, '', '/admin')
+    setRuta('/admin')
   }
 
   if (ruta === '/admin' || ruta === '/admin/') {
@@ -42,11 +45,7 @@ function App() {
 
   return (
     <main className="aplicacion">
-      <EscenaEstelar />
-      <div className="acciones-aplicacion">
-        <a className="enlace-administracion" href="/admin" onClick={(evento) => { evento.preventDefault(); navegar('/admin') }}>Administración</a>
-        <DescargaSinConexion />
-      </div>
+      <EscenaEstelar alAbrirAdministracion={abrirAdministracion} />
     </main>
   )
 }

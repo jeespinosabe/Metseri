@@ -1,0 +1,200 @@
+.admin-acceso,
+.admin-modulo,
+.admin-cargando {
+  --admin-blanco: #ffffff;
+  --admin-marfil: #f6f1e7;
+  --admin-tinto: #69233b;
+  --admin-logo-metseri: url('../../recursosGraficos/logo/logoMetseri.svg');
+  --admin-texto-secundario: color-mix(in srgb, var(--admin-tinto) 80%, var(--admin-blanco));
+  --admin-borde: color-mix(in srgb, var(--admin-tinto) 19%, var(--admin-marfil));
+  --admin-borde-control: color-mix(in srgb, var(--admin-tinto) 34%, var(--admin-marfil));
+  --admin-resaltado: color-mix(in srgb, var(--admin-tinto) 8%, var(--admin-marfil));
+  --admin-sombra-corta: color-mix(in srgb, var(--admin-tinto) 13%, transparent);
+  --admin-sombra-larga: color-mix(in srgb, var(--admin-tinto) 28%, transparent);
+  --admin-elevacion: 0 2px 5px var(--admin-sombra-corta), 0 14px 28px -16px var(--admin-sombra-larga);
+  color-scheme: light;
+  background: var(--admin-blanco);
+  color: var(--admin-tinto);
+  font-family: 'Noto Sans Variable', system-ui, 'Segoe UI', sans-serif;
+}
+
+.admin-cargando { display: grid; width: 100%; height: 100%; place-items: center; }
+
+.admin-acceso,
+.admin-modulo {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+:is(.admin-acceso, .admin-modulo) :where(a, button, input, textarea, select):focus-visible {
+  outline: 2px solid var(--admin-tinto);
+  outline-offset: 3px;
+}
+
+.admin-acceso__cabecera,
+.admin-modulo__cabecera {
+  display: flex;
+  flex: none;
+  min-height: 76px;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: max(28px, calc((100% - 1120px) / 2));
+  border-bottom: 1px solid var(--admin-tinto);
+  background: var(--admin-tinto);
+  box-shadow: 0 2px 7px var(--admin-sombra-corta);
+  color: var(--admin-blanco);
+}
+
+:is(.admin-acceso__cabecera, .admin-modulo__cabecera, .pie-institucional) :focus-visible {
+  outline-color: var(--admin-blanco);
+}
+
+.admin-acceso__marca {
+  position: relative;
+  display: inline-block;
+  padding-inline-start: 32px;
+  color: var(--admin-blanco);
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: .26em;
+  text-decoration: none;
+}
+
+.admin-acceso__marca::before {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 0;
+  width: 24px;
+  height: 24px;
+  transform: translateY(-50%);
+  background: var(--admin-marfil);
+  mask: var(--admin-logo-metseri) center / 30px no-repeat;
+  content: '';
+}
+
+.admin-acceso__marca span { color: var(--admin-marfil); }
+
+.admin-modulo__cabecera button {
+  min-height: 40px;
+  padding: 0 17px;
+  border: 1px solid color-mix(in srgb, var(--admin-marfil) 60%, transparent);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--admin-blanco);
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-modulo__cabecera button:not(:disabled):hover { background: color-mix(in srgb, var(--admin-blanco) 12%, transparent); }
+.admin-modulo__cabecera button:disabled { opacity: .65; cursor: not-allowed; }
+
+.admin-acceso__contenido { display: grid; flex: 1 0 auto; place-items: center; padding: clamp(40px, 5vh, 64px) 22px; }
+
+.admin-acceso__tarjeta {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 44px 42px 34px;
+  border: 1px solid var(--admin-borde);
+  border-radius: 20px;
+  background: var(--admin-blanco);
+  box-shadow: var(--admin-elevacion);
+}
+
+.admin-acceso__logo {
+  position: absolute;
+  top: -25px;
+  right: 35px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--admin-blanco);
+}
+
+.admin-acceso__logo::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--admin-tinto);
+  mask: var(--admin-logo-metseri) center / 60px no-repeat;
+  content: '';
+}
+
+.admin-acceso__sobrelinea { margin: 0 0 13px; font-size: .66rem; letter-spacing: .23em; }
+.admin-acceso__tarjeta h1 { margin: 0; font-size: clamp(1.8rem, 6vw, 2.35rem); font-weight: 400; letter-spacing: -.045em; }
+.admin-acceso__tarjeta form { display: grid; gap: 10px; }
+.admin-acceso__tarjeta label { margin-top: 7px; color: var(--admin-texto-secundario); font-size: .79rem; }
+
+.admin-acceso__tarjeta input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--admin-borde-control);
+  border-radius: 9px;
+  background: var(--admin-marfil);
+  color: var(--admin-tinto);
+  font: inherit;
+  box-shadow: inset 0 1px 4px var(--admin-sombra-corta);
+}
+
+.admin-acceso__tarjeta input:focus { border-color: var(--admin-tinto); }
+
+.admin-acceso__tarjeta button {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 13px;
+  padding: 0 17px;
+  border: 1px solid var(--admin-tinto);
+  border-radius: 9px;
+  background: var(--admin-tinto);
+  color: var(--admin-blanco);
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-acceso__tarjeta button:not(:disabled):hover { background: var(--admin-texto-secundario); }
+.admin-acceso__tarjeta button:disabled { opacity: .65; cursor: wait; }
+.admin-acceso__error { margin: 4px 0 0; font-size: .83rem; font-weight: 600; line-height: 1.5; }
+.admin-acceso__volver { display: block; margin-top: 24px; color: var(--admin-texto-secundario); font-size: .78rem; text-align: center; text-decoration: none; }
+.admin-acceso__volver:hover { color: var(--admin-tinto); text-decoration: underline; }
+
+.pie-institucional {
+  display: grid;
+  flex: none;
+  justify-items: center;
+  gap: 14px;
+  padding: 24px 16px max(24px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--admin-tinto);
+  background: var(--admin-tinto);
+  color: var(--admin-blanco);
+  text-align: center;
+}
+
+.pie-institucional__logos { display: flex; align-items: center; gap: 14px; }
+.pie-institucional__biblioteca { display: block; width: 106px; filter: brightness(0) invert(1); }
+.pie-institucional__cecan { padding-inline-start: 14px; border-inline-start: 1px solid color-mix(in srgb, var(--admin-marfil) 30%, transparent); }
+.pie-institucional__cecan img { display: block; width: 205px; }
+.pie-institucional__contacto { display: grid; color: var(--admin-marfil); font-size: .8125rem; font-style: normal; line-height: 1.5; }
+.pie-institucional__contacto a { justify-self: center; margin-top: 4px; color: var(--admin-blanco); text-decoration: none; }
+.pie-institucional__contacto a:hover { text-decoration: underline; }
+
+@media (max-width: 600px), (hover: none) and (pointer: coarse) {
+  .pie-institucional__logos { gap: 24px; }
+  .pie-institucional__cecan { padding: 0; border: 0; }
+  .pie-institucional__biblioteca, .pie-institucional__cecan img { height: 36px; object-fit: cover; object-position: left center; }
+  .pie-institucional__biblioteca { width: 24px; }
+  .pie-institucional__cecan img { width: 33px; }
+}
+
+@media (max-width: 480px) {
+  .admin-acceso__tarjeta { padding: 38px 25px 29px; }
+}

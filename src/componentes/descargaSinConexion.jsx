@@ -48,12 +48,19 @@ export function DescargaSinConexion() {
     }
   }
 
-  if (!import.meta.env.PROD) return null
+  if (!import.meta.env.PROD) return <p>La descarga está disponible en la versión de producción.</p>
+
+  const etiqueta = fecha === null ? 'Descargar para usar sin conexión' : 'Actualizar descarga'
 
   return (
     <div className="descarga-sin-conexion">
-      {admite && <button type="button" disabled={progreso !== null} onClick={descargar}>
-        {fecha === null ? 'Descargar para usar sin conexión' : 'Actualizar descarga'}
+      {admite && <button className="descarga-sin-conexion__boton"
+        type="button" disabled={progreso !== null} onClick={descargar}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+          <path d="M12 3v12m-4-4 4 4 4-4M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" />
+        </svg>
+        {etiqueta}
       </button>}
       <div className="descarga-sin-conexion__estado" role="status">
         {!admite && <p>La descarga sin conexión no está disponible en este navegador.</p>}
