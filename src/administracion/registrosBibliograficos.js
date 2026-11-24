@@ -1,4 +1,5 @@
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
+import { obtenerAnioActual } from '../datos/anioPublicacion.js'
 import { presentarPortada } from '../servicios/portadasLibros.js'
 import {
   listarAutoresDeTexto, normalizarTextoLibro, validarAnioLibro, validarAutoriaLibro, validarEditorialLibro, validarTituloLibro,
@@ -77,7 +78,7 @@ export function crearRegistroVistaPrevia(borrador) {
     titulo: borrador.titulo.trim() || 'Título del libro',
     autoria: separarAutores(borrador.autoria).join(', ') || 'Autor del libro',
     editorial: borrador.editorial.trim() || null,
-    anio: /^[1-9]\d{0,3}$/.test(anio) ? Number(anio) : null,
+    anio: anio && !validarCampoLibro('anio', anio) ? Number(anio) : null,
     cuerposIds: borrador.cuerposIds,
     fotografia: borrador.fotografia,
   }
@@ -130,7 +131,7 @@ function separarAutores(texto) {
 }
 
 // Reglas compartidas con la API: ver reglasLibro.js. `anioActual` permite fijar el año en las pruebas.
-export function validarCampoLibro(campo, valor, anioActual = new Date().getFullYear()) {
+export function validarCampoLibro(campo, valor, anioActual = obtenerAnioActual()) {
   switch (campo) {
     case 'titulo': return validarTituloLibro(valor)
     case 'autoria': return validarAutoriaLibro(listarAutoresDeTexto(valor))
@@ -152,7 +153,7 @@ export function leerErroresServidor(error) {
     .map(([campo, mensaje]) => [CAMPO_DEL_FORMULARIO[campo], mensaje]))
 }
 
-export function validarBorradorLibro(borrador, anioActual = new Date().getFullYear()) {
+export function validarBorradorLibro(borrador, anioActual = obtenerAnioActual()) {
   return Object.fromEntries(CAMPOS_LIBRO.map((campo) => [campo, validarCampoLibro(campo, borrador[campo], anioActual)]))
 }
 

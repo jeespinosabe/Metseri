@@ -2,6 +2,8 @@ import { obtenerDatosPrincipales } from '../datos/cuerposCelestes.js'
 import { etiquetaCopiaDescargada } from '../servicios/fechaDescarga.js'
 import { calcularFilasEncabezado, zonaCerrarVr } from './lecturaVisor.js'
 
+const INICIO_AVANCE_FICHA = .45
+
 export const SECCIONES_FICHA = [
   { id: 'resumen', nombre: 'Ficha', titulo: 'Presentación', pagina: 0 },
   { id: 'datos', nombre: 'Datos', titulo: 'Datos principales', pagina: 1 },
@@ -317,7 +319,7 @@ export function detectarAccionFicha(uv, ancho, alto, zonas, lectura) {
   const x = uv.x * ancho
   const y = (1 - uv.y) * alto
   const accion = zonas.find((zona) => x >= zona.x && x <= zona.x + zona.ancho && y >= zona.y && y <= zona.y + zona.alto)?.accion
-    ?? (uv.x < .5 ? 'anterior' : 'siguiente')
+    ?? (uv.x < INICIO_AVANCE_FICHA ? 'anterior' : 'siguiente')
   return resolverAccionFicha(accion, lectura)
 }
 

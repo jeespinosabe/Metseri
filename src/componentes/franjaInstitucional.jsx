@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import logoBiblioteca from '../assets/instituciones/logoBiblioteca.png'
 import logoCecan from '../assets/instituciones/logoCecan.png'
-import escudoTecnologico from '../assets/instituciones/escudoTecnologico.png'
 import { DialogoAcercaDe } from './dialogoAcercaDe.jsx'
 import { MenuPrincipal } from './menuPrincipal.jsx'
 import './franjaInstitucional.css'
@@ -82,10 +81,6 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
           <img className="franja-institucional__biblioteca" src={logoBiblioteca} alt="Biblioteca Pública Central Estatal Solón Argüello" />
           <div className="franja-institucional__cecan">
             <img src={logoCecan} alt="Nayarit y Consejo Estatal para la Cultura y las Artes de Nayarit" />
-          </div>
-          <div className="franja-institucional__tecnologico">
-            <img src={escudoTecnologico} alt="Instituto Tecnológico de Tepic" />
-            <span aria-hidden="true">Instituto Tecnológico de&nbsp;Tepic</span>
           </div>
         </div>
         <div className="franja-institucional__acciones" role="group" aria-label="Acciones de Metseri">

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { Euler, Quaternion, Vector3 } from 'three'
 import { calcularConfiguracionVisor, limitarRasterizacion } from './rendimientoEscena.js'
-import { calcularPresentacionFicha } from './lecturaVisor.js'
+import { calcularPresentacionFicha, DISTANCIA_FICHA_VR } from './lecturaVisor.js'
 import { proyectarPuntoVisor, proyectarRectanguloVisor, medirFuenteVisor, rectangulosSeCruzan } from './proyeccionVisor.js'
 import { crearPaginasFicha } from './contenidoFicha.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
@@ -47,14 +47,31 @@ it('la calidad automática no decrece con pulgadas y respeta DPR, presupuesto y 
 })
 
 it('las doce fichas mantienen contenido completo, sin recorte y con letra proyectada legible', () => {
-  for (const [ancho, alto] of ventanas) for (const diagonal of [6.9, 7, 8]) {
-    const c = calcularConfiguracionVisor({ ancho, alto, diagonal, densidad: 3 })
+  const formatos = [...ventanas.flatMap(([ancho, alto]) => [{ ancho, alto }, { ancho, alto, tactil: true }]),
+    { ancho: 1368, alto: 678, escritorio: true }, { ancho: 1920, alto: 1080, escritorio: true }]
+  for (const formato of formatos) for (const diagonal of [6.9, 7, 8]) {
+    const { ancho, alto } = formato
+    const c = calcularConfiguracionVisor({ ...formato, diagonal, densidad: 3 })
     const p = calcularPresentacionFicha(c)
-    for (const x of [32, 225, 450, 675, 868]) for (const y of [p.inicio, 500, 680]) {
-      for (const [tamano, minimo] of [[p.tipografia.parrafo, 16], [p.tipografia.unidad, 14]]) {
-        const medidas = medirFuenteVisor({ x: (x - 450) * p.escala, y: p.desplazamientoY + (400 - y) * p.escala, z: -32, tamano: tamano * p.escala }, c)
-        assert.ok(medidas.every(valor => valor >= minimo - .08))
+    const cajas = proyectarRectanguloVisor({ y: p.desplazamientoY, z: -DISTANCIA_FICHA_VR, ancho: p.ancho * p.escala, alto: p.alto * p.escala }, c)
+    for (const caja of cajas) {
+      assert.ok(caja.visible && caja.x >= 12 && caja.x + caja.ancho <= ancho / 2 - 12)
+      assert.ok(caja.y >= 40 && caja.y + caja.alto <= alto - c.margenInferior)
+    }
+    const primeraFila = p.alto * 11 / 40
+    const objetivos = formato.tactil ? { parrafo: 15.19, etiqueta: 13.23, unidad: 13.23, valor: 16.66, seccion: 16.66, titulo: 20.58 }
+      : { parrafo: 16, etiqueta: 14, unidad: 14, valor: 17.5, seccion: 17.5, titulo: 21.5 }
+    for (const [estilo, objetivo] of Object.entries(objetivos)) {
+      const filas = [p.alto * .5, p.alto * .625, p.alto * .85]
+      if (estilo === 'titulo') filas.push(primeraFila)
+      else filas.push(Math.min(p.inicio, primeraFila), p.inicio)
+      let minimo = Infinity
+      for (const x of [32, 225, 450, 675, 868]) for (const y of filas) {
+        const medidas = medirFuenteVisor({ x: (x - p.ancho / 2) * p.escala, y: p.desplazamientoY + (p.alto / 2 - y) * p.escala,
+          z: -DISTANCIA_FICHA_VR, tamano: p.tipografia[estilo] * p.escala }, c)
+        minimo = Math.min(minimo, ...medidas)
       }
+      assert.ok(minimo >= objetivo - .08 && minimo <= objetivo + .2, `${ancho}/${diagonal}/${estilo}: ${minimo} px`)
     }
     for (const fuente of FICHAS_PRUEBA) for (const copia of [false, true]) {
       const cuerpo = obtenerCuerpoCeleste(fuente.slug)
@@ -81,6 +98,70 @@ it('las doce fichas mantienen contenido completo, sin recorte y con letra proyec
       assert.ok(metadatos.includes(`${libros[0].editorial} · ${libros[0].anio}`))
     }
   }
+})
+
+it('con entrada táctil la ficha dibuja letra más pequeña en la misma textura', t => {
+  const entorno = prepararEntornoEscena(t)
+  const { campo } = entorno
+  let tactil = false
+  window.matchMedia = consulta => ({ matches: tactil && consulta === '(pointer: coarse)' })
+  entorno.redimensionar(844, 390, { rotarPantalla: true })
+  campo.establecerModo('vr')
+  campo.ocultarInstruccionVr()
+  entorno.apuntarCuerpo('tierra')
+  campo.activar({})
+  entorno.dibujar()
+
+  const material = entorno.tarjeta().material
+  const textura = material.map
+  const tamanos = new Map()
+  t.mock.method(textura.image.getContext('2d'), 'fillText', function (texto) {
+    tamanos.set(texto, Number.parseFloat(this.font))
+  })
+  campo.establecerContenidoFicha('tierra', { fase: 'cargando' })
+  const tamanosAnteriores = new Map(tamanos)
+  tamanos.clear()
+
+  tactil = true
+  entorno.redimensionar(844, 390, { rotarPantalla: true })
+  assert.ok(tamanos.get('Tierra') < tamanosAnteriores.get('Tierra'))
+  assert.ok(tamanos.get('Cargando información...') < tamanosAnteriores.get('Cargando información...'))
+  assert.equal(tamanos.get('Datos'), tamanosAnteriores.get('Datos'))
+  assert.equal(material.map, textura)
+})
+
+it('en escritorio la ficha ocupa menos pantalla y conserva su sección y resolución de texto', t => {
+  const entorno = prepararEntornoEscena(t)
+  const { campo } = entorno
+  let tipoPuntero = 'coarse'
+  window.matchMedia = consulta => ({ matches: consulta === `(pointer: ${tipoPuntero})` })
+  const ancho = 1920, alto = 1080
+  const configuracion = calcularConfiguracionVisor({ ancho, alto })
+  entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+  campo.establecerModo('vr')
+  campo.ocultarInstruccionVr()
+  entorno.apuntarCuerpo('tierra')
+  campo.activar({})
+  campo.ejecutarAccionFicha('seccion:1')
+  entorno.dibujar()
+  const tarjeta = entorno.tarjeta()
+  const medir = () => proyectarRectanguloVisor({ ...tarjeta.position, ancho: tarjeta.scale.x, alto: tarjeta.scale.y }, configuracion)
+  const antes = medir()
+  assert.equal(tarjeta.material.map.image.height, 1600)
+
+  tipoPuntero = 'fine'
+  entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+  entorno.dibujar()
+  assert.equal(entorno.lectura().cuerpoId, 'tierra')
+  assert.equal(entorno.lectura().seccion, 'datos')
+  const presentacion = calcularPresentacionFicha({ ...configuracion, escritorio: true })
+  assert.equal(tarjeta.material.map.image.width, presentacion.ancho * 2)
+  assert.equal(tarjeta.material.map.image.height, presentacion.alto * 2)
+  assert.equal(tarjeta.material.map.generateMipmaps, false)
+  assert.ok(medir().every((caja, ojo) => caja.visible && caja.ancho < 560 && caja.alto < antes[ojo].alto * .6))
+
+  const ventanaEstrecha = calcularConfiguracionVisor({ ancho: 1045, alto: 552, diagonal: 8 })
+  assert.deepEqual(calcularPresentacionFicha({ ...ventanaEstrecha, escritorio: true }), calcularPresentacionFicha(ventanaEstrecha))
 })
 
 it('los nombres centrados se pueden leer sin seleccionar y no quedan debajo de los botones', t => {
@@ -166,7 +247,7 @@ it('cambiar pulgadas conserva estrellas, cuerpos y texturas y reutiliza entradas
   }
 })
 
-it('las parejas de referencia conservan nombres y relaciones separados de la barra y la ficha', t => {
+it('las etiquetas VR de las parejas de referencia se mantienen separadas entre sí y de la barra', t => {
   const entorno = prepararEntornoEscena(t)
   entorno.redimensionar(1381, 645, { rotarPantalla: true })
   entorno.campo.establecerDiagonalPantalla(8)
@@ -200,8 +281,47 @@ it('las parejas de referencia conservan nombres y relaciones separados de la bar
       assert.ok(visibles[i].userData.cajas.every((c, ojo) => !rectangulosSeCruzan(c, visibles[j].userData.cajas[ojo])))
     }
   }
+})
+
+it('al abrir y cerrar una ficha, las etiquetas VR conservan su posición aunque la ficha las cubra', t => {
+  const entorno = prepararEntornoEscena(t)
+  const { campo } = entorno
+  const ancho = 1381, alto = 645, diagonal = 8
+  entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+  campo.establecerDiagonalPantalla(diagonal)
+  campo.establecerModo('vr')
+  campo.ocultarInstruccionVr()
   entorno.apuntarCuerpo('saturno')
-  entorno.campo.activar({})
   entorno.dibujar()
-  assert.equal(etiquetas.find(e => e.userData.cuerpoId === 'saturno').visible, false, 'la ficha oculta el nombre cubierto')
+
+  const etiquetas = []
+  entorno.escena().traverse(objeto => { if (objeto.isSprite && objeto.userData.cuerpoId) etiquetas.push(objeto) })
+  const posicionesVisibles = () => etiquetas.filter(etiqueta => etiqueta.visible).map(etiqueta => ({
+    id: etiqueta.userData.cuerpoId, posicion: etiqueta.position.toArray(), escala: etiqueta.scale.toArray(),
+  }))
+  const posicionesAnteriores = posicionesVisibles()
+  const etiquetaSaturno = etiquetas.find(etiqueta => etiqueta.userData.cuerpoId === 'saturno')
+  assert.ok(etiquetaSaturno.visible)
+
+  campo.activar({})
+  entorno.dibujar()
+  const tarjeta = entorno.tarjeta()
+  assert.ok(tarjeta.visible)
+  assert.deepEqual(posicionesVisibles(), posicionesAnteriores)
+
+  const configuracion = calcularConfiguracionVisor({ ancho, alto, diagonal })
+  const centroTarjeta = tarjeta.position.clone().applyQuaternion(campo.obtenerOrientacion().invert())
+  const cajasTarjeta = proyectarRectanguloVisor({ ...centroTarjeta, ancho: tarjeta.scale.x, alto: tarjeta.scale.y }, configuracion)
+  assert.ok(etiquetaSaturno.userData.cajas.every((caja, ojo) => rectangulosSeCruzan(caja, cajasTarjeta[ojo])))
+  assert.ok(etiquetaSaturno.material.transparent && tarjeta.renderOrder > etiquetaSaturno.renderOrder,
+    'la ficha se dibuja después de la etiqueta que cubre')
+
+  const anillos = entorno.escena().getObjectByName('saturno').children.find(o => o.geometry?.type === 'RingGeometry')
+  assert.ok(tarjeta.material.transparent && !tarjeta.material.depthTest && tarjeta.renderOrder > anillos.renderOrder,
+    'la ficha se dibuja sobre los anillos aunque queden más cerca que el plano')
+
+  campo.ejecutarAccionFicha('cerrar')
+  entorno.dibujar()
+  assert.equal(tarjeta.visible, false)
+  assert.deepEqual(posicionesVisibles(), posicionesAnteriores)
 })

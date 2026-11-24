@@ -120,6 +120,12 @@ describe('validación visual de los campos', () => {
     assert.equal(validarCampoLibro('anio', '2028', 2027), '')
   })
 
+  it('la vista previa descarta un año fuera de rango (1450 al año actual + 1)', (contexto) => {
+    contexto.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2027, 5, 1) })
+    assert.equal(crearRegistroVistaPrevia({ ...crearBorradorLibro(), anio: '2028' }).anio, 2028)
+    for (const anio of ['2029', '1449', '1000']) assert.equal(crearRegistroVistaPrevia({ ...crearBorradorLibro(), anio }).anio, null, anio)
+  })
+
   it('la editorial es obligatoria y rechaza solo espacios', () => {
     for (const vacia of ['', '   ']) assert.equal(validarCampoLibro('editorial', vacia), 'Escribe la editorial del libro.')
     assert.equal(validarCampoLibro('editorial', 'Fondo de Cultura Económica'), '')

@@ -2,6 +2,12 @@ import { LinearFilter } from 'three'
 import { medirFuenteVisor, proyectarRectanguloVisor } from './proyeccionVisor.js'
 import { distorsionarRadio, PERFIL_HOMIDO_GRAB } from './perfilVisor.js'
 
+export const DISTANCIA_FICHA_VR = 44
+export const PROPORCION_TAMANO_FICHA_VR = .9
+const ANCHO_MINIMO_PARA_REDUCIR_FICHA_PX = 260
+const ANCHO_MINIMO_FICHA_ESCRITORIO_PX = 410
+const ANCHO_MAXIMO_FICHA_ESCRITORIO_PX = 600
+
 export function configurarTexturaLectura(textura) {
   textura.minFilter = LinearFilter
   textura.magFilter = LinearFilter
@@ -23,8 +29,9 @@ export function calcularFilasEncabezado(ancho, tipografia, altoPestana, lineasCa
 
 export function calcularPresentacionFicha(configuracion) {
   const ancho = 900
-  const alto = 800
-  const distancia = 32
+  const fichaCompacta = configuracion.escritorio && configuracion.ancho >= 900
+  const alto = fichaCompacta ? 540 : 800
+  const distancia = DISTANCIA_FICHA_VR
   const desplazamientoPantalla = (configuracion.margenInferior - 40) / 2 * configuracion.optica.milimetrosPorPixel
   const desplazamientoY = distorsionarRadio(desplazamientoPantalla / PERFIL_HOMIDO_GRAB.distanciaPantalla) * distancia
   let minimo = 0
@@ -34,38 +41,58 @@ export function calcularPresentacionFicha(configuracion) {
     const escala = (minimo + maximo) / 2
     const cajas = proyectarRectanguloVisor({ y: desplazamientoY, z: -distancia, ancho: ancho * escala, alto: alto * escala }, configuracion)
     if (cajas.every(c => c?.visible && c.x >= 12 && c.x + c.ancho <= configuracion.ancho / 2 - 12
-      && c.y >= 40 && c.y + c.alto <= configuracion.alto - configuracion.margenInferior)) minimo = escala
+      && c.y >= 40 && c.y + c.alto <= configuracion.alto - configuracion.margenInferior
+      && (!fichaCompacta || c.ancho <= ANCHO_MAXIMO_FICHA_ESCRITORIO_PX))) minimo = escala
     else maximo = escala
   }
-  const escala = minimo * .98
+  const escalaDisponible = minimo * .98
   // Una ventana reducida puede dejar los ejes físicos fuera del viewport.
-  if (escala < .00001) return null
+  if (escalaDisponible < .00001) return null
+  const cajasDisponibles = proyectarRectanguloVisor({ y: desplazamientoY, z: -distancia,
+    ancho: ancho * escalaDisponible, alto: alto * escalaDisponible }, configuracion)
+  const anchoDisponible = Math.min(...cajasDisponibles.map(caja => caja.ancho))
+  // Usar la altura habitual si el campo óptico es estrecho para mostrar filas completas de datos.
+  if (fichaCompacta && anchoDisponible < ANCHO_MINIMO_FICHA_ESCRITORIO_PX) {
+    return calcularPresentacionFicha({ ...configuracion, escritorio: false })
+  }
+  // En ventanas estrechas se conserva el espacio que necesitan los datos y las pestañas.
+  const proporcion = Math.min(1, Math.max(PROPORCION_TAMANO_FICHA_VR, ANCHO_MINIMO_PARA_REDUCIR_FICHA_PX / anchoDisponible))
+  const escala = escalaDisponible * proporcion
+  const primeraFilaMedicion = alto * 11 / 40
   let pixelesPorUnidad = Infinity
-  for (const x of [ancho * .25, ancho * .5, ancho * .75]) for (const y of [220, alto * .5, alto - 120]) {
+  for (const x of [ancho * .25, ancho * .5, ancho * .75]) for (const y of [primeraFilaMedicion, alto * .5, alto * .85]) {
     const medidas = medirFuenteVisor({ x: (x - ancho / 2) * escala, y: desplazamientoY + (alto / 2 - y) * escala,
       z: -distancia, tamano: escala }, configuracion)
     pixelesPorUnidad = Math.min(pixelesPorUnidad, ...medidas)
   }
   pixelesPorUnidad = Math.max(.05, pixelesPorUnidad)
-  const fuente = px => {
-    let tamano = Math.ceil(px / pixelesPorUnidad)
-    // Medir el em completo: la derivada de un píxel sobreestima la letra en los bordes.
+  const fuente = (px, inicioMedicion = primeraFilaMedicion) => {
+    let tamano = px / pixelesPorUnidad
+    // Ajustar el em completo al tamaño objetivo en ambos ojos, incluso en los bordes.
     for (let paso = 0; paso < 4; paso += 1) {
       let minimo = Infinity
-      for (const x of [32, 225, 450, 675, 868]) for (const y of [220, 400, 500, 680]) {
+      for (const x of [32, 225, 450, 675, 868]) for (const y of [inicioMedicion, alto * .5, alto * .625, alto * .85]) {
         minimo = Math.min(minimo, ...medirFuenteVisor({ x: (x - ancho / 2) * escala,
           y: desplazamientoY + (alto / 2 - y) * escala, z: -distancia, tamano: tamano * escala }, configuracion))
       }
-      if (minimo >= px) break
-      tamano = Math.ceil(tamano * px / minimo)
+      const ajuste = px / minimo
+      tamano *= ajuste
+      if (Math.abs(ajuste - 1) < .0001) break
     }
-    return tamano
+    return Math.ceil(tamano * 4) / 4
   }
-  const tipografia = { parrafo: fuente(16), etiqueta: fuente(14), unidad: fuente(14), valor: fuente(18),
-    titulo: fuente(22), categoria: fuente(12), navegacion: fuente(14), pestana: fuente(12), seccion: fuente(18), nota: fuente(12) }
-  const altoControl = Math.ceil(tipografia.navegacion * 1.35 + 12)
-  const altoPestana = Math.ceil(tipografia.pestana * 1.35 + 10)
-  const { tituloY, pestanasY, inicio } = calcularFilasEncabezado(ancho, tipografia, altoPestana)
+  const fuenteLectura = (px, inicioMedicion) => fuente(configuracion.tactil ? (px - .5) * .98 : px, inicioMedicion)
+  const fuentesEncabezado = { titulo: fuenteLectura(21.5), categoria: fuente(12), pestana: fuente(12) }
+  const navegacion = fuente(14)
+  const altoControl = Math.ceil(navegacion * 1.35 + 12)
+  const altoPestana = Math.ceil(fuentesEncabezado.pestana * 1.35 + 10)
+  const { tituloY, pestanasY, inicio } = calcularFilasEncabezado(ancho, fuentesEncabezado, altoPestana)
+  const inicioMedicion = Math.min(inicio, primeraFilaMedicion)
+  const tamanoDato = fuenteLectura(14, inicioMedicion)
+  const tamanoDestacado = fuenteLectura(17.5, inicioMedicion)
+  const tipografia = { ...fuentesEncabezado, navegacion, nota: fuente(12),
+    parrafo: fuenteLectura(16, inicioMedicion), etiqueta: tamanoDato, unidad: tamanoDato,
+    valor: tamanoDestacado, seccion: tamanoDestacado }
   const pie = altoControl + 28
   return { ancho, alto, escala, desplazamientoY, pixelesPorUnidad, tipografia, tituloY, pestanasY, altoControl, altoPestana, inicio, pie,
     margen: 32 }

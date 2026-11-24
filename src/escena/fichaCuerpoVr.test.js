@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict'
 import { it } from 'node:test'
-import { Mesh, MeshBasicMaterial, PerspectiveCamera, PlaneGeometry, Vector3 } from 'three'
+import { PerspectiveCamera, Vector3 } from 'three'
 import { crearFichaCuerpoVr } from './fichaCuerpoVr.js'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { obtenerZonasNavegacion } from './contenidoFicha.js'
-import { etiquetaCubiertaPorFicha } from './etiquetasPlanetas.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 import { calcularConfiguracionVisor } from './rendimientoEscena.js'
+import { DISTANCIA_FICHA_VR } from './lecturaVisor.js'
 
 function preparar(t, anchoLetra = .5) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
@@ -68,6 +68,7 @@ it('la rasterización física conserva páginas, orientación y acciones lógica
   const camara = new PerspectiveCamera(70, 2, .1, 1000)
   ficha.reubicar(camara)
   const estado = ficha.obtenerLectura(), revision = ficha.obtenerRevisionLectura(), posicion = ficha.malla.position.clone()
+  assert.equal(posicion.z, -DISTANCIA_FICHA_VR)
   const original = ficha.malla.material.map
   let liberaciones = 0
   original.addEventListener('dispose', () => { liberaciones += 1 })
@@ -231,11 +232,11 @@ it('el rayo distingue ambas mitades, consume el límite inicial y respeta pesta�
   }
   assert.ok(apuntar(.25, .5), 'la mitad sin acción sigue bloqueando el cielo')
   assert.equal(apuntar(.25, .5).accion, null)
-  assert.equal(apuntar(.75, .5).accion, 'siguiente')
+  assert.equal(apuntar(.46, .5).accion, 'siguiente', 'permite avanzar antes de alcanzar el centro')
   ficha.moverPagina(1)
   assert.equal(apuntar(.25, .5).accion, 'anterior')
   ficha.mostrarSeccion(3)
-  assert.equal(apuntar(.75, .5).accion, 'cerrar')
+  assert.equal(apuntar(.46, .5).accion, 'cerrar')
   for (const zona of obtenerZonasNavegacion(lienzo.width, lienzo.height, 3, 4)) {
     assert.equal(apuntar((zona.x + zona.ancho / 2) / lienzo.width, (zona.y + zona.alto / 2) / lienzo.height).accion,
       zona.accion === 'siguiente' ? 'cerrar' : zona.accion)
@@ -280,16 +281,4 @@ it('sin cambios no redibuja; libera cada recurso una vez e ignora imágenes tard
   assert.deepEqual(liberados, [1, 1, 1])
   assert.equal(ficha.malla.visible, false)
   assert.equal(imagenes[1].onload, null)
-})
-
-it('las etiquetas cubiertas por la tarjeta no atraviesan el texto y las demás se conservan', () => {
-  const camara = new PerspectiveCamera(70, 1, .1, 1000)
-  camara.updateMatrixWorld(true)
-  const plano = new Mesh(new PlaneGeometry(10, 10), new MeshBasicMaterial())
-  plano.position.z = -10
-  assert.equal(etiquetaCubiertaPorFicha({ x: 400, y: 400 }, plano, camara, 800, 800), true)
-  assert.equal(etiquetaCubiertaPorFicha({ x: 10, y: 20 }, plano, camara, 800, 800), false)
-  plano.visible = false
-  assert.equal(etiquetaCubiertaPorFicha({ x: 400, y: 400 }, plano, camara, 800, 800), false)
-  plano.geometry.dispose(); plano.material.dispose()
 })

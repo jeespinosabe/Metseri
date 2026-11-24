@@ -1,6 +1,7 @@
 import {
   normalizarTextoLibro, validarAnioLibro, validarAutoriaLibro, validarEditorialLibro, validarTituloLibro,
 } from '../../src/administracion/reglasLibro.js'
+import { obtenerAnioActual } from '../../src/datos/anioPublicacion.js'
 import { esSlugValido } from './consultaSupabase.js'
 import { decodificarPortada } from './portadasLibros.js'
 import { obtenerConfiguracionPrivada, solicitarRpcPrivada } from './supabasePrivada.js'
@@ -28,7 +29,7 @@ function esPortadaValida(portada, parcial) {
 
 // Las reglas de título, autores, editorial y año son las mismas del formulario (reglasLibro.js).
 // `anioActual` se puede fijar en las pruebas; el servidor decide el año máximo (año actual + 1).
-export function validarLibro(datos, parcial = false, { anioActual = new Date().getUTCFullYear() } = {}) {
+export function validarLibro(datos, parcial = false, { anioActual = obtenerAnioActual() } = {}) {
   const invalido = () => { throw new ErrorLibros(400, 'LIBRO_INVALIDO', 'Revisa los campos del libro, sus autores y cuerpos celestes.') }
   if (!datos || typeof datos !== 'object' || Array.isArray(datos)
     || !Object.keys(datos).length || Object.keys(datos).some((campo) => !CAMPOS.includes(campo))) invalido()

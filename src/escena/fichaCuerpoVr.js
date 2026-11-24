@@ -1,9 +1,7 @@
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, Raycaster, SRGBColorSpace, Vector2, Vector3 } from 'three'
 import { calcularEncabezadoFicha, crearEstadoLectura, crearPaginasFicha, detectarAccionFicha, obtenerTextoCategoria, obtenerZonasNavegacion, resolverAccionFicha, SECCIONES_FICHA } from './contenidoFicha.js'
-import { calcularPresentacionFicha, configurarTexturaLectura } from './lecturaVisor.js'
+import { calcularPresentacionFicha, configurarTexturaLectura, DISTANCIA_FICHA_VR, PROPORCION_TAMANO_FICHA_VR } from './lecturaVisor.js'
 import { limitarRasterizacion } from './rendimientoEscena.js'
-
-const DISTANCIA_FICHA = 32
 
 export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   const lienzo = document.createElement('canvas')
@@ -13,8 +11,11 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
   let textura = new CanvasTexture(lienzo)
   textura.colorSpace = SRGBColorSpace
   const geometria = new PlaneGeometry(1, 1)
-  const material = new MeshBasicMaterial({ map: textura, toneMapped: false })
+  const material = new MeshBasicMaterial({ map: textura, toneMapped: false, transparent: true, depthTest: false, depthWrite: false })
   const malla = new Mesh(geometria, material)
+  malla.name = 'fichaCuerpoVr'
+  // La ficha se dibuja sobre los cuerpos y anillos sin perder su profundidad estereoscópica.
+  malla.renderOrder = 10
   malla.visible = false
   const rayo = new Raycaster()
   let cuerpo = null
@@ -183,7 +184,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
         material.map = textura
       }
       if (presentacion) configurarTexturaLectura(textura)
-      const altoMundo = 2 * DISTANCIA_FICHA * Math.tan(35 * Math.PI / 180) * .82
+      const altoMundo = 2 * DISTANCIA_FICHA_VR * Math.tan(35 * Math.PI / 180) * .82 * PROPORCION_TAMANO_FICHA_VR
       const anchoMundo = altoMundo * (ancho / 2 / alto)
       // Mantener el ancho y la escala del texto al acortar el área de lectura.
       const escala = presentacion?.escala ?? Math.min(anchoMundo / anchoLogico, altoMundo / altoReferencia)
@@ -194,7 +195,7 @@ export function crearFichaCuerpoVr({ alInvalidar, alCambiarLectura } = {}) {
     },
     reubicar(camara) {
       if (!cuerpo || destruido) return
-      malla.position.set(0, presentacion?.desplazamientoY ?? 0, -DISTANCIA_FICHA).applyQuaternion(camara.quaternion)
+      malla.position.set(0, presentacion?.desplazamientoY ?? 0, -DISTANCIA_FICHA_VR).applyQuaternion(camara.quaternion)
       malla.up.set(0, 1, 0).applyQuaternion(camara.quaternion)
       malla.quaternion.copy(camara.quaternion)
       malla.updateWorldMatrix(true, false)

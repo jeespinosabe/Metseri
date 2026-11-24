@@ -81,9 +81,30 @@
 .panel-admin__contenido-formulario { display: grid; gap: 28px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .panel-admin__campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 20px; }
 .panel-admin__campo--completo { grid-column: 1 / -1; }
+.panel-admin__formulario [data-ayuda-campo] { position: relative; }
+.panel-admin__ayuda-emergente {
+  position: absolute;
+  z-index: 2;
+  inset-block-end: 100%;
+  inset-inline-start: 0;
+  width: max-content;
+  max-width: min(100%, 19rem);
+  margin: 0;
+  padding: 3px 6px;
+  border: 1px solid currentColor;
+  background: var(--admin-blanco);
+  color: #292929;
+  font: .75rem/1.35 system-ui, sans-serif;
+  pointer-events: none;
+}
+.panel-admin__ayuda-emergente:not([hidden]) {
+  animation: mostrarAyudaEmergente 0s 1s backwards;
+}
+@keyframes mostrarAyudaEmergente {
+  from { visibility: hidden; }
+}
 .panel-admin__selector { min-width: 0; margin: 0; padding: 0; border: 0; }
 .panel-admin__selector > legend { padding: 0; color: var(--admin-tinto); font-size: .95rem; }
-.panel-admin__selector > .panel-admin__ayuda { margin: 6px 0 14px; }
 .panel-admin__grupos-cuerpos { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 14px; }
 .panel-admin__grupo-cuerpos { min-width: 0; margin: 0; padding: 12px 14px 14px; border: 1px solid var(--admin-borde); border-radius: 12px; }
 .panel-admin__grupo-cuerpos legend { padding: 0 6px; color: var(--admin-texto-secundario); font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
@@ -95,13 +116,11 @@
 .panel-admin__nombre-cuerpo, .panel-admin__detalle-cuerpo { display: block; }
 .panel-admin__detalle-cuerpo { color: var(--admin-texto-secundario); font-size: .74rem; }
 .panel-admin__resumen-seleccion { margin: 14px 0 0; color: var(--admin-tinto); font-size: .84rem; }
-.panel-admin__publicacion .panel-admin__opcion-cuerpo + * { margin-top: 8px; }
 .panel-admin__pie-formulario { display: flex; justify-content: flex-end; padding-top: 20px; border-top: 1px solid var(--admin-borde); }
 
 /* Fotografía del libro */
 .panel-admin__fotografia { min-width: 0; margin: 0; padding: 0; border: 0; }
 .panel-admin__fotografia > legend { padding: 0 0 12px; color: var(--admin-tinto); font-size: .95rem; }
-.panel-admin__fotografia > .panel-admin__ayuda { margin-bottom: 10px; }
 .panel-admin__foto-disposicion { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); align-items: start; gap: 20px; }
 .panel-admin__foto-zona { display: grid; justify-items: center; gap: 10px; padding: 30px 18px; border: 1px dashed var(--admin-borde-control); border-radius: 14px; color: var(--admin-texto-secundario); font-size: .86rem; text-align: center; background: var(--admin-marfil); }
 .panel-admin__foto-zona p { margin: 0; }

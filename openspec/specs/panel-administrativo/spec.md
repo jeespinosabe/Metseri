@@ -111,7 +111,7 @@ El panel SHALL permitir buscar por título o autoría y filtrar por un cuerpo ce
 
 ### Requirement: Formularios para preparar altas y ediciones
 
-Los formularios SHALL ofrecer título, autoría, editorial, año y URL de la ficha bibliográfica, una fotografía opcional del libro y la selección de cuerpos celestes. Título, autoría, editorial y URL SHALL identificarse como obligatorios; año y fotografía SHALL ser opcionales. El alta SHALL comenzar vacía y sin fotografía. La edición SHALL presentar los valores originales del libro seleccionado, incluidos su fotografía y su encuadre. Los campos SHALL poder modificarse como borrador temporal, sin alterar el registro mostrado en el listado.
+Los formularios SHALL ofrecer título, autor, editorial, año y URL de la ficha bibliográfica, una fotografía opcional del libro y la selección de cuerpos celestes. Título, autor, editorial y URL SHALL identificarse como obligatorios; año y fotografía SHALL ser opcionales. El alta SHALL comenzar vacía y sin fotografía. La edición SHALL presentar los valores originales del libro seleccionado, incluidos su fotografía y su encuadre. Los campos SHALL poder modificarse como borrador temporal, sin alterar el registro mostrado en el listado.
 
 #### Scenario: Preparar un alta
 - **WHEN** se abre Agregar libro
@@ -129,11 +129,11 @@ Los formularios SHALL ofrecer título, autoría, editorial, año y URL de la fic
 
 #### Scenario: Identificar la editorial como obligatoria
 - **WHEN** se abre Agregar libro o Editar
-- **THEN** la etiqueta de la editorial indica «Obligatorio», igual que título y autoría, y la del año indica «Opcional»
+- **THEN** la etiqueta de la editorial indica «Obligatorio», igual que título y autor, y la del año indica «Opcional»
 
 ### Requirement: Validación visual de los campos
 
-La interfaz SHALL señalar errores al abandonar un campo que se haya editado y actualizar el mensaje al corregirlo. Título y autoría SHALL rechazar contenido compuesto únicamente por espacios; la editorial SHALL rechazarlo y SHALL ser obligatoria. Los textos SHALL respetar las reglas de `validacion-datos-bibliograficos` (longitud, una línea sin caracteres de control, al menos una letra o dígito, nombres de autor que inician con letra y tienen al menos 2 caracteres, y rango del año). La URL SHALL requerir un destino absoluto con protocolo HTTP o HTTPS. Cuando el servidor rechace un campo, su mensaje SHALL mostrarse bajo ese campo. Cada error SHALL estar asociado al campo y expresarse en texto; su corrección SHALL NOT habilitar el guardado en esta etapa.
+La interfaz SHALL asociar las indicaciones de alta y edición con cada control o grupo. La ayuda emergente SHALL mostrarse después de un segundo con el cursor sobre el texto de la etiqueta y ocultarse al retirarlo. La interfaz SHALL señalar errores al abandonar un campo que se haya editado y actualizar el mensaje al corregirlo. Título y autor SHALL rechazar contenido compuesto únicamente por espacios; la editorial SHALL rechazarlo y SHALL ser obligatoria. Los textos SHALL respetar las reglas de `validacion-datos-bibliograficos` (longitud, una línea sin caracteres de control, al menos una letra o dígito, nombres de autor que inician con letra y tienen al menos 2 caracteres, y rango del año). La URL SHALL requerir un destino absoluto con protocolo HTTP o HTTPS. Cuando el servidor rechace un campo, su mensaje SHALL mostrarse bajo ese campo. Cada error SHALL estar asociado al campo y expresarse en texto; su corrección SHALL NOT habilitar el guardado en esta etapa.
 
 #### Scenario: Mostrar y corregir errores
 - **WHEN** se introduce un título vacío, una URL no válida o un año decimal y se abandona el campo correspondiente

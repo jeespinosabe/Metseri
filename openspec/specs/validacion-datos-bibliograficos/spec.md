@@ -112,7 +112,7 @@ Todo libro SHALL tener editorial. La editorial SHALL identificarse como obligato
 - **THEN** la API responde 400 con `LIBRO_INVALIDO` y el mensaje «Escribe la editorial del libro.»
 
 ### Requirement: Rango del año de publicación
-El año, cuando se indique, SHALL ser un entero de cuatro cifras entre 1450 y el año actual más uno, calculado con la fecha del servidor. El año SHALL seguir siendo opcional.
+El año, cuando se indique, SHALL ser un entero de cuatro cifras entre 1450 y el año actual más uno, con el año actual calculado en la zona `America/Mazatlan`. El año SHALL seguir siendo opcional.
 
 #### Scenario: Año válido
 - **WHEN** se guarda un libro con año 2020

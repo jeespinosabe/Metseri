@@ -1,6 +1,7 @@
 // Reglas de los datos de un libro. Módulo puro y sin dependencias: lo usan el
 // formulario (src/) y la API (servidor/) para aplicar los mismos criterios y mensajes.
 // Las restricciones equivalentes de la base están en bd/validarDatosLibros.sql.
+import { obtenerAnioActual } from '../datos/anioPublicacion.js'
 
 export const LIMITES_LIBRO = Object.freeze({
   titulo: 200,
@@ -22,7 +23,7 @@ export function normalizarTextoLibro(texto) {
   return String(texto ?? '').replace(/\p{Zs}+/gu, ' ').trim()
 }
 
-export function anioMaximoLibro(anioActual = new Date().getFullYear()) {
+export function anioMaximoLibro(anioActual = obtenerAnioActual()) {
   return anioActual + 1
 }
 
@@ -56,7 +57,7 @@ export const validarTituloLibro = (valor) => validarTextoDeUnaLinea('titulo', va
 export const validarEditorialLibro = (valor) => validarTextoDeUnaLinea('editorial', valor)
 
 // Año opcional: vacío es válido. Con valor, cuatro cifras entre 1450 y el año actual + 1.
-export function validarAnioLibro(valor, anioActual = new Date().getFullYear()) {
+export function validarAnioLibro(valor, anioActual = obtenerAnioActual()) {
   if (valor === null || valor === undefined) return ''
   const texto = typeof valor === 'number' ? (Number.isInteger(valor) ? String(valor) : 'no entero') : String(valor).trim()
   if (texto === '') return ''

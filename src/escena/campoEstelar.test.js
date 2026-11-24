@@ -39,7 +39,7 @@ for (const origen of ['mitad', 'control', 'acción accesible']) {
       const { width: ancho, height: alto } = tarjeta().material.map.image
       const zona = obtenerZonasNavegacion(ancho, alto, lectura().pagina, lectura().total).find((registro) => registro.accion === 'siguiente')
       apuntar((zona.x + zona.ancho / 2) / ancho, (zona.y + zona.alto / 2) / alto)
-    } else apuntar(.75, .5)
+    } else apuntar(.46, .5)
     const orientacion = campo.obtenerOrientacion()
     if (origen === 'acción accesible') campo.ejecutarAccionFicha('siguiente')
     else {
@@ -62,7 +62,7 @@ it('la instrucción consume el primer tap; después navegar usa la mitad captura
   gestos.pulsar({})
   t.mock.timers.tick(INTERVALO_DOBLE_TAP_MS)
   assert.equal(lectura().pagina, 0)
-  apuntar(.75, .5)
+  apuntar(.46, .5)
   gestos.pulsar({ clientX: 5 })
   apuntar(.25, .5)
   t.mock.timers.tick(INTERVALO_DOBLE_TAP_MS)
@@ -118,7 +118,7 @@ it('el puntero en ambos ojos sigue la lectura, cierre, tamaño, diagonal y nuevo
   campo.ejecutarAccionFicha('siguiente')
   dibujar()
   assert.deepEqual(punteros.slice(-2), [-1, -1])
-  apuntar(.75, .5)
+  apuntar(.46, .5)
   assert.deepEqual(punteros.slice(-2), [1, 1])
   campo.ejecutarAccionFicha('seccion:3')
   dibujar()

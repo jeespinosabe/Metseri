@@ -9,7 +9,7 @@ La información, los nombres y las formas de los cuerpos pierden definición en 
 - Mantener Ajustar visor con la diagonal como único dato de configuración del visitante, junto con Guardar y Cancelar. Se descarta incorporar elecciones manuales de tamaño de lectura o calidad.
 - Calcular automáticamente la resolución por ojo, el detalle de rasterización y los tamaños de texto a partir de las pulgadas declaradas, viewport, screen, DPR y límites gráficos.
 - Compensar la pérdida de definición al aumentar las pulgadas, tanto en fichas como en nombres, relaciones de satélites, superficies, contornos, anillos y cielo.
-- Adaptar las etiquetas para que puedan leerse sin seleccionar el cuerpo y no queden debajo de la barra inferior, superpuestas con su pareja o dentro de una ficha abierta.
+- Adaptar las etiquetas al área útil del visor y separar los nombres de cada pareja. Si se abre una ficha, esta puede cubrir las etiquetas en su posición dentro de la vista.
 - Separar composición lógica y resolución física del texto. Repartir el contenido en continuaciones cuando sea necesario para conservar una letra legible.
 - Revisar resolución por ojo, muestreo y detalle de texturas de cuerpos y estrellas con un presupuesto común acotado, preservando la distribución e identidad visual.
 - Incorporar las tres nuevas capturas aportadas como evidencia del antes y compararlas con un después equivalente; conservar también las dos capturas anteriores de fichas.

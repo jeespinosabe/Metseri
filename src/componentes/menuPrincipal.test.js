@@ -125,10 +125,11 @@ describe('banner sin accesos sueltos (MN-03, MN-27)', () => {
     assert.ok(banner.includes('>Acerca de</h2>'))
   })
 
-  it('mantiene la marca, los logos institucionales y el nombre de las acciones', () => {
+  it('mantiene la marca, los logos de la Biblioteca y del CECAN y el nombre de las acciones, sin el escudo del Tecnológico', () => {
     assert.ok(banner.includes('aria-label="Acciones de Metseri"'))
     assert.ok(banner.includes('alt="Biblioteca Pública Central Estatal Solón Argüello"'))
-    assert.ok(banner.includes('alt="Instituto Tecnológico de Tepic"'))
+    assert.ok(banner.includes('alt="Nayarit y Consejo Estatal para la Cultura y las Artes de Nayarit"'))
+    assert.equal(banner.includes('alt="Instituto Tecnológico de Tepic"'), false)
     assert.ok(banner.includes('aria-label="Menú"'))
   })
 })
