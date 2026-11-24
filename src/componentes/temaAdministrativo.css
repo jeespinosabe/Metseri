@@ -144,6 +144,34 @@
 
 .admin-acceso__tarjeta input:focus { border-color: var(--admin-tinto); }
 
+/* Campo de contraseña con botón para mostrarla u ocultarla. El botón mide 44 px aunque el icono sea pequeño. */
+.admin-acceso__campo-contrasena { position: relative; }
+.admin-acceso__tarjeta .admin-acceso__campo-contrasena input { padding-inline-end: 52px; }
+
+.admin-acceso__tarjeta .admin-acceso__ojo {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 2px;
+  display: grid;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--admin-texto-secundario);
+  transform: translateY(-50%);
+  touch-action: manipulation;
+}
+
+.admin-acceso__tarjeta .admin-acceso__ojo svg { display: block; pointer-events: none; }
+.admin-acceso__tarjeta .admin-acceso__ojo:not(:disabled):hover { background: var(--admin-resaltado); color: var(--admin-tinto); }
+.admin-acceso__tarjeta .admin-acceso__ojo[aria-pressed="true"] { color: var(--admin-tinto); }
+.admin-acceso__tarjeta .admin-acceso__ojo:focus-visible { outline: 2px solid var(--admin-tinto); outline-offset: -3px; }
+
 .admin-acceso__tarjeta button {
   position: relative;
   display: flex;
