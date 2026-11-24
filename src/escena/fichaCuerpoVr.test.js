@@ -8,6 +8,7 @@ import { etiquetaCubiertaPorFicha } from './etiquetasPlanetas.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
 import { adaptarContenido } from '../servicios/consultaContenido.js'
 import { calcularConfiguracionVisor } from './rendimientoEscena.js'
+import { DISTANCIA_FICHA_VR } from './lecturaVisor.js'
 
 function preparar(t, anchoLetra = .5) {
   const anteriores = ['document', 'Image'].map((clave) => [clave, Object.getOwnPropertyDescriptor(globalThis, clave)])
@@ -68,6 +69,7 @@ it('la rasterización física conserva páginas, orientación y acciones lógica
   const camara = new PerspectiveCamera(70, 2, .1, 1000)
   ficha.reubicar(camara)
   const estado = ficha.obtenerLectura(), revision = ficha.obtenerRevisionLectura(), posicion = ficha.malla.position.clone()
+  assert.equal(posicion.z, -DISTANCIA_FICHA_VR)
   const original = ficha.malla.material.map
   let liberaciones = 0
   original.addEventListener('dispose', () => { liberaciones += 1 })

@@ -129,7 +129,7 @@ Los formularios SHALL ofrecer título, autoría, editorial, año y URL de la fic
 
 ### Requirement: Validación visual de los campos
 
-La interfaz SHALL señalar errores al abandonar un campo que se haya editado y actualizar el mensaje al corregirlo. Título y autoría SHALL rechazar contenido compuesto únicamente por espacios. La URL SHALL requerir un destino absoluto con protocolo HTTP o HTTPS. El año, cuando se indique, SHALL ser un entero positivo de hasta cuatro cifras. Cada error SHALL estar asociado al campo y expresarse en texto; su corrección SHALL NOT habilitar el guardado en esta etapa.
+La interfaz SHALL asociar las indicaciones de alta y edición con cada control o grupo. La ayuda emergente SHALL mostrarse después de un segundo con el cursor sobre el texto de la etiqueta y ocultarse al retirarlo. La interfaz SHALL señalar errores al abandonar un campo que se haya editado y actualizar el mensaje al corregirlo. Título y autoría SHALL rechazar contenido compuesto únicamente por espacios. La URL SHALL requerir un destino absoluto con protocolo HTTP o HTTPS. El año, cuando se indique, SHALL ser un entero entre 1000 y el año actual en `America/Mazatlan`. Cada error SHALL estar asociado al campo y expresarse en texto; su corrección SHALL NOT habilitar el guardado en esta etapa.
 
 #### Scenario: Mostrar y corregir errores
 - **WHEN** se introduce un título vacío, una URL no válida o un año decimal y se abandona el campo correspondiente

@@ -7,7 +7,7 @@ import { TarjetaLibro } from './tarjetaLibro.jsx'
 const FORMATOS_ACEPTADOS = 'image/jpeg,image/png,image/webp'
 const EXTREMOS_EJE = { y: ['Arriba', 'Abajo', 'desde arriba'], x: ['Izquierda', 'Derecha', 'desde la izquierda'] }
 
-export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevia }) {
+export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevia, ayudaVisible }) {
   const id = useId()
   const entrada = useRef(null)
   const botonElegir = useRef(null)
@@ -63,7 +63,7 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
   }
 
   const elegirArchivo = () => entrada.current?.click()
-  const descripcion = [`${id}-formatos`, error && `${id}-error`].filter(Boolean).join(' ')
+  const descripcion = error ? `${id}-ayuda ${id}-error` : `${id}-ayuda`
   const eventosArrastre = {
     onDragOver: (evento) => { evento.preventDefault(); setArrastrando(true) },
     onDragLeave: (evento) => { if (!evento.currentTarget.contains(evento.relatedTarget)) setArrastrando(false) },
@@ -75,9 +75,12 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
   }
 
   return (
-    <fieldset className={`panel-admin__fotografia${arrastrando ? ' panel-admin__fotografia--arrastrando' : ''}`} {...eventosArrastre}>
-      <legend>Fotografía del libro <span className="panel-admin__marca-campo">Opcional</span></legend>
-      <p className="panel-admin__ayuda">La portada se guarda junto con el libro.</p>
+    <fieldset className={`panel-admin__fotografia${arrastrando ? ' panel-admin__fotografia--arrastrando' : ''}`} data-ayuda-campo="fotografia" {...eventosArrastre}>
+      <legend>
+        <span data-ayuda-etiqueta="fotografia">Fotografía del libro</span>{' '}
+        <span className="panel-admin__marca-campo">Opcional</span>
+      </legend>
+      <p id={`${id}-ayuda`} className="panel-admin__ayuda-emergente" role="tooltip" hidden={!ayudaVisible}>Elige una foto JPG, PNG o WebP de hasta 5 MB y revisa cómo se verá en la tarjeta.</p>
       <input
         ref={entrada}
         type="file"
@@ -126,7 +129,6 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
                 <button type="button" className="panel-admin__boton panel-admin__boton--secundario" aria-describedby={descripcion} onClick={elegirArchivo}>Cambiar foto</button>
                 <button type="button" className="panel-admin__boton panel-admin__boton--peligro" onClick={quitarFotografia}>Quitar foto</button>
               </div>
-              <p id={`${id}-formatos`} className="panel-admin__ayuda">JPG, PNG o WebP · hasta 5 MB</p>
               <p id={`${id}-error`} className="panel-admin__error-campo" aria-live="polite">{error}</p>
             </div>
           </div>
@@ -135,7 +137,6 @@ export function CampoFotografiaLibro({ fotografia, alCambiar, registroVistaPrevi
             <span className="panel-admin__foto-icono" aria-hidden="true">+</span>
             <p>Arrastra aquí una fotografía o</p>
             <button ref={botonElegir} type="button" className="panel-admin__boton panel-admin__boton--secundario" aria-describedby={descripcion} onClick={elegirArchivo}>Elegir fotografía</button>
-            <p id={`${id}-formatos`} className="panel-admin__ayuda">JPG, PNG o WebP · hasta 5 MB</p>
             <p id={`${id}-error`} className="panel-admin__error-campo" aria-live="polite">{error}</p>
           </div>
         )}

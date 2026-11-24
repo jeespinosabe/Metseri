@@ -1,3 +1,4 @@
+import { ANIO_MINIMO_PUBLICACION, esAnioPublicacionValido, obtenerAnioActual } from '../datos/anioPublicacion.js'
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { presentarPortada } from '../servicios/portadasLibros.js'
 
@@ -74,7 +75,7 @@ export function crearRegistroVistaPrevia(borrador) {
     titulo: borrador.titulo.trim() || 'Título del libro',
     autoria: separarAutores(borrador.autoria).join(', ') || 'Autoría del libro',
     editorial: borrador.editorial.trim() || null,
-    anio: /^[1-9]\d{0,3}$/.test(anio) ? Number(anio) : null,
+    anio: anio && !validarCampoLibro('anio', anio) ? Number(anio) : null,
     cuerposIds: borrador.cuerposIds,
     fotografia: borrador.fotografia,
   }
@@ -142,8 +143,13 @@ export function validarCampoLibro(campo, valor) {
     }
     case 'editorial':
       return texto.length > 500 ? 'La editorial admite hasta 500 caracteres.' : ''
-    case 'anio':
-      return !texto || (/^\d{4}$/.test(texto) && +texto >= 1000 && +texto <= 2100) ? '' : 'Escribe un año entre 1000 y 2100.'
+    case 'anio': {
+      if (!texto) return ''
+      const anioActual = obtenerAnioActual()
+      return /^\d{4}$/.test(texto) && esAnioPublicacionValido(Number(texto), anioActual)
+        ? ''
+        : `Escribe un año entre ${ANIO_MINIMO_PUBLICACION} y ${anioActual}.`
+    }
     default:
       return ''
   }

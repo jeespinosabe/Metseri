@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { it } from 'node:test'
 import { Euler, Quaternion, Vector3 } from 'three'
 import { calcularConfiguracionVisor, limitarRasterizacion } from './rendimientoEscena.js'
-import { calcularPresentacionFicha } from './lecturaVisor.js'
+import { calcularPresentacionFicha, DISTANCIA_FICHA_VR } from './lecturaVisor.js'
 import { proyectarPuntoVisor, proyectarRectanguloVisor, medirFuenteVisor, rectangulosSeCruzan } from './proyeccionVisor.js'
 import { crearPaginasFicha } from './contenidoFicha.js'
 import { FICHAS_PRUEBA } from '../pruebas/fichasPrueba.js'
@@ -50,11 +50,21 @@ it('las doce fichas mantienen contenido completo, sin recorte y con letra proyec
   for (const [ancho, alto] of ventanas) for (const diagonal of [6.9, 7, 8]) {
     const c = calcularConfiguracionVisor({ ancho, alto, diagonal, densidad: 3 })
     const p = calcularPresentacionFicha(c)
-    for (const x of [32, 225, 450, 675, 868]) for (const y of [p.inicio, 500, 680]) {
-      for (const [tamano, minimo] of [[p.tipografia.parrafo, 16], [p.tipografia.unidad, 14]]) {
-        const medidas = medirFuenteVisor({ x: (x - 450) * p.escala, y: p.desplazamientoY + (400 - y) * p.escala, z: -32, tamano: tamano * p.escala }, c)
-        assert.ok(medidas.every(valor => valor >= minimo - .08))
+    const cajas = proyectarRectanguloVisor({ y: p.desplazamientoY, z: -DISTANCIA_FICHA_VR, ancho: p.ancho * p.escala, alto: p.alto * p.escala }, c)
+    for (const caja of cajas) {
+      assert.ok(caja.visible && caja.x >= 12 && caja.x + caja.ancho <= ancho / 2 - 12)
+      assert.ok(caja.y >= 40 && caja.y + caja.alto <= alto - c.margenInferior)
+    }
+    const objetivos = { parrafo: 16, etiqueta: 14, unidad: 14, valor: 17.5, seccion: 17.5, titulo: 21.5 }
+    for (const [estilo, objetivo] of Object.entries(objetivos)) {
+      const filas = estilo === 'titulo' ? [220, 400, 500, 680] : [Math.min(p.inicio, 220), p.inicio, 400, 500, 680]
+      let minimo = Infinity
+      for (const x of [32, 225, 450, 675, 868]) for (const y of filas) {
+        const medidas = medirFuenteVisor({ x: (x - 450) * p.escala, y: p.desplazamientoY + (400 - y) * p.escala,
+          z: -DISTANCIA_FICHA_VR, tamano: p.tipografia[estilo] * p.escala }, c)
+        minimo = Math.min(minimo, ...medidas)
       }
+      assert.ok(minimo >= objetivo - .08 && minimo <= objetivo + .2, `${ancho}/${diagonal}/${estilo}: ${minimo} px`)
     }
     for (const fuente of FICHAS_PRUEBA) for (const copia of [false, true]) {
       const cuerpo = obtenerCuerpoCeleste(fuente.slug)
@@ -203,5 +213,9 @@ it('las parejas de referencia conservan nombres y relaciones separados de la bar
   entorno.apuntarCuerpo('saturno')
   entorno.campo.activar({})
   entorno.dibujar()
+  const tarjeta = entorno.tarjeta()
+  const anillos = entorno.escena().getObjectByName('saturno').children.find(o => o.geometry?.type === 'RingGeometry')
+  assert.ok(tarjeta.material.transparent && !tarjeta.material.depthTest && tarjeta.renderOrder > anillos.renderOrder,
+    'la ficha se dibuja sobre los anillos aunque queden más cerca que el plano')
   assert.equal(etiquetas.find(e => e.userData.cuerpoId === 'saturno').visible, false, 'la ficha oculta el nombre cubierto')
 })

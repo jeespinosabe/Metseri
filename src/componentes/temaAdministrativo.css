@@ -190,11 +190,16 @@
 .pie-institucional__contacto a:hover { text-decoration: underline; }
 
 @media (max-width: 600px), (hover: none) and (pointer: coarse) {
-  .pie-institucional__logos { gap: 24px; }
+  .pie-institucional__logos {
+    display: grid;
+    width: min(100%, 325px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+
+  .pie-institucional__biblioteca,
+  .pie-institucional__cecan img { width: 100%; }
+
   .pie-institucional__cecan { padding: 0; border: 0; }
-  .pie-institucional__biblioteca, .pie-institucional__cecan img { height: 36px; object-fit: cover; object-position: left center; }
-  .pie-institucional__biblioteca { width: 24px; }
-  .pie-institucional__cecan img { width: 33px; }
 }
 
 @media (max-width: 480px) {

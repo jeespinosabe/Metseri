@@ -99,7 +99,6 @@
 .franja-institucional__marca span { color: var(--icono-franja); }
 
 .franja-institucional__marcas,
-.franja-institucional__tecnologico,
 .franja-institucional__acciones {
   display: flex;
   align-items: center;
@@ -110,15 +109,10 @@
 .franja-institucional__cecan { width: clamp(161px, 20vw, 250px); }
 .franja-institucional__cecan img { display: block; width: 100%; }
 
-.franja-institucional__cecan,
-.franja-institucional__tecnologico {
+.franja-institucional__cecan {
   border-inline-start: 1px solid #ffffff35;
   padding-inline-start: 12px;
 }
-
-.franja-institucional__tecnologico { gap: 7px; font-size: .75rem; line-height: 1.2; font-weight: 600; }
-.franja-institucional__tecnologico img { width: 42px; }
-.franja-institucional__tecnologico span { max-width: 134px; }
 
 .franja-institucional__acciones { flex: 0 0 auto; gap: 7px; }
 
@@ -224,24 +218,21 @@
   .franja-institucional__marca { padding-inline-start: 28px; font-size: clamp(.65rem, 3.1vw, .875rem); letter-spacing: .15em; }
   .franja-institucional__marca::before { width: 22px; height: 22px; mask-size: 27px; }
 
-  .franja-institucional__marcas { --alto-logo: clamp(23px, 7.3vw, 36px); gap: clamp(10px, 20vw - 54px, 24px); }
-
-  .franja-institucional__cecan,
-  .franja-institucional__tecnologico { padding-inline-start: 0; border: 0; }
-
-  .franja-institucional__cecan { width: auto; }
-
-  .franja-institucional__biblioteca,
-  .franja-institucional__cecan img {
-    height: var(--alto-logo);
-    object-fit: cover;
-    object-position: left center;
+  .franja-institucional__marcas {
+    flex: 1 1 0;
+    justify-content: center;
+    gap: clamp(8px, 2.5vw, 16px);
   }
 
-  .franja-institucional__biblioteca { width: calc(var(--alto-logo) * 2 / 3); }
-  .franja-institucional__cecan img { width: calc(var(--alto-logo) * 11 / 12); }
-  .franja-institucional__tecnologico img { width: var(--alto-logo); }
-  .franja-institucional__tecnologico span { display: none; }
+  .franja-institucional__biblioteca { flex: 2 1 0; min-width: 0; max-width: 105px; }
+
+  .franja-institucional__cecan {
+    flex: 3 1 0;
+    min-width: 0;
+    max-width: 185px;
+    padding-inline-start: 0;
+    border: 0;
+  }
 
   .franja-institucional__acciones { gap: 3px; }
   .franja-institucional__accion { width: 44px; padding: 0; }

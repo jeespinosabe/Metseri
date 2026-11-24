@@ -80,7 +80,7 @@ Crear o editar un libro SHALL guardar sus campos, autores y relaciones en una so
 - **AND** el cliente no puede atribuir la verificación a un perfil arbitrario
 
 ### Requirement: Validación y errores controlados
-La API SHALL validar UUID, campos permitidos, textos no vacíos, año entero entre 1000 y 2100, URL HTTP/HTTPS, booleanos, autores y relaciones sin duplicados y órdenes positivos. SHALL devolver errores JSON con `error.codigo` y `error.mensaje`, sin secretos ni detalles internos del proveedor.
+La API SHALL validar UUID, campos permitidos, textos no vacíos, año entero entre 1000 y el año actual en `America/Mazatlan`, URL HTTP/HTTPS, booleanos, autores y relaciones sin duplicados y órdenes positivos. SHALL devolver errores JSON con `error.codigo` y `error.mensaje`, sin secretos ni detalles internos del proveedor.
 
 #### Scenario: Entrada inválida
 - **WHEN** la petición contiene campos desconocidos, identificadores inválidos, JSON mal formado o relaciones duplicadas

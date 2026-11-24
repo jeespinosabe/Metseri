@@ -159,11 +159,10 @@ describe('tarjeta de libro', () => {
 describe('campo de fotografía', () => {
   it('sin fotografía ofrece elegirla o arrastrarla, con formatos y vista previa con portada vacía', () => {
     const html = representar('CampoFotografiaLibro', { fotografia: null, alCambiar: nada, registroVistaPrevia: crearRegistroVistaPrevia(crearBorradorLibro()) })
-    assert.ok(html.includes('<legend>Fotografía del libro <span class="panel-admin__marca-campo">Opcional</span></legend>'))
-    assert.ok(html.includes('La portada se guarda junto con el libro.'))
+    assert.ok(html.includes('<legend><span data-ayuda-etiqueta="fotografia">Fotografía del libro</span> <span class="panel-admin__marca-campo">Opcional</span></legend>'))
+    assert.match(html, /role="tooltip" hidden="">Elige una foto JPG, PNG o WebP de hasta 5 MB y revisa cómo se verá en la tarjeta\.<\/p>/)
     assert.match(html, /<input type="file" accept="image\/jpeg,image\/png,image\/webp" hidden=""/)
-    assert.match(html, /aria-describedby="[^"]+-formatos"[^>]*>Elegir fotografía<\/button>/)
-    assert.ok(html.includes('JPG, PNG o WebP · hasta 5 MB'))
+    assert.match(html, /aria-describedby="[^"]+-ayuda"[^>]*>Elegir fotografía<\/button>/)
     assert.ok(html.includes('Vista previa') && html.includes(PORTADA_VACIA))
     assert.ok(html.includes('Título del libro') && html.includes('Sin asociar'))
     assert.equal(html.includes('Quitar foto'), false)
@@ -182,6 +181,32 @@ describe('campo de fotografía', () => {
 })
 
 describe('formulario de libro', () => {
+  it('asocia las ayudas ocultas a los controles y marca solo los textos de las etiquetas como activadores', (contexto) => {
+    contexto.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2027, 5, 1) })
+    const ayudas = {
+      titulo: 'Escribe el título tal como aparece en el libro. Incluye el subtítulo si lo tiene.',
+      autoria: 'Personas o instituciones que escribieron el libro. Escribe un nombre por línea, en el orden en que aparecen.',
+      editorial: 'Empresa o institución que publicó esta edición. Si no la conoces, deja el campo vacío.',
+      anio: 'Escribe el año de esta edición en cuatro cifras, de 1000 a 2027. Déjalo vacío si no lo conoces.',
+    }
+    for (const propiedades of [{ modo: 'alta' }, { modo: 'edicion', registro: TIERRA_LUNA }]) {
+      const html = representar('FormularioLibro', { ...propiedades, alVolver: nada })
+      assert.equal(contar(html, 'role="tooltip" hidden=""'), 7)
+      const etiquetas = [...html.matchAll(/<span data-ayuda-etiqueta="([^"]+)">([^<]+)<\/span>/g)].map((coincidencia) => coincidencia.slice(1))
+      assert.deepEqual(etiquetas, [
+        ['titulo', 'Título'], ['autoria', 'Autoría'], ['editorial', 'Editorial'], ['anio', 'Año de publicación'],
+        ['fotografia', 'Fotografía del libro'], ['cuerpos', 'Cuerpos celestes relacionados'], ['activo', 'Libro activo'],
+      ])
+      assert.equal(contar(html, 'data-ayuda-etiqueta='), etiquetas.length)
+      for (const [campo, ayuda] of Object.entries(ayudas)) {
+        const control = html.match(new RegExp(`<(?:input|textarea)\\b[^>]*name="${campo}"[^>]*>`))?.[0]
+        const idAyuda = control?.match(/aria-describedby="([^"]+)"/)?.[1]
+        assert.ok(idAyuda, campo)
+        assert.ok(html.includes(`<p id="${idAyuda}" class="panel-admin__ayuda-emergente" role="tooltip" hidden="">${ayuda}</p>`), campo)
+      }
+    }
+  })
+
   it('el alta empieza vacía, identifica obligatorios y permite enviar el formulario', () => {
     const html = representar('FormularioLibro', { modo: 'alta', alVolver: nada })
     assert.match(html, /<form [^>]*novalidate=""[^>]*aria-label="Agregar libro"/i)

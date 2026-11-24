@@ -114,9 +114,13 @@ describe('validación visual de los campos', () => {
     }
   })
 
-  it('el año es opcional en borradores y admite enteros de 1000 a 2100', () => {
-    for (const valido of ['', '   ', '1000', '2024', '2100', ' 2020 ']) assert.equal(validarCampoLibro('anio', valido), '', valido)
-    for (const invalido of ['0', '-5', '999', '2101', '2020.5', '20,5', '10000', '0123', 'dos mil', '1e3', '+20']) assert.ok(validarCampoLibro('anio', invalido), invalido)
+  it('el año es opcional en borradores y admite enteros de 1000 al año actual', (contexto) => {
+    contexto.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2027, 5, 1) })
+    for (const valido of ['', '   ', '1000', '2024', '2027', ' 2020 ']) assert.equal(validarCampoLibro('anio', valido), '', valido)
+    for (const invalido of ['0', '-5', '999', '2028', '2020.5', '20,5', '10000', '0123', 'dos mil', '1e3', '+20']) {
+      assert.equal(validarCampoLibro('anio', invalido), 'Escribe un año entre 1000 y 2027.', invalido)
+    }
+    assert.equal(crearRegistroVistaPrevia({ ...crearBorradorLibro(), anio: '2028' }).anio, null)
   })
 
   it('editorial es opcional y un borrador completo no presenta errores', () => {

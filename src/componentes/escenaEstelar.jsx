@@ -266,7 +266,11 @@ export function EscenaEstelar({ alAbrirAdministracion }) {
             <span>Mira izquierda/derecha y toca · Al final, avanzar cierra · Doble tap recentra</span>
           </div>}
           <div className="escena-estelar__avisos" role="status">
-            {modo === 'vr' && instruccionVrVisible && <span className="solo-lectores">{INSTRUCCION_VR}</span>}
+            {modo === 'vr' && instruccionVrVisible && (
+              <span className="solo-lectores">
+                {INSTRUCCION_VR} En el HOMIDO GRAB, usa el botón plateado de la parte superior del visor.
+              </span>
+            )}
             {modo === 'vr' && enVertical && (
               <p className="escena-estelar__indicacion">
                 Gira el teléfono a horizontal para usar el visor.

@@ -77,7 +77,7 @@ export function prepararEntornoEscena(t) {
   return {
     campo, punteros, dibujar: () => ciclo?.(), lectura: () => lecturas.at(-1), escena: () => escenaPrincipal,
     rectangulo: () => contenedor.getBoundingClientRect(),
-    tarjeta: () => escenaPrincipal.children.find((nodo) => nodo.isMesh && nodo.geometry.type === 'PlaneGeometry' && !nodo.material.transparent),
+    tarjeta: () => escenaPrincipal.getObjectByName('fichaCuerpoVr'),
     apuntarCuerpo(cuerpoId) {
       ciclo?.()
       const cuerpo = escenaPrincipal.getObjectByName(cuerpoId)

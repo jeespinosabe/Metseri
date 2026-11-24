@@ -1,3 +1,4 @@
+import { esAnioPublicacionValido } from '../../src/datos/anioPublicacion.js'
 import { esSlugValido } from './consultaSupabase.js'
 import { decodificarPortada } from './portadasLibros.js'
 import { obtenerConfiguracionPrivada, solicitarRpcPrivada } from './supabasePrivada.js'
@@ -36,8 +37,7 @@ export function validarLibro(datos, parcial = false) {
     libro[campo] = libro[campo].trim()
   }
   if (!parcial && !libro.titulo) invalido()
-  if (Object.hasOwn(libro, 'anio') && libro.anio !== null
-    && (!Number.isInteger(libro.anio) || libro.anio < 1000 || libro.anio > 2100)) invalido()
+  if (Object.hasOwn(libro, 'anio') && libro.anio !== null && !esAnioPublicacionValido(libro.anio)) invalido()
   if (Object.hasOwn(libro, 'url_ficha') && libro.url_ficha !== null) {
     try {
       if (typeof libro.url_ficha !== 'string' || libro.url_ficha.length > 2048) invalido()

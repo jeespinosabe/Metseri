@@ -266,7 +266,8 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     renderizador.setViewport(0, 0, ancho, alto)
   }
 
-  function dibujarSiHaceFalta() {
+  function dibujarSiHaceFalta(tiempo) {
+    instrucciones.actualizarAnimacion(tiempo)
     if (!necesitaDibujo) return
     if (modo === 'vr') efectoEstereo.establecerAccionPuntero(instrucciones.esVisible() ? null : ficha.detectar(camara)?.accion)
     necesitaDibujo = false
