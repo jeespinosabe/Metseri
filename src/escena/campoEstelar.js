@@ -273,8 +273,8 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
     if (!necesitaDibujo) return
     if (modo === 'vr') efectoEstereo.establecerAccionPuntero(instrucciones.esVisible() ? null : ficha.detectar(camara)?.accion)
     necesitaDibujo = false
-    etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight, ficha.malla)
-    etiquetasVisor?.actualizar(camara, modo, ficha.malla)
+    etiquetas.actualizar(camara, modo, proyeccion.obtenerParametros(), contenedor.clientWidth, contenedor.clientHeight)
+    etiquetasVisor?.actualizar(camara, modo)
     if (modo === 'vr') efectoEstereo.render(escena, camara)
     else renderizador.render(escena, camara)
   }

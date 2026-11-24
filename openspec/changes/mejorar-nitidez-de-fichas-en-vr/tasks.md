@@ -17,7 +17,7 @@
 - [x] 3.1 Separar dimensiones lógicas y rasterización física en ficha y etiquetas, con factor inicial 2× y límites del diseño; probar que resolución no reduzca tamaño de letra ni altere páginas, posición, acciones UV o correspondencia entre ojos.
 - [x] 3.2 Adaptar automáticamente tipografía y escala de ficha y etiquetas a la diagonal y área óptica útil; verificar los mínimos de 16/14 px CSS em en fichas y 14/12 en nombres/relaciones sin requerir apuntado o selección.
 - [x] 3.3 Repartir contenido largo en continuaciones, manteniendo dos columnas y filas completas en Datos; reconstruir textos de los doce cuerpos y libros para comprobar integridad, y probar conservación de cuerpo/sección y cancelación de taps de una composición sustituida.
-- [x] 3.4 Evitar que las etiquetas de parejas completamente visibles coincidan entre sí, con la barra inferior o con fichas; comprobar especialmente Tritón/Neptuno y Titán/Saturno, en ambos ojos y durante movimiento, sin mover los cuerpos ni interceptar gestos.
+- [x] 3.4 Separar las etiquetas de parejas completamente visibles y mantenerlas dentro del área útil del visor, por encima de la barra inferior. Comprobar especialmente Tritón/Neptuno y Titán/Saturno, en ambos ojos y durante movimiento, y que la ficha pueda cubrir las etiquetas en su posición.
 - [x] 3.5 Comparar filtros de texto en reposo y movimiento y conservar la opción que mejore definición sin parpadeo; probar recreación/liberación de texturas, creación diferida de etiquetas y actualización solo ante cambios relevantes. Guardar capturas y decisión de filtrado.
 
 ## 4. Cuerpos y cielo

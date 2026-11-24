@@ -74,23 +74,11 @@ export function crearEtiquetasVisor(escena, planetas) {
         etiqueta.dibujar(activa)
       })
     },
-    actualizar(camara, modo, ficha = null) {
+    actualizar(camara, modo) {
       raiz.visible = modo === 'vr'
       if (!raiz.visible) return
       camara.updateWorldMatrix(true, false)
       const ocupados = []
-      let cajasFicha = null
-      if (configuracion && ficha?.visible) {
-        ficha.updateWorldMatrix(true, false)
-        const puntos = [-.5, 0, .5].flatMap(x => [-.5, 0, .5].map(y => new Vector3(x, y, 0)
-          .applyMatrix4(ficha.matrixWorld).applyMatrix4(camara.matrixWorldInverse)))
-        cajasFicha = [0, 1].map(indice => {
-          const pantalla = puntos.map(p => proyectarPuntoVisor(p, configuracion, indice)).filter(Boolean)
-          if (!pantalla.length) return null
-          const x = Math.min(...pantalla.map(p => p.x)), y = Math.min(...pantalla.map(p => p.y))
-          return { x, y, ancho: Math.max(...pantalla.map(p => p.x)) - x, alto: Math.max(...pantalla.map(p => p.y)) - y }
-        })
-      }
       // Los satélites se ubican primero para reservar su hueco antes que los demás nombres.
       const ordenadas = [...etiquetas].sort((a, b) => {
         const distanciaCentro = etiqueta => {
@@ -158,7 +146,6 @@ export function crearEtiquetasVisor(escena, planetas) {
             const valida = propuesta.every((caja, indice) => caja?.visible && caja.x >= 8
               && caja.x + caja.ancho <= configuracion.ancho / 2 - 8 && caja.y >= 38
               && caja.y + caja.alto <= configuracion.alto - configuracion.margenInferior
-              && !rectangulosSeCruzan(caja, cajasFicha?.[indice])
               && !ocupados.some(otra => rectangulosSeCruzan(caja, otra[indice], 3)))
             if (valida) { posicion = candidato; cajas = propuesta; break }
           }

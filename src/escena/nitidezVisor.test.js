@@ -247,7 +247,7 @@ it('cambiar pulgadas conserva estrellas, cuerpos y texturas y reutiliza entradas
   }
 })
 
-it('las parejas de referencia conservan nombres y relaciones separados de la barra y la ficha', t => {
+it('las etiquetas VR de las parejas de referencia se mantienen separadas entre sí y de la barra', t => {
   const entorno = prepararEntornoEscena(t)
   entorno.redimensionar(1381, 645, { rotarPantalla: true })
   entorno.campo.establecerDiagonalPantalla(8)
@@ -281,12 +281,47 @@ it('las parejas de referencia conservan nombres y relaciones separados de la bar
       assert.ok(visibles[i].userData.cajas.every((c, ojo) => !rectangulosSeCruzan(c, visibles[j].userData.cajas[ojo])))
     }
   }
+})
+
+it('al abrir y cerrar una ficha, las etiquetas VR conservan su posición aunque la ficha las cubra', t => {
+  const entorno = prepararEntornoEscena(t)
+  const { campo } = entorno
+  const ancho = 1381, alto = 645, diagonal = 8
+  entorno.redimensionar(ancho, alto, { rotarPantalla: true })
+  campo.establecerDiagonalPantalla(diagonal)
+  campo.establecerModo('vr')
+  campo.ocultarInstruccionVr()
   entorno.apuntarCuerpo('saturno')
-  entorno.campo.activar({})
+  entorno.dibujar()
+
+  const etiquetas = []
+  entorno.escena().traverse(objeto => { if (objeto.isSprite && objeto.userData.cuerpoId) etiquetas.push(objeto) })
+  const posicionesVisibles = () => etiquetas.filter(etiqueta => etiqueta.visible).map(etiqueta => ({
+    id: etiqueta.userData.cuerpoId, posicion: etiqueta.position.toArray(), escala: etiqueta.scale.toArray(),
+  }))
+  const posicionesAnteriores = posicionesVisibles()
+  const etiquetaSaturno = etiquetas.find(etiqueta => etiqueta.userData.cuerpoId === 'saturno')
+  assert.ok(etiquetaSaturno.visible)
+
+  campo.activar({})
   entorno.dibujar()
   const tarjeta = entorno.tarjeta()
+  assert.ok(tarjeta.visible)
+  assert.deepEqual(posicionesVisibles(), posicionesAnteriores)
+
+  const configuracion = calcularConfiguracionVisor({ ancho, alto, diagonal })
+  const centroTarjeta = tarjeta.position.clone().applyQuaternion(campo.obtenerOrientacion().invert())
+  const cajasTarjeta = proyectarRectanguloVisor({ ...centroTarjeta, ancho: tarjeta.scale.x, alto: tarjeta.scale.y }, configuracion)
+  assert.ok(etiquetaSaturno.userData.cajas.every((caja, ojo) => rectangulosSeCruzan(caja, cajasTarjeta[ojo])))
+  assert.ok(etiquetaSaturno.material.transparent && tarjeta.renderOrder > etiquetaSaturno.renderOrder,
+    'la ficha se dibuja después de la etiqueta que cubre')
+
   const anillos = entorno.escena().getObjectByName('saturno').children.find(o => o.geometry?.type === 'RingGeometry')
   assert.ok(tarjeta.material.transparent && !tarjeta.material.depthTest && tarjeta.renderOrder > anillos.renderOrder,
     'la ficha se dibuja sobre los anillos aunque queden más cerca que el plano')
-  assert.equal(etiquetas.find(e => e.userData.cuerpoId === 'saturno').visible, false, 'la ficha oculta el nombre cubierto')
+
+  campo.ejecutarAccionFicha('cerrar')
+  entorno.dibujar()
+  assert.equal(tarjeta.visible, false)
+  assert.deepEqual(posicionesVisibles(), posicionesAnteriores)
 })

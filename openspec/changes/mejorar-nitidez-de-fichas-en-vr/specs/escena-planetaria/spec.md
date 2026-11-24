@@ -18,7 +18,7 @@ Los nombres de los doce cuerpos y las relaciones de satélites SHALL adaptar aut
 
 ### Requirement: Etiquetas dentro del área útil del visor
 
-Una etiqueta de un cuerpo completamente visible SHALL mantenerse fuera del área de controles inferiores y de una ficha que la ocluya. Las etiquetas de una pareja completamente visible SHALL permitir distinguir sus nombres sin superponerse entre sí. Su adaptación SHALL NOT mover cuerpos ni interceptar selección, arrastre o acciones de ficha.
+Una etiqueta de un cuerpo completamente visible SHALL mantenerse dentro del área útil de ambos ojos y fuera de los controles inferiores. Las etiquetas de una pareja completamente visible SHALL mantener sus nombres separados entre sí. Su posición SHALL calcularse con independencia de la ficha, que puede cubrirlas parcial o totalmente. La adaptación de las etiquetas SHALL NOT mover cuerpos ni interceptar selección, arrastre o acciones de ficha.
 
 #### Scenario: Satélite próximo a la barra inferior
 - **WHEN** Tritón u otro satélite está completamente visible y su etiqueta inferior coincidiría con Ajustar visor o Salir de VR
@@ -27,8 +27,8 @@ Una etiqueta de un cuerpo completamente visible SHALL mantenerse fuera del área
 
 #### Scenario: Pareja y ficha abierta
 - **WHEN** están completamente visibles Titán/Saturno o Tritón/Neptuno y después se abre una ficha
-- **THEN** se distinguen los nombres de la pareja donde exista área visible
-- **AND** las etiquetas ocluidas por la ficha no atraviesan su lectura
+- **THEN** las etiquetas conservan la posición que corresponde a la vista
+- **AND** la ficha cubre las partes de las etiquetas con las que se superpone
 
 ### Requirement: Cuerpos reconocibles al aumentar pulgadas
 
