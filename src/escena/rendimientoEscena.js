@@ -1,14 +1,15 @@
 import { calcularOpticaVisor, DIAGONAL_PREDETERMINADA, esDiagonalValida } from './perfilVisor.js'
 
 export function calcularConfiguracionVisor({ ancho, alto, densidad = 1, diagonal = DIAGONAL_PREDETERMINADA,
-  anchoPantalla = ancho, altoPantalla = alto, maxTextura = 4096, maxRenderbuffer = maxTextura, margenInferior = 80 }) {
+  anchoPantalla = ancho, altoPantalla = alto, maxTextura = 4096, maxRenderbuffer = maxTextura, margenInferior = 80,
+  escritorio = false, tactil = false }) {
   ancho = Math.max(1, ancho)
   alto = Math.max(1, alto)
   diagonal = esDiagonalValida(diagonal) ? diagonal : DIAGONAL_PREDETERMINADA
   const limiteGpu = Math.max(1, Math.min(maxTextura, maxRenderbuffer))
   const objetivo = Math.min(1.75, 1.5 * Math.max(1, diagonal / 6.9))
   const proporcion = Math.min(densidad || 1, objetivo, Math.sqrt(2_000_000 / (ancho * alto)), limiteGpu / Math.max(ancho, alto))
-  return { ancho, alto, diagonal, proporcion, objetivo, margenInferior,
+  return { ancho, alto, diagonal, proporcion, objetivo, margenInferior, escritorio, tactil,
     maxTextura: Math.min(2048, maxTextura), factorTextura: 2,
     optica: calcularOpticaVisor({ ancho, alto, anchoPantalla, altoPantalla, diagonal }) }
 }

@@ -222,6 +222,7 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
   function ajustarTamano() {
     const ancho = Math.max(1, contenedor.clientWidth)
     const alto = Math.max(1, contenedor.clientHeight)
+    const tactil = window.matchMedia?.('(pointer: coarse)').matches ?? false
     const controles = contenedor.parentElement?.querySelector('.escena-estelar__controles')?.getBoundingClientRect()
     const parametrosVisor = {
       ancho, alto,
@@ -229,12 +230,13 @@ export function crearCampoEstelar(contenedor, { alPerderContexto, alCambiarFicha
       altoPantalla: window.screen.height,
       diagonal: diagonalPantalla,
       densidad: window.devicePixelRatio,
+      tactil,
+      escritorio: modo === 'vr' && (window.matchMedia?.('(pointer: fine)').matches ?? false),
       maxTextura: renderizador.capabilities?.maxTextureSize ?? 4096,
       maxRenderbuffer: renderizador.getContext?.()?.getParameter(renderizador.getContext().MAX_RENDERBUFFER_SIZE) ?? 4096,
       margenInferior: controles ? Math.max(80, alto - (controles.top - contenedor.getBoundingClientRect().top) + 12) : 80,
     }
-    const tactil = window.matchMedia?.('(pointer: coarse)').matches ?? false
-    const clave = JSON.stringify({ modo, tactil, ...parametrosVisor })
+    const clave = JSON.stringify({ modo, ...parametrosVisor })
     if (parametrosAnteriores === clave) return
     parametrosAnteriores = clave
     const configuracionVisor = calcularConfiguracionVisor(parametrosVisor)

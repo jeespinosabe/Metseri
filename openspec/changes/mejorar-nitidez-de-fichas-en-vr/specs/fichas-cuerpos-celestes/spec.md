@@ -21,7 +21,7 @@ La vista única SHALL conservar distribución, colores, tipografía, imágenes, 
 
 ### Requirement: Legibilidad automática tras la proyección
 
-En la matriz horizontal de aceptación, la ficha VR SHALL alcanzar automáticamente un em proyectado mínimo de 16 px CSS para párrafos y 14 para etiquetas y unidades en su zona de lectura, con ficha y controles visibles. El ajuste SHALL responder a diagonal y área útil sin exigir elecciones manuales de tamaño o calidad. El criterio SHALL medirse después de la transformación óptica.
+En la matriz horizontal de aceptación, la ficha VR SHALL alcanzar automáticamente un em proyectado mínimo de 15.5 px CSS para párrafos y 13.5 para etiquetas y unidades cuando la entrada principal es táctil. Con otras entradas SHALL alcanzar 16 y 14 px CSS, respectivamente. Estos mínimos aplican en la zona de lectura, con la ficha y los controles visibles. El ajuste SHALL responder a diagonal y área útil sin exigir elecciones manuales de tamaño o calidad. El criterio SHALL medirse después de la transformación óptica.
 
 #### Scenario: Matriz horizontal
 - **WHEN** se recorren los doce cuerpos con viewports 844 × 390, 1045 × 552 y 1381 × 645, diagonales 6.9, 7 y 8 y DPR 1, 2 y 3, con screen igual al viewport
