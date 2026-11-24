@@ -153,7 +153,6 @@
 }
 
 .franja-institucional__accion svg { color: var(--icono-franja); }
-.franja-institucional__descarga { width: 44px; padding: 0; }
 
 .aplicacion-metseri {
   width: min(440px, calc(100% - 24px));
@@ -213,6 +212,75 @@
 .descarga-sin-conexion__boton:disabled { opacity: .65; cursor: wait; }
 .aplicacion-metseri button:focus-visible { outline: 2px solid var(--fondo-franja); outline-offset: 2px; }
 
+.acerca-de h3 { margin: 16px 0 0; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.acerca-de ul { margin: 8px 0 0; padding: 0; list-style: none; font-size: .95rem; line-height: 1.5; }
+.acerca-de li { overflow-wrap: anywhere; }
+.acerca-de li + li { margin-top: 4px; }
+
+/* Menú del banner. Los botones de instalar y descargar conservan sus estilos propios; aquí solo se
+   da al panel el aspecto claro del diálogo y se replican, con alcance en el panel, los estilos de
+   texto que en el diálogo cuelgan de .aplicacion-metseri. */
+.menu-principal { position: relative; }
+
+.menu-principal__panel {
+  position: absolute;
+  z-index: 1;
+  top: calc(100% + 8px);
+  right: 0;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 16px));
+  max-height: calc(100dvh - var(--alto-franja) - 24px);
+  padding: 16px;
+  overflow: auto;
+  border: 1px solid var(--fondo-franja);
+  border-radius: 16px;
+  background: var(--icono-franja);
+  color: var(--fondo-franja);
+  color-scheme: light;
+  box-shadow: 0 12px 48px #080b1280;
+  overscroll-behavior: contain;
+  font-size: .875rem;
+  text-align: start;
+  white-space: normal;
+}
+
+.menu-principal__panel[hidden] { display: none; }
+.menu-principal__panel > :first-child { margin-top: 0; }
+.menu-principal__panel p, .menu-principal__panel ol { margin: 12px 0 0; font-size: .95rem; line-height: 1.5; }
+.menu-principal__panel ol { padding-inline-start: 1.4em; }
+.menu-principal__panel li + li { margin-top: 6px; }
+.menu-principal__panel svg { flex: none; }
+.menu-principal__panel :is(a, button):focus-visible { outline: 2px solid var(--fondo-franja); outline-offset: 2px; }
+
+.menu-principal__opciones {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid color-mix(in srgb, var(--fondo-franja) 25%, transparent);
+}
+
+.menu-principal__opcion {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border: 1px solid var(--fondo-franja);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fondo-franja);
+  font: inherit;
+  font-size: .875rem;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.menu-principal__opcion:hover { background: color-mix(in srgb, var(--fondo-franja) 10%, transparent); }
+.menu-principal__opcion .franja-institucional__icono-administracion { flex: none; background: var(--fondo-franja); }
+
 @media (max-width: 900px), (hover: none) and (pointer: coarse) {
   .franja-institucional { --alto-franja: 56px; }
 
@@ -245,7 +313,7 @@
 
   .franja-institucional__acciones { gap: 3px; }
   .franja-institucional__accion { width: 44px; padding: 0; }
-  .franja-institucional__etiqueta-administracion { display: none; }
+  .menu-principal__etiqueta { display: none; }
 }
 
 @media (max-width: 319px) {

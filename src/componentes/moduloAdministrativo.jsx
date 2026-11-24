@@ -178,7 +178,7 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
             {registros.length > 0 && (
               <form className="panel-admin__filtros" role="search" aria-label="Buscar registros bibliográficos" onSubmit={(evento) => evento.preventDefault()}>
                 <div className="panel-admin__campo">
-                  <label htmlFor="panel-admin-busqueda">Buscar por título o autoría</label>
+                  <label htmlFor="panel-admin-busqueda">Buscar por título o autor</label>
                   <input id="panel-admin-busqueda" ref={campoBusqueda} type="search" autoComplete="off" value={busqueda} onChange={(evento) => setBusqueda(evento.target.value)} />
                 </div>
                 <div className="panel-admin__campo">

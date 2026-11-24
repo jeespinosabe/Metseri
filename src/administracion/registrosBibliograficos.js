@@ -1,5 +1,8 @@
 import { CUERPOS_CELESTES } from '../datos/cuerposCelestes.js'
 import { presentarPortada } from '../servicios/portadasLibros.js'
+import {
+  listarAutoresDeTexto, normalizarTextoLibro, validarAnioLibro, validarAutoriaLibro, validarEditorialLibro, validarTituloLibro,
+} from './reglasLibro.js'
 
 export const CAMPOS_LIBRO = Object.freeze(['titulo', 'autoria', 'editorial', 'anio'])
 
@@ -72,7 +75,7 @@ export function crearRegistroVistaPrevia(borrador) {
   return {
     id: 'vista-previa',
     titulo: borrador.titulo.trim() || 'Título del libro',
-    autoria: separarAutores(borrador.autoria).join(', ') || 'Autoría del libro',
+    autoria: separarAutores(borrador.autoria).join(', ') || 'Autor del libro',
     editorial: borrador.editorial.trim() || null,
     anio: /^[1-9]\d{0,3}$/.test(anio) ? Number(anio) : null,
     cuerposIds: borrador.cuerposIds,
@@ -123,34 +126,34 @@ export function alternarCuerpo(cuerposIds, cuerpoId) {
 }
 
 function separarAutores(texto) {
-  return texto.split('\n').map((nombre) => nombre.trim()).filter(Boolean)
+  return listarAutoresDeTexto(texto).map(({ nombre }) => nombre)
 }
 
-export function validarCampoLibro(campo, valor) {
-  const texto = String(valor ?? '').trim()
+// Reglas compartidas con la API: ver reglasLibro.js. `anioActual` permite fijar el año en las pruebas.
+export function validarCampoLibro(campo, valor, anioActual = new Date().getFullYear()) {
   switch (campo) {
-    case 'titulo':
-      if (!texto) return 'Escribe el título del libro.'
-      return texto.length > 500 ? 'El título admite hasta 500 caracteres.' : ''
-    case 'autoria': {
-      const autores = separarAutores(texto)
-      if (!autores.length) return 'Escribe la autoría del libro.'
-      if (autores.length > 50 || autores.some((nombre) => nombre.length > 200)) {
-        return 'Escribe hasta 50 nombres, con un máximo de 200 caracteres por nombre.'
-      }
-      return new Set(autores.map((nombre) => nombre.toLowerCase())).size !== autores.length ? 'Escribe cada nombre una sola vez.' : ''
-    }
-    case 'editorial':
-      return texto.length > 500 ? 'La editorial admite hasta 500 caracteres.' : ''
-    case 'anio':
-      return !texto || (/^\d{4}$/.test(texto) && +texto >= 1000 && +texto <= 2100) ? '' : 'Escribe un año entre 1000 y 2100.'
-    default:
-      return ''
+    case 'titulo': return validarTituloLibro(valor)
+    case 'autoria': return validarAutoriaLibro(listarAutoresDeTexto(valor))
+    case 'editorial': return validarEditorialLibro(valor)
+    case 'anio': return validarAnioLibro(valor, anioActual)
+    default: return ''
   }
 }
 
-export function validarBorradorLibro(borrador) {
-  return Object.fromEntries(CAMPOS_LIBRO.map((campo) => [campo, validarCampoLibro(campo, borrador[campo])]))
+// La API nombra `autores` al campo que el formulario llama `autoria`.
+const CAMPO_DEL_FORMULARIO = Object.freeze({ titulo: 'titulo', autores: 'autoria', editorial: 'editorial', anio: 'anio' })
+
+// Mensajes por campo que devuelve la API en `error.campos`, con los nombres del formulario.
+export function leerErroresServidor(error) {
+  const campos = error?.campos
+  if (!campos || typeof campos !== 'object' || Array.isArray(campos)) return {}
+  return Object.fromEntries(Object.entries(campos)
+    .filter(([campo, mensaje]) => CAMPO_DEL_FORMULARIO[campo] && typeof mensaje === 'string' && mensaje)
+    .map(([campo, mensaje]) => [CAMPO_DEL_FORMULARIO[campo], mensaje]))
+}
+
+export function validarBorradorLibro(borrador, anioActual = new Date().getFullYear()) {
+  return Object.fromEntries(CAMPOS_LIBRO.map((campo) => [campo, validarCampoLibro(campo, borrador[campo], anioActual)]))
 }
 
 export function validarOrdenLibro(valor) {
@@ -175,9 +178,9 @@ export function presentarLibroAdministrativo(libro) {
 
 function convertirBorrador(borrador) {
   return {
-    titulo: borrador.titulo.trim(),
+    titulo: normalizarTextoLibro(borrador.titulo),
     autores: separarAutores(borrador.autoria),
-    editorial: borrador.editorial.trim() || null,
+    editorial: normalizarTextoLibro(borrador.editorial),
     anio: Number(borrador.anio) || null,
     cuerpos: [...borrador.cuerposIds].sort().map((slug) => ({ slug, orden: Number(borrador.ordenPorCuerpo[slug] ?? 1) })),
     activo: borrador.activo,

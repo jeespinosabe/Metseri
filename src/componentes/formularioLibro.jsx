@@ -1,13 +1,14 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { alternarCuerpo, crearBorradorLibro, crearRegistroVistaPrevia, prepararDatosLibro, validarBorradorLibro } from '../administracion/registrosBibliograficos.js'
+import { alternarCuerpo, crearBorradorLibro, crearRegistroVistaPrevia, leerErroresServidor, prepararDatosLibro, validarBorradorLibro } from '../administracion/registrosBibliograficos.js'
+import { anioMaximoLibro, LIMITES_LIBRO } from '../administracion/reglasLibro.js'
 import { CampoFotografiaLibro } from './campoFotografiaLibro.jsx'
 import { SelectorCuerposCelestes } from './selectorCuerposCelestes.jsx'
 
 const CAMPOS_FORMULARIO = [
   { campo: 'titulo', etiqueta: 'Título', obligatorio: true, completo: true },
-  { campo: 'autoria', etiqueta: 'Autoría', obligatorio: true, ayuda: 'Escribe un nombre por línea, en el orden de la ficha.' },
-  { campo: 'editorial', etiqueta: 'Editorial', obligatorio: false },
-  { campo: 'anio', etiqueta: 'Año de publicación', obligatorio: false, inputMode: 'numeric', ayuda: 'Año entre 1000 y 2100.' },
+  { campo: 'autoria', etiqueta: 'Autor', obligatorio: true, ayuda: 'Autores (uno por línea), en el orden de la ficha.' },
+  { campo: 'editorial', etiqueta: 'Editorial', obligatorio: true },
+  { campo: 'anio', etiqueta: 'Año de publicación', obligatorio: false, inputMode: 'numeric', ayuda: () => `Año entre ${LIMITES_LIBRO.anioMinimo} y ${anioMaximoLibro()}.` },
 ]
 
 function agregarCampo(conjunto, campo) {
@@ -19,6 +20,7 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
   const [conErrorVisible, setConErrorVisible] = useState(() => new Set())
   const [enviado, setEnviado] = useState(false)
   const [errorGuardado, setErrorGuardado] = useState('')
+  const [erroresServidor, setErroresServidor] = useState({})
   const campoInicial = useRef(null)
   const id = useId()
   const edicion = modo === 'edicion'
@@ -29,16 +31,24 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
 
   function cambiarCampo(campo, valor) {
     setBorrador((actual) => ({ ...actual, [campo]: valor }))
+    setErroresServidor((actuales) => {
+      if (!actuales[campo]) return actuales
+      const restantes = { ...actuales }
+      delete restantes[campo]
+      return restantes
+    })
   }
 
   async function guardar(evento) {
     evento.preventDefault()
     if (guardando) return
+    const formulario = evento.currentTarget
     setEnviado(true)
     setErrorGuardado('')
+    setErroresServidor({})
     const campoInvalido = Object.keys(errores).find((campo) => errores[campo])
     if (campoInvalido) {
-      evento.currentTarget.elements.namedItem(campoInvalido)?.focus()
+      formulario.elements.namedItem(campoInvalido)?.focus()
       return
     }
     const datos = prepararDatosLibro(borrador, registro)
@@ -46,7 +56,14 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
     try {
       await alGuardar(datos, registro?.id)
     } catch (error) {
-      setErrorGuardado(error.message)
+      const delServidor = leerErroresServidor(error)
+      const primero = CAMPOS_FORMULARIO.find(({ campo }) => delServidor[campo])
+      if (primero) {
+        setErroresServidor(delServidor)
+        formulario.elements.namedItem(primero.campo)?.focus()
+      } else {
+        setErrorGuardado(error.message)
+      }
     }
   }
 
@@ -58,8 +75,9 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
         <fieldset className="panel-admin__contenido-formulario" disabled={guardando}>
           <div className="panel-admin__campos">
             {CAMPOS_FORMULARIO.map(({ campo, etiqueta, obligatorio, completo, inputMode, ayuda }) => {
-              const error = enviado || conErrorVisible.has(campo) ? errores[campo] : ''
-              const descripcion = [ayuda && `${id}-${campo}-ayuda`, error && `${id}-${campo}-error`].filter(Boolean).join(' ')
+              const error = (enviado || conErrorVisible.has(campo) ? errores[campo] : '') || erroresServidor[campo] || ''
+              const textoAyuda = typeof ayuda === 'function' ? ayuda() : ayuda
+              const descripcion = [textoAyuda && `${id}-${campo}-ayuda`, error && `${id}-${campo}-error`].filter(Boolean).join(' ')
               const Control = campo === 'autoria' ? 'textarea' : 'input'
               return (
                 <div key={campo} className={`panel-admin__campo${completo ? ' panel-admin__campo--completo' : ''}`}>
@@ -81,7 +99,7 @@ export function FormularioLibro({ modo, registro = null, alVolver, alGuardar, gu
                     onChange={(evento) => cambiarCampo(campo, evento.target.value)}
                     onBlur={() => setConErrorVisible((actuales) => agregarCampo(actuales, campo))}
                   />
-                  {ayuda && <p id={`${id}-${campo}-ayuda`} className="panel-admin__ayuda">{ayuda}</p>}
+                  {textoAyuda && <p id={`${id}-${campo}-ayuda`} className="panel-admin__ayuda">{textoAyuda}</p>}
                   <p id={`${id}-${campo}-error`} className="panel-admin__error-campo" aria-live="polite">{error}</p>
                 </div>
               )

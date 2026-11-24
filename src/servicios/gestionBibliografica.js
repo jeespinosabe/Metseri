@@ -18,7 +18,12 @@ async function solicitarLibros(ruta, { method = 'GET', datos, signal } = {}) {
   if (respuesta.status === 204) return
   if (respuesta.status === 401) throw new Error('La sesión administrativa venció. Vuelve a iniciar sesión.')
   const contenido = await respuesta.json().catch(() => null)
-  if (!respuesta.ok) throw new Error(contenido?.error?.mensaje || 'La API de libros no está disponible.')
+  if (!respuesta.ok) {
+    const campos = contenido?.error?.campos
+    const error = new Error(contenido?.error?.mensaje || 'La API de libros no está disponible.')
+    if (campos && typeof campos === 'object' && !Array.isArray(campos)) error.campos = campos
+    throw error
+  }
   return contenido
 }
 

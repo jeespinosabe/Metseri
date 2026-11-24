@@ -2,23 +2,26 @@ import { useEffect, useId, useRef, useState } from 'react'
 import logoBiblioteca from '../assets/instituciones/logoBiblioteca.png'
 import logoCecan from '../assets/instituciones/logoCecan.png'
 import escudoTecnologico from '../assets/instituciones/escudoTecnologico.png'
-import { DialogoAplicacionMetseri } from './dialogoAplicacionMetseri.jsx'
+import { DialogoAcercaDe } from './dialogoAcercaDe.jsx'
+import { MenuPrincipal } from './menuPrincipal.jsx'
 import './franjaInstitucional.css'
 
 export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
   const idPanel = useId()
   const zonaRef = useRef(null)
   const botonRef = useRef(null)
-  const enlaceRef = useRef(null)
+  const menuBotonRef = useRef(null)
   const [apertura, setApertura] = useState(null)
-  const [dialogoAbierto, setDialogoAbierto] = useState(false)
+  const [menuAbierto, setMenuAbierto] = useState(false)
+  const [acercaAbierto, setAcercaAbierto] = useState(false)
   const abierta = activa && apertura !== null
 
   if (!activa && apertura !== null) setApertura(null)
-  if (!activa && dialogoAbierto) setDialogoAbierto(false)
+  if (!abierta && menuAbierto) setMenuAbierto(false)
+  if (!activa && acercaAbierto) setAcercaAbierto(false)
 
   useEffect(() => {
-    if (apertura === 'teclado') enlaceRef.current?.focus({ preventScroll: true })
+    if (apertura === 'teclado') menuBotonRef.current?.focus({ preventScroll: true })
   }, [apertura])
 
   useEffect(() => {
@@ -26,10 +29,17 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
 
     function cerrarAlPulsarFuera(evento) {
       if (!zonaRef.current?.contains(evento.target)) setApertura(null)
+      else if (menuAbierto && !evento.target.closest?.('.menu-principal')) setMenuAbierto(false)
     }
 
     function cerrarConEscape(evento) {
       if (evento.key !== 'Escape' || zonaRef.current?.querySelector('dialog[open]')) return
+      if (menuAbierto) {
+        // Con el Menú abierto, Escape cierra primero el Menú y conserva el banner.
+        setMenuAbierto(false)
+        menuBotonRef.current?.focus({ preventScroll: true })
+        return
+      }
       if (zonaRef.current?.contains(document.activeElement)) botonRef.current?.focus({ preventScroll: true })
       setApertura(null)
     }
@@ -40,14 +50,14 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
       document.removeEventListener('pointerdown', cerrarAlPulsarFuera)
       document.removeEventListener('keydown', cerrarConEscape)
     }
-  }, [abierta])
+  }, [abierta, menuAbierto])
 
   function abrirConRaton(evento) {
     if (evento.pointerType === 'mouse' && apertura === null) setApertura('raton')
   }
 
   function cerrarAlSalir(evento) {
-    if (evento.pointerType === 'mouse' && apertura === 'raton' && !dialogoAbierto) setApertura(null)
+    if (evento.pointerType === 'mouse' && apertura === 'raton' && !menuAbierto && !acercaAbierto) setApertura(null)
   }
 
   function abrirConBoton(evento) {
@@ -56,7 +66,7 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
   }
 
   function cerrarAlPerderFoco(evento) {
-    if (apertura === 'teclado' && !dialogoAbierto && !evento.currentTarget.contains(evento.relatedTarget)) setApertura(null)
+    if (apertura === 'teclado' && !menuAbierto && !acercaAbierto && !evento.currentTarget.contains(evento.relatedTarget)) setApertura(null)
   }
 
   return (
@@ -79,22 +89,17 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
           </div>
         </div>
         <div className="franja-institucional__acciones" role="group" aria-label="Acciones de Metseri">
-          <a className="franja-institucional__accion franja-institucional__administracion" href="/admin"
-            ref={enlaceRef} aria-label="Administración" title="Administración" onClick={alAbrirAdministracion}>
-            <span className="franja-institucional__icono-administracion" aria-hidden="true" />
-            <span className="franja-institucional__etiqueta-administracion">Administración</span>
-          </a>
-          <button className="franja-institucional__accion franja-institucional__descarga" type="button"
-            aria-label="Instalar o descargar" aria-haspopup="dialog" title="Instalar o descargar"
-            onClick={() => setDialogoAbierto(true)}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-              strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 3v12m-4-4 4 4 4-4M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5" />
-            </svg>
-          </button>
+          <MenuPrincipal
+            abierto={menuAbierto}
+            botonRef={menuBotonRef}
+            alAlternar={() => setMenuAbierto((actual) => !actual)}
+            alCerrar={() => setMenuAbierto(false)}
+            alAbrirAdministracion={alAbrirAdministracion}
+            alAbrirAcerca={() => { setMenuAbierto(false); setAcercaAbierto(true) }}
+          />
         </div>
       </header>
-      <DialogoAplicacionMetseri abierto={dialogoAbierto} alCerrar={() => setDialogoAbierto(false)} />
+      <DialogoAcercaDe abierto={acercaAbierto} alCerrar={() => { setAcercaAbierto(false); menuBotonRef.current?.focus({ preventScroll: true }) }} />
     </div>
   )
 }

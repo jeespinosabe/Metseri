@@ -38,7 +38,7 @@ export function crearRutasLibros(gestion, exigirAdministrador) {
   rutas.use((error, peticion, respuesta, siguiente) => {
     if (respuesta.headersSent) return siguiente(error)
     const fallo = error instanceof ErrorLibros ? error : new ErrorLibros()
-    respuesta.status(fallo.estado).json({ error: { codigo: fallo.codigo, mensaje: fallo.message } })
+    respuesta.status(fallo.estado).json({ error: { codigo: fallo.codigo, mensaje: fallo.message, ...(fallo.campos && { campos: fallo.campos }) } })
   })
   return rutas
 }

@@ -1,3 +1,6 @@
+import {
+  normalizarTextoLibro, validarAnioLibro, validarAutoriaLibro, validarEditorialLibro, validarTituloLibro,
+} from '../../src/administracion/reglasLibro.js'
 import { esSlugValido } from './consultaSupabase.js'
 import { decodificarPortada } from './portadasLibros.js'
 import { obtenerConfiguracionPrivada, solicitarRpcPrivada } from './supabasePrivada.js'
@@ -6,10 +9,12 @@ const CAMPOS = ['titulo', 'editorial', 'anio', 'url_ficha', 'activo', 'verificad
 export const esIdLibroValido = (valor) => typeof valor === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valor)
 
 export class ErrorLibros extends Error {
-  constructor(estado = 503, codigo = 'BIBLIOGRAFIA_NO_DISPONIBLE', mensaje = 'No se pudo acceder a los libros. Inténtalo más tarde.') {
+  // `campos` es opcional: mensaje de cada campo inválido, con las claves de la API.
+  constructor(estado = 503, codigo = 'BIBLIOGRAFIA_NO_DISPONIBLE', mensaje = 'No se pudo acceder a los libros. Inténtalo más tarde.', campos = null) {
     super(mensaje)
     this.estado = estado
     this.codigo = codigo
+    if (campos && Object.keys(campos).length) this.campos = campos
   }
 }
 
@@ -21,7 +26,9 @@ function esPortadaValida(portada, parcial) {
   return parcial && Object.keys(portada).length === 3 && esIdLibroValido(portada.version)
 }
 
-export function validarLibro(datos, parcial = false) {
+// Las reglas de título, autores, editorial y año son las mismas del formulario (reglasLibro.js).
+// `anioActual` se puede fijar en las pruebas; el servidor decide el año máximo (año actual + 1).
+export function validarLibro(datos, parcial = false, { anioActual = new Date().getUTCFullYear() } = {}) {
   const invalido = () => { throw new ErrorLibros(400, 'LIBRO_INVALIDO', 'Revisa los campos del libro, sus autores y cuerpos celestes.') }
   if (!datos || typeof datos !== 'object' || Array.isArray(datos)
     || !Object.keys(datos).length || Object.keys(datos).some((campo) => !CAMPOS.includes(campo))) invalido()
@@ -29,15 +36,6 @@ export function validarLibro(datos, parcial = false) {
   if (Object.hasOwn(libro, 'portada') && !esPortadaValida(libro.portada, parcial)) {
     throw new ErrorLibros(400, 'PORTADA_INVALIDA', 'La portada no es válida. Selecciona la fotografía de nuevo.')
   }
-  for (const campo of ['titulo', 'editorial']) {
-    if (!Object.hasOwn(libro, campo)) continue
-    if (campo === 'editorial' && libro[campo] === null) continue
-    if (typeof libro[campo] !== 'string' || !libro[campo].trim() || libro[campo].length > 500) invalido()
-    libro[campo] = libro[campo].trim()
-  }
-  if (!parcial && !libro.titulo) invalido()
-  if (Object.hasOwn(libro, 'anio') && libro.anio !== null
-    && (!Number.isInteger(libro.anio) || libro.anio < 1000 || libro.anio > 2100)) invalido()
   if (Object.hasOwn(libro, 'url_ficha') && libro.url_ficha !== null) {
     try {
       if (typeof libro.url_ficha !== 'string' || libro.url_ficha.length > 2048) invalido()
@@ -49,15 +47,6 @@ export function validarLibro(datos, parcial = false) {
   for (const campo of ['activo', 'verificado']) {
     if (Object.hasOwn(libro, campo) && typeof libro[campo] !== 'boolean') invalido()
   }
-  if (!parcial && !Object.hasOwn(libro, 'autores')) invalido()
-  if (Object.hasOwn(libro, 'autores')) {
-    if (!Array.isArray(libro.autores) || !libro.autores.length || libro.autores.length > 50) invalido()
-    libro.autores = libro.autores.map((nombre) => {
-      if (typeof nombre !== 'string' || !nombre.trim() || nombre.length > 200) invalido()
-      return nombre.trim()
-    })
-    if (new Set(libro.autores.map((nombre) => nombre.toLowerCase())).size !== libro.autores.length) invalido()
-  }
   if (Object.hasOwn(libro, 'cuerpos')) {
     if (!Array.isArray(libro.cuerpos) || libro.cuerpos.length > 100) invalido()
     libro.cuerpos = libro.cuerpos.map((cuerpo) => {
@@ -68,6 +57,35 @@ export function validarLibro(datos, parcial = false) {
       return { slug: cuerpo.slug, orden: cuerpo.orden }
     })
     if (new Set(libro.cuerpos.map((cuerpo) => cuerpo.slug)).size !== libro.cuerpos.length) invalido()
+  }
+
+  // Campos del libro: se recogen todos los errores para devolver un mensaje por campo.
+  const campos = {}
+  const exige = (campo) => !parcial || Object.hasOwn(libro, campo)
+  if (exige('titulo')) {
+    const error = validarTituloLibro(typeof libro.titulo === 'string' ? libro.titulo : '')
+    if (error) campos.titulo = error
+    else libro.titulo = normalizarTextoLibro(libro.titulo)
+  }
+  if (exige('autores')) {
+    const entradas = Array.isArray(libro.autores)
+      ? libro.autores.map((nombre, indice) => ({ nombre: typeof nombre === 'string' ? nombre.trim() : '', linea: indice + 1 }))
+      : []
+    const error = validarAutoriaLibro(entradas)
+    if (error) campos.autores = error
+    else libro.autores = entradas.map(({ nombre }) => nombre)
+  }
+  if (exige('editorial')) {
+    const error = validarEditorialLibro(typeof libro.editorial === 'string' ? libro.editorial : '')
+    if (error) campos.editorial = error
+    else libro.editorial = normalizarTextoLibro(libro.editorial)
+  }
+  if (Object.hasOwn(libro, 'anio') && libro.anio !== null) {
+    const error = validarAnioLibro(typeof libro.anio === 'number' ? libro.anio : 'no numérico', anioActual)
+    if (error) campos.anio = error
+  }
+  if (Object.keys(campos).length) {
+    throw new ErrorLibros(400, 'LIBRO_INVALIDO', Object.values(campos).join(' '), campos)
   }
   return libro
 }

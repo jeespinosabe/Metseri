@@ -24,6 +24,11 @@
 - **THEN** se muestran solo los libros públicos válidos y un aviso neutral de recomendaciones en preparación
 - **AND** no se afirma completada la cobertura pública ni se revelan candidatos privados
 
+#### Scenario: Recorrer libros y volver sin controles nuevos
+- **WHEN** se desplaza el panel existente hasta «Descubrir libros», se vuelve hacia la información y después se usa el cierre
+- **THEN** se conserva el cuerpo durante la lectura, el panel no mueve la escena y el cierre devuelve el foco a la exploración
+- **AND** no se agregan pestañas, botones o rutas para completar ese recorrido
+
 ## ADDED Requirements
 
 ### Requirement: Identidad visual de las recomendaciones

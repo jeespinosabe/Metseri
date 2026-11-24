@@ -35,7 +35,7 @@ test('la API acepta portadas en alta y edición, y sirve solo la imagen disponib
   const enviar = (url, method, body) => fetch(url, { method, headers: { ...sesion, 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
   assert.equal((await fetch(privada)).status, 401)
-  const alta = await enviar(admin, 'POST', { titulo: 'Libro', autores: ['Autora'], portada: { datos, x: 50, y: 50 } })
+  const alta = await enviar(admin, 'POST', { titulo: 'Libro', autores: ['Autora'], editorial: 'Editorial de prueba', portada: { datos, x: 50, y: 50 } })
   assert.equal(alta.status, 201)
   assert.equal(escrituras[0].p_id, null)
   for (const imagen of [await fetch(privada, { headers: sesion }), await fetch(publica)]) {

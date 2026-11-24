@@ -1,10 +1,9 @@
-# Spec Delta
+# gestion-bibliografica Specification
 
 ## Purpose
-
 Permitir al administrador gestionar libros, autorías y asociaciones astronómicas con persistencia íntegra y acceso separado de las consultas públicas.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Acceso administrativo autenticado
 La API SHALL exigir una sesión administrativa válida para toda operación en `/api/admin/libros`. Una petición sin sesión SHALL recibir 401 antes de consultar o modificar registros bibliográficos.
@@ -15,12 +14,12 @@ La API SHALL exigir una sesión administrativa válida para toda operación en `
 - **AND** no se ejecuta una operación bibliográfica en la base
 
 ### Requirement: Creación de un registro bibliográfico
-`POST /api/admin/libros` SHALL aceptar un objeto JSON con título no vacío y una lista ordenada no vacía de autores. SHALL admitir editorial, año, URL institucional, estado activo y relaciones. Una creación válida SHALL responder 201, con el libro persistido y su ubicación en `Location`.
+`POST /api/admin/libros` SHALL aceptar un objeto JSON con título no vacío, editorial obligatoria y una lista ordenada no vacía de autores. SHALL admitir año, URL institucional, estado activo y relaciones. Una creación válida SHALL responder 201, con el libro persistido y su ubicación en `Location`.
 
 #### Scenario: Crear un candidato sin disponibilidad comprobada
-- **WHEN** un administrador envía título, autores y relaciones válidas sin verificación institucional
+- **WHEN** un administrador envía título, editorial, autores y relaciones válidas sin verificación institucional
 - **THEN** se crea un libro con identificador estable, `verificado=false` y `activo=true` por defecto
-- **AND** editorial, año y URL pueden permanecer en null cuando no estén confirmados
+- **AND** solo el año y la URL pueden permanecer en null cuando no estén confirmados; la editorial es obligatoria
 - **AND** la respuesta incluye autores ordenados y cuerpos asociados
 
 ### Requirement: Consulta administrativa de registros
@@ -80,7 +79,7 @@ Crear o editar un libro SHALL guardar sus campos, autores y relaciones en una so
 - **AND** el cliente no puede atribuir la verificación a un perfil arbitrario
 
 ### Requirement: Validación y errores controlados
-La API SHALL validar UUID, campos permitidos, textos no vacíos, año entero entre 1000 y 2100, URL HTTP/HTTPS, booleanos, autores y relaciones sin duplicados y órdenes positivos. SHALL devolver errores JSON con `error.codigo` y `error.mensaje`, sin secretos ni detalles internos del proveedor.
+La API SHALL validar UUID, campos permitidos, textos no vacíos, año entero entre 1450 y el año actual más uno, URL HTTP/HTTPS, booleanos, autores y relaciones sin duplicados y órdenes positivos. SHALL devolver errores JSON con `error.codigo` y `error.mensaje`, sin secretos ni detalles internos del proveedor.
 
 #### Scenario: Entrada inválida
 - **WHEN** la petición contiene campos desconocidos, identificadores inválidos, JSON mal formado o relaciones duplicadas

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test'
 import {
   alternarCuerpo, calcularMarcoEncuadre, calcularTamanoVistaFotografia, crearBorradorLibro, crearRegistroVistaPrevia,
   etiquetaPestanaRegistros, filtrarRegistros, formatearAnio, formatearEditorial, PROPORCION_PORTADA, TAMANO_MAXIMO_FOTOGRAFIA, validarArchivoFotografia,
-  hayCriteriosActivos, normalizarTexto, obtenerCuerposRelacionados, validarBorradorLibro, validarCampoLibro,
+  hayCriteriosActivos, leerErroresServidor, normalizarTexto, obtenerCuerposRelacionados, validarBorradorLibro, validarCampoLibro,
   prepararDatosLibro, presentarLibroAdministrativo, validarOrdenLibro,
 } from './registrosBibliograficos.js'
 
@@ -114,18 +114,47 @@ describe('validación visual de los campos', () => {
     }
   })
 
-  it('el año es opcional en borradores y admite enteros de 1000 a 2100', () => {
-    for (const valido of ['', '   ', '1000', '2024', '2100', ' 2020 ']) assert.equal(validarCampoLibro('anio', valido), '', valido)
-    for (const invalido of ['0', '-5', '999', '2101', '2020.5', '20,5', '10000', '0123', 'dos mil', '1e3', '+20']) assert.ok(validarCampoLibro('anio', invalido), invalido)
+  it('el año es opcional y admite enteros de cuatro cifras de 1450 al año actual + 1', () => {
+    for (const valido of ['', '   ', '1450', '2024', '2027', ' 2020 ']) assert.equal(validarCampoLibro('anio', valido, 2026), '', valido)
+    for (const invalido of ['0', '-5', '999', '1449', '1000', '2028', '2100', '2020.5', '20,5', '10000', '0123', 'dos mil', '1e3', '+20']) assert.ok(validarCampoLibro('anio', invalido, 2026), invalido)
+    assert.equal(validarCampoLibro('anio', '2028', 2027), '')
   })
 
-  it('editorial es opcional y un borrador completo no presenta errores', () => {
-    assert.equal(validarCampoLibro('editorial', ''), '')
-    assert.deepEqual(validarBorradorLibro(crearBorradorLibro(REGISTROS[1])), { titulo: '', autoria: '', editorial: '', anio: '' })
-    const errores = validarBorradorLibro(crearBorradorLibro())
-    assert.ok(errores.titulo && errores.autoria)
-    assert.equal(errores.editorial, '')
+  it('la editorial es obligatoria y rechaza solo espacios', () => {
+    for (const vacia of ['', '   ']) assert.equal(validarCampoLibro('editorial', vacia), 'Escribe la editorial del libro.')
+    assert.equal(validarCampoLibro('editorial', 'Fondo de Cultura Económica'), '')
+  })
+
+  it('un borrador completo no presenta errores y uno sin editorial la señala', () => {
+    const completo = { ...crearBorradorLibro(REGISTROS[0]), anio: '2020' }
+    assert.deepEqual(validarBorradorLibro(completo, 2026), { titulo: '', autoria: '', editorial: '', anio: '' })
+    const errores = validarBorradorLibro(crearBorradorLibro(), 2026)
+    assert.ok(errores.titulo && errores.autoria && errores.editorial)
     assert.equal(errores.anio, '')
+    assert.equal(validarBorradorLibro(crearBorradorLibro(REGISTROS[1]), 2026).editorial, 'Escribe la editorial del libro.')
+  })
+
+  it('aplica las reglas compartidas de longitud, autoría y texto limpio', () => {
+    assert.ok(validarCampoLibro('titulo', 'a'.repeat(201)))
+    assert.ok(validarCampoLibro('titulo', '!!!'))
+    assert.ok(validarCampoLibro('autoria', '#Ana'))
+    assert.ok(validarCampoLibro('autoria', '3 Ana'))
+    assert.ok(validarCampoLibro('autoria', 'A'))
+    assert.equal(validarCampoLibro('autoria', 'Álvaro Mutis'), '')
+  })
+})
+
+describe('mensajes por campo del servidor (VL-35 a VL-37)', () => {
+  it('traduce las claves de la API a los campos del formulario', () => {
+    const error = Object.assign(new Error('x'), { campos: { titulo: 'T', autores: 'A', editorial: 'E', anio: 'Y' } })
+    assert.deepEqual(leerErroresServidor(error), { titulo: 'T', autoria: 'A', editorial: 'E', anio: 'Y' })
+  })
+
+  it('ignora errores sin campos, campos desconocidos y valores que no son texto', () => {
+    assert.deepEqual(leerErroresServidor(new Error('503')), {})
+    assert.deepEqual(leerErroresServidor(null), {})
+    assert.deepEqual(leerErroresServidor({ campos: ['x'] }), {})
+    assert.deepEqual(leerErroresServidor({ campos: { cuerpos: 'x', editorial: 7, anio: '', titulo: 'T' } }), { titulo: 'T' })
   })
 })
 
@@ -148,9 +177,9 @@ describe('datos bibliográficos para la API', () => {
   })
 
   it('permite el alta de un libro activo sin enlace ni verificación', () => {
-    const borrador = { ...crearBorradorLibro(), titulo: 'Atlas lunar', autoria: ' Ana \n\n Beto ', cuerposIds: ['luna'] }
+    const borrador = { ...crearBorradorLibro(), titulo: '  Atlas   lunar ', autoria: ' Ana \n\n Beto ', editorial: ' Fondo   de Cultura ', cuerposIds: ['luna'] }
     assert.deepEqual(prepararDatosLibro(borrador), {
-      titulo: 'Atlas lunar', autores: ['Ana', 'Beto'], editorial: null, anio: null,
+      titulo: 'Atlas lunar', autores: ['Ana', 'Beto'], editorial: 'Fondo de Cultura', anio: null,
       activo: true, cuerpos: [{ slug: 'luna', orden: 1 }],
     })
     assert.deepEqual(validarBorradorLibro(borrador), { titulo: '', autoria: '', editorial: '', anio: '' })
@@ -232,7 +261,7 @@ describe('fotografía del libro', () => {
   it('la vista previa convierte el borrador en un registro de presentación sin inventar datos', () => {
     const vacio = crearRegistroVistaPrevia(crearBorradorLibro())
     assert.equal(vacio.titulo, 'Título del libro')
-    assert.equal(vacio.autoria, 'Autoría del libro')
+    assert.equal(vacio.autoria, 'Autor del libro')
     assert.equal(vacio.editorial, null)
     assert.equal(vacio.anio, null)
     assert.equal(vacio.fotografia, null)
