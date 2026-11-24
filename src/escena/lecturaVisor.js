@@ -81,17 +81,17 @@ export function calcularPresentacionFicha(configuracion) {
     }
     return Math.ceil(tamano * 4) / 4
   }
-  const reduccionLectura = configuracion.tactil ? .5 : 0
-  const fuentesEncabezado = { titulo: fuente(21.5 - reduccionLectura), categoria: fuente(12), pestana: fuente(12) }
+  const fuenteLectura = (px, inicioMedicion) => fuente(configuracion.tactil ? (px - .5) * .98 : px, inicioMedicion)
+  const fuentesEncabezado = { titulo: fuenteLectura(21.5), categoria: fuente(12), pestana: fuente(12) }
   const navegacion = fuente(14)
   const altoControl = Math.ceil(navegacion * 1.35 + 12)
   const altoPestana = Math.ceil(fuentesEncabezado.pestana * 1.35 + 10)
   const { tituloY, pestanasY, inicio } = calcularFilasEncabezado(ancho, fuentesEncabezado, altoPestana)
   const inicioMedicion = Math.min(inicio, primeraFilaMedicion)
-  const tamanoDato = fuente(14 - reduccionLectura, inicioMedicion)
-  const tamanoDestacado = fuente(17.5 - reduccionLectura, inicioMedicion)
+  const tamanoDato = fuenteLectura(14, inicioMedicion)
+  const tamanoDestacado = fuenteLectura(17.5, inicioMedicion)
   const tipografia = { ...fuentesEncabezado, navegacion, nota: fuente(12),
-    parrafo: fuente(16 - reduccionLectura, inicioMedicion), etiqueta: tamanoDato, unidad: tamanoDato,
+    parrafo: fuenteLectura(16, inicioMedicion), etiqueta: tamanoDato, unidad: tamanoDato,
     valor: tamanoDestacado, seccion: tamanoDestacado }
   const pie = altoControl + 28
   return { ancho, alto, escala, desplazamientoY, pixelesPorUnidad, tipografia, tituloY, pestanasY, altoControl, altoPestana, inicio, pie,

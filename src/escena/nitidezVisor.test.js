@@ -59,7 +59,7 @@ it('las doce fichas mantienen contenido completo, sin recorte y con letra proyec
       assert.ok(caja.y >= 40 && caja.y + caja.alto <= alto - c.margenInferior)
     }
     const primeraFila = p.alto * 11 / 40
-    const objetivos = formato.tactil ? { parrafo: 15.5, etiqueta: 13.5, unidad: 13.5, valor: 17, seccion: 17, titulo: 21 }
+    const objetivos = formato.tactil ? { parrafo: 15.19, etiqueta: 13.23, unidad: 13.23, valor: 16.66, seccion: 16.66, titulo: 20.58 }
       : { parrafo: 16, etiqueta: 14, unidad: 14, valor: 17.5, seccion: 17.5, titulo: 21.5 }
     for (const [estilo, objetivo] of Object.entries(objetivos)) {
       const filas = [p.alto * .5, p.alto * .625, p.alto * .85]
