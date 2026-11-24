@@ -192,7 +192,7 @@ it('lectura conserva página al recentrar, reinicia al cambiar cuerpo/modo y lim
   assert.ok(cambios.length > 0)
 })
 
-it('acciones UV priorizan botones y navegan por mitades locales, con el centro a la derecha', () => {
+it('acciones UV priorizan botones y permiten avanzar desde el 45 % del ancho de la tarjeta', () => {
   const zonas = obtenerZonasNavegacion(800, 720, 0, 4)
   const lectura = { pagina: 0, total: 4 }
   assert.ok(!zonas.some((z) => z.accion === 'anterior'))
@@ -201,9 +201,14 @@ it('acciones UV priorizan botones y navegan por mitades locales, con el centro a
     assert.equal(detectarAccionFicha(uv, 800, 720, zonas, lectura), zona.accion)
   }
   const detectar = (uv, pagina = 0) => detectarAccionFicha(uv, 800, 720, obtenerZonasNavegacion(800, 720, pagina, 4), { pagina, total: 4 })
+  assert.equal(detectar({ x: .449, y: .5 }), null)
+  assert.equal(detectar({ x: .449, y: .5 }, 1), 'anterior')
+  assert.equal(detectar({ x: .45, y: .5 }), 'siguiente')
+  assert.equal(detectar({ x: .45, y: .5 }, 1), 'siguiente')
+  assert.equal(detectar({ x: .45, y: .5 }, 3), 'cerrar')
   assert.equal(detectar({ x: .5, y: .5 }), 'siguiente')
-  assert.equal(detectar({ x: .499, y: .5 }), null)
-  assert.equal(detectar({ x: .499, y: .5 }, 1), 'anterior')
+  assert.equal(detectar({ x: .499, y: .5 }), 'siguiente')
+  assert.equal(detectar({ x: .499, y: .5 }, 1), 'siguiente')
   assert.equal(detectar({ x: .9, y: .5 }, 2), 'siguiente')
   assert.equal(detectar({ x: .9, y: .5 }, 3), 'cerrar')
   for (const uv of [{ x: -.1, y: .5 }, { x: 1.1, y: .5 }, { x: .5, y: -.1 }, { x: .5, y: 1.1 }, { x: NaN, y: .5 }, null]) {

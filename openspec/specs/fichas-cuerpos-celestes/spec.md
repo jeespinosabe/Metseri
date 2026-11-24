@@ -113,9 +113,9 @@ La ficha SHALL conservar desplazamiento propio y controles utilizables en escrit
 
 ### Requirement: Contenido completo en ambas vistas de VR
 
-La ficha VR SHALL aparecer frente a la mirada al abrir y compartir cuerpo, página y sección en ambos ojos. SHALL ofrecer las secciones Ficha, Datos, ¿Sabías? y Libros mediante pestañas con estado actual visible, Anterior cuando exista una página anterior, un control de avance disponible también en la última página y cierre separado ×. Las dos imágenes SHALL usar un solo estado y SHALL NOT duplicar la lectura accesible. El contenido publicado SHALL rellenar también el Canvas y coincidir con la lectura accesible. Las continuaciones SHALL recorrerse con los mismos controles de navegación y mediante taps sobre las mitades de la tarjeta, sin perder la relación entre pestaña y sección.
+La ficha VR SHALL aparecer frente a la mirada al abrir y compartir cuerpo, página y sección en ambos ojos. SHALL ofrecer las secciones Ficha, Datos, ¿Sabías? y Libros mediante pestañas con estado actual visible, Anterior cuando exista una página anterior, un control de avance disponible también en la última página y cierre separado ×. Las dos imágenes SHALL usar un solo estado y SHALL NOT duplicar la lectura accesible. El contenido publicado SHALL rellenar también el Canvas y coincidir con la lectura accesible. Las continuaciones SHALL recorrerse con los mismos controles de navegación y mediante taps sobre las zonas de navegación de la tarjeta, sin perder la relación entre pestaña y sección.
 
-Cada avance o retroceso SHALL recorrer exactamente una página, incluidas las continuaciones dentro de una sección. Desde la última página, tanto el control de avance como el tap sobre la mitad derecha sin control explícito SHALL cerrar la ficha y quitar la selección permaneciendo en VR. El control de avance final SHALL indicar «Cerrar» y la alternativa accesible VR SHALL permitir activarlo con teclado. La mitad izquierda de la primera página SHALL mantener la ficha abierta sin cambiar de página. La vista única SHALL conservar su navegación y cierre existentes.
+Cada avance o retroceso SHALL recorrer exactamente una página, incluidas las continuaciones dentro de una sección. Desde la última página, tanto el control de avance como el tap sobre la zona de avance sin control explícito SHALL cerrar la ficha y quitar la selección permaneciendo en VR. El control de avance final SHALL indicar «Cerrar» y la alternativa accesible VR SHALL permitir activarlo con teclado. La zona de retroceso de la primera página SHALL mantener la ficha abierta sin cambiar de página. La vista única SHALL conservar su navegación y cierre existentes.
 
 #### Scenario: Apertura inmediata
 - **WHEN** se selecciona un cuerpo en VR o se entra con una selección
@@ -124,7 +124,7 @@ Cada avance o retroceso SHALL recorrer exactamente una página, incluidas las co
 #### Scenario: Salto directo de sección
 - **WHEN** se apunta a Libros desde Datos y se toca
 - **THEN** ambos ojos pasan directamente a la primera página de Libros conservando selección y pestaña activa
-- **AND** no se añade otra página por estar la pestaña en la mitad derecha
+- **AND** no se añade otra página por estar la pestaña en la zona de avance
 
 #### Scenario: Navegación secuencial
 - **WHEN** se activa Anterior o Siguiente mediante su control o la mitad correspondiente de la tarjeta y existe esa página

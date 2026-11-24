@@ -233,11 +233,11 @@ it('el rayo distingue ambas mitades, consume el límite inicial y respeta pesta�
   }
   assert.ok(apuntar(.25, .5), 'la mitad sin acción sigue bloqueando el cielo')
   assert.equal(apuntar(.25, .5).accion, null)
-  assert.equal(apuntar(.75, .5).accion, 'siguiente')
+  assert.equal(apuntar(.46, .5).accion, 'siguiente', 'permite avanzar antes de alcanzar el centro')
   ficha.moverPagina(1)
   assert.equal(apuntar(.25, .5).accion, 'anterior')
   ficha.mostrarSeccion(3)
-  assert.equal(apuntar(.75, .5).accion, 'cerrar')
+  assert.equal(apuntar(.46, .5).accion, 'cerrar')
   for (const zona of obtenerZonasNavegacion(lienzo.width, lienzo.height, 3, 4)) {
     assert.equal(apuntar((zona.x + zona.ancho / 2) / lienzo.width, (zona.y + zona.alto / 2) / lienzo.height).accion,
       zona.accion === 'siguiente' ? 'cerrar' : zona.accion)
