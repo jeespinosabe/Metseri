@@ -95,6 +95,10 @@ describe('estilos del botón del ojo', () => {
   const css = readFileSync(new URL('./temaAdministrativo.css', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
   const bloque = (selector) => css.match(new RegExp(`${selector.replace(/[.[\]]/g, '\\$&')} \\{([^}]*)\\}`))?.[1] ?? ''
 
+  it('oculta el botón nativo de Edge dentro del campo con botón propio', () => {
+    assert.match(bloque('.admin-acceso__campo-contrasena input::-ms-reveal'), /display: none/)
+  })
+
   it('mide al menos 44 px y queda alineado a la derecha del campo', () => {
     const reglas = bloque('.admin-acceso__tarjeta .admin-acceso__ojo')
     assert.match(reglas, /width: 44px/)

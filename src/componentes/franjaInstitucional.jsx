@@ -78,10 +78,10 @@ export function FranjaInstitucional({ activa, alAbrirAdministracion }) {
       <header id={idPanel} className="franja-institucional__panel" aria-label="Instituciones y acciones" inert={!abierta}>
         <span className="franja-institucional__marca">MET<span>S</span>ERI</span>
         <div className="franja-institucional__marcas">
-          <img className="franja-institucional__biblioteca" src={logoBiblioteca} alt="Biblioteca Pública Central Estatal Solón Argüello" />
           <div className="franja-institucional__cecan">
             <img src={logoCecan} alt="Nayarit y Consejo Estatal para la Cultura y las Artes de Nayarit" />
           </div>
+          <img className="franja-institucional__biblioteca" src={logoBiblioteca} alt="Biblioteca Pública Central Estatal Solón Argüello" />
         </div>
         <div className="franja-institucional__acciones" role="group" aria-label="Acciones de Metseri">
           <MenuPrincipal

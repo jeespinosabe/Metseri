@@ -110,8 +110,8 @@
 .franja-institucional__cecan img { display: block; width: 100%; }
 
 .franja-institucional__cecan {
-  border-inline-start: 1px solid #ffffff35;
-  padding-inline-start: 12px;
+  border-inline-end: 1px solid #ffffff35;
+  padding-inline-end: 12px;
 }
 
 .franja-institucional__acciones { flex: 0 0 auto; gap: 7px; }
@@ -206,10 +206,44 @@
 .descarga-sin-conexion__boton:disabled { opacity: .65; cursor: wait; }
 .aplicacion-metseri button:focus-visible { outline: 2px solid var(--fondo-franja); outline-offset: 2px; }
 
-.acerca-de h3 { margin: 16px 0 0; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
-.acerca-de ul { margin: 8px 0 0; padding: 0; list-style: none; font-size: .95rem; line-height: 1.5; }
-.acerca-de li { overflow-wrap: anywhere; }
-.acerca-de li + li { margin-top: 4px; }
+.acerca-de {
+  --relleno-acerca-de: clamp(16px, 4vw, 24px);
+  padding: 0;
+}
+
+.acerca-de .aplicacion-metseri__cabecera {
+  padding: 12px var(--relleno-acerca-de);
+  background: var(--fondo-franja);
+  color: var(--icono-franja);
+}
+
+.acerca-de h2 { font-size: 1.5rem; }
+.acerca-de .aplicacion-metseri__cerrar {
+  border-color: color-mix(in srgb, currentColor 55%, transparent);
+  color: inherit;
+}
+
+.acerca-de .aplicacion-metseri__cerrar:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+.acerca-de .aplicacion-metseri__cerrar:focus-visible { outline-color: currentColor; }
+
+.acerca-de__pie {
+  display: grid;
+  grid-template-columns: minmax(0, 126px) minmax(0, 50px);
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--fondo-franja) 12%, transparent);
+  background: #fff;
+}
+
+.acerca-de__pie img { display: block; width: 100%; height: auto; }
+.acerca-de__equipo { margin: 16px var(--relleno-acerca-de) 0; overflow-wrap: anywhere; }
+.acerca-de__equipo h3 { margin: 0 0 6px; font-size: .875rem; }
+.acerca-de__equipo ul { margin: 0; padding: 0; list-style: none; font-size: .95rem; line-height: 1.5; }
+.acerca-de__equipo li + li { margin-top: 3px; }
+.acerca-de__equipo ul, .acerca-de__equipo p { color: #38232a; }
 
 /* Menú del banner. Los botones de instalar y descargar conservan sus estilos propios; aquí solo se
    da al panel el aspecto claro del diálogo y se replican, con alcance en el panel, los estilos de
@@ -298,7 +332,7 @@
     flex: 3 1 0;
     min-width: 0;
     max-width: 185px;
-    padding-inline-start: 0;
+    padding-inline-end: 0;
     border: 0;
   }
 

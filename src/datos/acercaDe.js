@@ -5,5 +5,4 @@ export const DESARROLLADORES = Object.freeze([
   'García Vázquez Edgar Daniel',
   'Gonzalez Zapete Sophia',
 ])
-export const CARRERA = 'Ingeniería en Sistemas Computacionales'
-export const INSTITUCION = 'Instituto Tecnológico de Tepic'
+export const FORMACION_ACADEMICA = 'Alumnos de Ing. en sistemas computacionales en el Instituto Tecnológico de Tepic'

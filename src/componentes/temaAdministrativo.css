@@ -147,6 +147,7 @@
 /* Campo de contraseña con botón para mostrarla u ocultarla. El botón mide 44 px aunque el icono sea pequeño. */
 .admin-acceso__campo-contrasena { position: relative; }
 .admin-acceso__tarjeta .admin-acceso__campo-contrasena input { padding-inline-end: 52px; }
+.admin-acceso__campo-contrasena input::-ms-reveal { display: none; }
 
 .admin-acceso__tarjeta .admin-acceso__ojo {
   position: absolute;
@@ -211,7 +212,7 @@
 
 .pie-institucional__logos { display: flex; align-items: center; gap: 14px; }
 .pie-institucional__biblioteca { display: block; width: 106px; filter: brightness(0) invert(1); }
-.pie-institucional__cecan { padding-inline-start: 14px; border-inline-start: 1px solid color-mix(in srgb, var(--admin-marfil) 30%, transparent); }
+.pie-institucional__cecan { padding-inline-end: 14px; border-inline-end: 1px solid color-mix(in srgb, var(--admin-marfil) 30%, transparent); }
 .pie-institucional__cecan img { display: block; width: 205px; }
 .pie-institucional__contacto { display: grid; color: var(--admin-marfil); font-size: .8125rem; font-style: normal; line-height: 1.5; }
 .pie-institucional__contacto a { justify-self: center; margin-top: 4px; color: var(--admin-blanco); text-decoration: none; }
@@ -221,7 +222,7 @@
   .pie-institucional__logos {
     display: grid;
     width: min(100%, 325px);
-    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 
   .pie-institucional__biblioteca,

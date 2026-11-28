@@ -48,21 +48,22 @@ describe('Acerca de (MN-16, MN-17)', () => {
     assert.deepEqual([...componentes.DESARROLLADORES], [
       'Espinosa Benítez Jesús', 'Garay Ocegueda Francisco Daniel', 'García Vázquez Edgar Daniel', 'Gonzalez Zapete Sophia',
     ])
-    assert.equal(componentes.CARRERA, 'Ingeniería en Sistemas Computacionales')
-    assert.equal(componentes.INSTITUCION, 'Instituto Tecnológico de Tepic')
   })
 
-  it('muestra los cuatro nombres, la carrera y la institución, y se puede cerrar', () => {
-    const html = representar('DialogoAcercaDe', { abierto: false, alCerrar: nada })
-    assert.ok(html.startsWith('<dialog'))
+  it('muestra los cuatro nombres, una sola frase de formación y los dos logos, y se puede cerrar', () => {
+    const html = representar('DialogoAcercaDe', { abierto: false, alCerrar: nada }).match(/<dialog\b.*?<\/dialog>/s)?.[0]
+    assert.ok(html)
     assert.match(html, /<h2 id="[^"]+">Acerca de<\/h2>/)
     assert.ok(html.includes('aria-label="Cerrar"'))
     for (const nombre of ['Espinosa Benítez Jesús', 'Garay Ocegueda Francisco Daniel', 'García Vázquez Edgar Daniel', 'Gonzalez Zapete Sophia']) {
       assert.ok(html.includes(`<li>${nombre}</li>`), nombre)
     }
     assert.equal(contar(html, '<li>'), 4)
-    assert.ok(html.includes('<p>Ingeniería en Sistemas Computacionales</p>'))
-    assert.ok(html.includes('<p>Instituto Tecnológico de Tepic</p>'))
+    assert.ok(html.includes('<p>Alumnos de Ing. en sistemas computacionales en el Instituto Tecnológico de Tepic</p>'))
+    assert.doesNotMatch(html, /<h3>(Carrera|Institución)<\/h3>/)
+    assert.match(html, /<\/section>\s*<footer class="acerca-de__pie">.*<\/footer>\s*<\/dialog>/s)
+    assert.match(html, /<img[^>]*src="[^"]*logoTecnm\.png"[^>]*alt="Tecnológico Nacional de México"/)
+    assert.match(html, /<img[^>]*src="[^"]*escudoTecnologico\.png"[^>]*alt=""/)
   })
 })
 
@@ -125,11 +126,13 @@ describe('banner sin accesos sueltos (MN-03, MN-27)', () => {
     assert.ok(banner.includes('>Acerca de</h2>'))
   })
 
-  it('mantiene la marca, los logos de la Biblioteca y del CECAN y el nombre de las acciones, sin el escudo del Tecnológico', () => {
+  it('mantiene los logos de la Biblioteca y del CECAN en el encabezado y reserva los del Tecnológico para Acerca de', () => {
     assert.ok(banner.includes('aria-label="Acciones de Metseri"'))
     assert.ok(banner.includes('alt="Biblioteca Pública Central Estatal Solón Argüello"'))
     assert.ok(banner.includes('alt="Nayarit y Consejo Estatal para la Cultura y las Artes de Nayarit"'))
-    assert.equal(banner.includes('alt="Instituto Tecnológico de Tepic"'), false)
+    const encabezado = banner.match(/<header\b.*?<\/header>/s)?.[0]
+    assert.ok(encabezado)
+    assert.doesNotMatch(encabezado, /escudoTecnologico\.png|logoTecnm\.png/)
     assert.ok(banner.includes('aria-label="Menú"'))
   })
 })
