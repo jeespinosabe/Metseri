@@ -148,7 +148,8 @@ for (const cuerpoId of ['tierra', 'luna']) {
       const contenido = fase === 'disponible'
         ? { fase, ficha: adaptarContenido(cuerpo, FICHAS_PRUEBA.find((ficha) => ficha.slug === cuerpoId)) }
         : { fase }
-      const apuntar = (x, y = .5) => {
+      // Probar las mitades fuera de las pestañas, incluso en la ficha más estrecha.
+      const apuntar = (x, y = .4) => {
         const camara = new PerspectiveCamera()
         camara.lookAt(tarjeta().localToWorld(new Vector3(x - .5, .5 - y, 0)))
         campo.establecerOrientacion(camara.quaternion)

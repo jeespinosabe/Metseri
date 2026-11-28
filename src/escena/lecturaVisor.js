@@ -2,7 +2,7 @@ import { LinearFilter } from 'three'
 import { medirFuenteVisor, proyectarRectanguloVisor } from './proyeccionVisor.js'
 import { distorsionarRadio, PERFIL_HOMIDO_GRAB } from './perfilVisor.js'
 
-export const DISTANCIA_FICHA_VR = 44
+export const DISTANCIA_FICHA_VR = 46
 export const PROPORCION_TAMANO_FICHA_VR = .9
 const ANCHO_MINIMO_PARA_REDUCIR_FICHA_PX = 260
 const ANCHO_MINIMO_FICHA_ESCRITORIO_PX = 410
@@ -81,17 +81,17 @@ export function calcularPresentacionFicha(configuracion) {
     }
     return Math.ceil(tamano * 4) / 4
   }
-  const fuenteLectura = (px, inicioMedicion) => fuente(configuracion.tactil ? (px - .5) * .98 : px, inicioMedicion)
-  const fuentesEncabezado = { titulo: fuenteLectura(21.5), categoria: fuente(12), pestana: fuente(12) }
+  const fuenteLectura = (px, inicioMedicion) => fuente(configuracion.tactil ? (px - .5) * .98 - 2 : px, inicioMedicion)
+  const fuentesEncabezado = { titulo: fuenteLectura(19.75), categoria: fuente(12), pestana: fuente(12) }
   const navegacion = fuente(14)
   const altoControl = Math.ceil(navegacion * 1.35 + 12)
   const altoPestana = Math.ceil(fuentesEncabezado.pestana * 1.35 + 10)
   const { tituloY, pestanasY, inicio } = calcularFilasEncabezado(ancho, fuentesEncabezado, altoPestana)
   const inicioMedicion = Math.min(inicio, primeraFilaMedicion)
-  const tamanoDato = fuenteLectura(14, inicioMedicion)
-  const tamanoDestacado = fuenteLectura(17.5, inicioMedicion)
+  const tamanoDato = fuenteLectura(12.25, inicioMedicion)
+  const tamanoDestacado = fuenteLectura(15.75, inicioMedicion)
   const tipografia = { ...fuentesEncabezado, navegacion, nota: fuente(12),
-    parrafo: fuenteLectura(16, inicioMedicion), etiqueta: tamanoDato, unidad: tamanoDato,
+    parrafo: fuenteLectura(14.25, inicioMedicion), etiqueta: tamanoDato, unidad: tamanoDato,
     valor: tamanoDestacado, seccion: tamanoDestacado }
   const pie = altoControl + 28
   return { ancho, alto, escala, desplazamientoY, pixelesPorUnidad, tipografia, tituloY, pestanasY, altoControl, altoPestana, inicio, pie,

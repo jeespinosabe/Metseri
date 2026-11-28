@@ -59,8 +59,8 @@ it('las doce fichas mantienen contenido completo, sin recorte y con letra proyec
       assert.ok(caja.y >= 40 && caja.y + caja.alto <= alto - c.margenInferior)
     }
     const primeraFila = p.alto * 11 / 40
-    const objetivos = formato.tactil ? { parrafo: 15.19, etiqueta: 13.23, unidad: 13.23, valor: 16.66, seccion: 16.66, titulo: 20.58 }
-      : { parrafo: 16, etiqueta: 14, unidad: 14, valor: 17.5, seccion: 17.5, titulo: 21.5 }
+    const objetivos = formato.tactil ? { parrafo: 11.475, etiqueta: 9.515, unidad: 9.515, valor: 12.945, seccion: 12.945, titulo: 16.865 }
+      : { parrafo: 14.25, etiqueta: 12.25, unidad: 12.25, valor: 15.75, seccion: 15.75, titulo: 19.75 }
     for (const [estilo, objetivo] of Object.entries(objetivos)) {
       const filas = [p.alto * .5, p.alto * .625, p.alto * .85]
       if (estilo === 'titulo') filas.push(primeraFila)
@@ -128,6 +128,8 @@ it('con entrada táctil la ficha dibuja letra más pequeña en la misma textura'
   assert.ok(tamanos.get('Cargando información...') < tamanosAnteriores.get('Cargando información...'))
   assert.equal(tamanos.get('Datos'), tamanosAnteriores.get('Datos'))
   assert.equal(material.map, textura)
+  assert.equal(textura.image.width, 1800)
+  assert.equal(textura.image.height, 1600)
 })
 
 it('en escritorio la ficha ocupa menos pantalla y conserva su sección y resolución de texto', t => {
