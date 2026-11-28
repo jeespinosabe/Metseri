@@ -51,12 +51,14 @@ function botonGuardar(html, texto) {
 describe('contenedor del panel', () => {
   it('muestra navegación y espera el catálogo real sin mostrar registros de ejemplo', () => {
     const html = representar('ModuloAdministrativo', { alCerrarSesion: nada })
-    for (const texto of ['aria-label="Panel administrativo"', 'Registros bibliográficos</button>', 'Agregar libro</button>', 'Volver a la exploración</a>', 'Cerrar sesión</button>', 'aria-label="Listado de registros bibliográficos"', 'Cargando catálogo…']) {
+    for (const texto of ['aria-label="Panel administrativo"', 'Registros bibliográficos</span>', 'Agregar libro</span>', 'aria-label="Volver a la exploración"', 'aria-label="Cerrar sesión"', 'aria-label="Listado de registros bibliográficos"', 'Cargando catálogo…']) {
       assert.ok(html.includes(texto), texto)
     }
     for (const retirado of [...TEXTOS_RETIRADOS, '<article', 'Todavía no hay registros bibliográficos']) assert.equal(html.includes(retirado), false, retirado)
-    assert.match(html, /aria-current="page">\s*Registros bibliográficos/)
-    assert.match(html, /data-foco="agregar-navegacion">\s*Agregar libro/)
+    const cabecera = html.match(/<header\b[^>]*>(.*?)<\/header>/s)?.[1] ?? ''
+    const navegacion = cabecera.match(/<nav\b[^>]*aria-label="Panel administrativo"[^>]*>(.*?)<\/nav>/s)?.[1] ?? ''
+    assert.match(navegacion, /aria-label="Registros bibliográficos" aria-current="page"/)
+    assert.match(navegacion, /data-foco="agregar-navegacion">.*<span>Agregar libro<\/span>/s)
     assert.equal(html.includes('<dialog'), false)
   })
 })

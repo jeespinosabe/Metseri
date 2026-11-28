@@ -35,6 +35,7 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
   const registroActivo = registros.find((registro) => registro.id === registroActivoId) ?? null
   const registroEliminar = registros.find((registro) => registro.id === registroEliminarId) ?? null
   const pantallaVisible = pantalla === 'edicion' && !registroActivo ? 'listado' : pantalla
+  const etiquetaRegistros = etiquetaPestanaRegistros(pantallaVisible)
 
   useEffect(() => {
     const controlador = new AbortController()
@@ -143,22 +144,37 @@ export function ModuloAdministrativo({ alCerrarSesion }) {
     <main className="admin-modulo panel-admin" ref={contenedor}>
       <header className="admin-modulo__cabecera panel-admin__cabecera">
         <a className="admin-acceso__marca" href="/" aria-label="Metseri, ir a la exploración">MET<span>S</span>ERI</a>
-        <div className="panel-admin__sesion">
-          <a className="panel-admin__enlace" href="/"><span aria-hidden="true">←</span> Volver a la exploración</a>
-          <button type="button" disabled={operando} onClick={cerrarSesion}>Cerrar sesión</button>
+        <div className="panel-admin__menu">
+          <nav className="panel-admin__navegacion" aria-label="Panel administrativo">
+            <button type="button" className="panel-admin__pestana" disabled={operando} aria-label={etiquetaRegistros} aria-current={pantallaVisible !== 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible === 'edicion') return; focoAlVolver.current = null; volverAlListado(); volverAConsultar() }}>
+              <span className="panel-admin__icono-menu panel-admin__icono-menu--registros" aria-hidden="true" />
+              <span className="panel-admin__texto-registros">{etiquetaRegistros}</span>
+              <span className="panel-admin__texto-movil" aria-hidden="true">{pantallaVisible === 'edicion' ? etiquetaRegistros : 'Registros'}</span>
+            </button>
+            <button type="button" className="panel-admin__pestana" data-foco="agregar-navegacion" disabled={operando} aria-current={pantallaVisible === 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible !== 'alta') abrirAlta('agregar-navegacion') }}>
+              <svg className="panel-admin__icono-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M11 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6M3 17h8m6-4v8m-4-4h8" />
+              </svg>
+              <span>Agregar libro</span>
+            </button>
+          </nav>
+          <div className="panel-admin__sesion">
+            <a className="panel-admin__enlace" href="/" aria-label="Volver a la exploración" title="Volver a la exploración">
+              <span className="panel-admin__icono-exploracion" aria-hidden="true" />
+              <span className="panel-admin__texto-movil" aria-hidden="true">Exploración</span>
+            </a>
+            <button type="button" disabled={operando} aria-label="Cerrar sesión" title="Cerrar sesión" onClick={cerrarSesion}>
+              <svg className="panel-admin__icono-salida" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M10 17v3H4V4h6v3m3 1 4 4-4 4M8 12h9" />
+              </svg>
+              <span className="panel-admin__etiqueta-salida">Cerrar sesión</span>
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="panel-admin__cuerpo">
         {errorSesion && <p className="panel-admin__error-campo" role="alert">{errorSesion}</p>}
-        <nav className="panel-admin__navegacion" aria-label="Panel administrativo">
-          <button type="button" className="panel-admin__pestana" disabled={operando} aria-current={pantallaVisible !== 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible === 'edicion') return; focoAlVolver.current = null; volverAlListado(); volverAConsultar() }}>
-            {etiquetaPestanaRegistros(pantallaVisible)}
-          </button>
-          <button type="button" className="panel-admin__pestana" data-foco="agregar-navegacion" disabled={operando} aria-current={pantallaVisible === 'alta' ? 'page' : undefined} onClick={() => { if (pantallaVisible !== 'alta') abrirAlta('agregar-navegacion') }}>
-            Agregar libro
-          </button>
-        </nav>
 
         {pantallaVisible === 'alta' && <FormularioLibro key="alta" modo="alta" alVolver={volverAlListado} alGuardar={guardarLibro} guardando={operando} />}
         {pantallaVisible === 'edicion' && (
